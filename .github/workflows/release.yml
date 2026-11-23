@@ -63,7 +63,7 @@ jobs:
         if: steps.v.outputs.skip == '0'
         run: |
           MK="/c/Program Files (x86)/NSIS/makensis.exe"
-          if [ ! -f "$MK" ]; then choco install nsis -y --no-progress >/dev/null; fi
+          for t in 1 2 3; do [ -f "$MK" ] || [ -f "/c/Program Files/NSIS/makensis.exe" ] && break; choco install nsis -y --no-progress || sleep 10; done
           if [ ! -f "$MK" ]; then MK="/c/Program Files/NSIS/makensis.exe"; fi
           "$MK" -V2 -DVERSION=${{ steps.v.outputs.ver }} installer.nsi
           node -e "
