@@ -11,7 +11,7 @@ const STUDIO = `http://127.0.0.1:${PORT}/studio`;
 const DATA = path.join(app.getPath('appData'), 'OAB');            // %APPDATA%\OAB – settings, playlists, recordings
 const RES = app.isPackaged ? process.resourcesPath : path.join(__dirname, 'resources');
 const SERVER_DIR = app.isPackaged ? path.join(process.resourcesPath, 'server') : path.join(__dirname, '..', 'server');
-let win = null, server = null, quitting = false, ytWin = null;
+let win = null, server = null, quitting = false, ytWin = null, splash = null;
 
 if (!app.requestSingleInstanceLock()) { app.quit(); }
 app.on('second-instance', () => { if (win) { if (win.isMinimized()) win.restore(); win.focus(); } });
@@ -120,7 +120,7 @@ function createWindow(){
     webPreferences: { contextIsolation: true, nodeIntegration: false, backgroundThrottling: false, autoplayPolicy: 'no-user-gesture-required', preload: path.join(__dirname, 'preload.js') }
   });
   win.removeMenu();
-  win.once('ready-to-show', () => { win.maximize(); win.show(); });
+  win.once('ready-to-show', () => { win._ready = true; });
   win.webContents.setWindowOpenHandler(({ url }) => { shell.openExternal(url); return { action: 'deny' }; });
   win.webContents.on('will-navigate', (e, url) => { if (!url.startsWith(`http://127.0.0.1:${PORT}`) && !url.startsWith(`http://localhost:${PORT}`)) { e.preventDefault(); shell.openExternal(url); } });
   win.webContents.on('before-input-event', (e, i) => { if (i.type === 'keyDown' && i.key === 'F12' && i.control && i.shift) win.webContents.openDevTools({ mode: 'detach' }); });
@@ -143,14 +143,41 @@ function checkUpdates(){
   } catch(e){ log('updater not available: ' + e.message); }
 }
 
+// ---------- opening screen: the studio photo, the ON AIR sign lights up with the loading (at least 7 s) ----------
+function showSplash(){
+  splash = new BrowserWindow({ width: 1100, height: 614, frame: false, resizable: false, movable: true, center: true, show: false,
+    backgroundColor: '#000000', icon: path.join(__dirname, 'build', 'icon.ico'), skipTaskbar: false, title: 'OAB Studio',
+    webPreferences: { contextIsolation: true, nodeIntegration: false } });
+  splash.loadFile(path.join(__dirname, 'splash', 'splash.html'));
+  splash.once('ready-to-show', () => { splash.show(); splash.webContents.executeJavaScript(`setVer(${JSON.stringify(app.getVersion())})`).catch(() => {}); });
+  splash.on('closed', () => { splash = null; });
+}
+function runSplash(serverReady){
+  const SPLASH_MS = 7000, t0 = Date.now();
+  return new Promise(done => {
+    const tick = setInterval(() => {
+      const t = (Date.now() - t0) / SPLASH_MS, ready = serverReady() && win && win._ready;
+      const p = ready ? Math.min(1, t) : Math.min(0.94, t);
+      if (splash && !splash.isDestroyed()) splash.webContents.executeJavaScript(`setP(${p.toFixed(3)})`).catch(() => {});
+      if (p >= 1 || (!splash && ready)) { clearInterval(tick); setTimeout(done, 900); }       // a moment to enjoy the lit sign
+    }, 60);
+  });
+}
+
 app.whenReady().then(async () => {
   fs.mkdirSync(DATA, { recursive: true });
   restoreDefaultSync();                      // after a crash: give Windows its own speakers back
+  showSplash();
   importOldSettings();
   permissions();
-  const ok = await startServer();
-  if (!ok) { dialog.showErrorBox('OAB Studio', 'The OAB server did not start.\nIf the old OAB (start-oab.bat) is open, close it and try again.\nLog: ' + path.join(DATA, 'server.log')); }
+  let up = false;
+  const sp = runSplash(() => up);           // the sign starts lighting at once
+  const ok = await startServer(); up = true;
   createWindow();
+  await sp;
+  if (!ok) { dialog.showErrorBox('OAB Studio', 'The OAB server did not start.\nIf the old OAB (start-oab.bat) is open, close it and try again.\nLog: ' + path.join(DATA, 'server.log')); }
+  if (win) { win.maximize(); win.show(); win.focus(); }
+  if (splash && !splash.isDestroyed()) splash.close();
   if (app.isPackaged) setTimeout(checkUpdates, 8000);
 });
 app.on('before-quit', () => { quitting = true; });
