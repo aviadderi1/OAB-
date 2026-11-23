@@ -1637,3 +1637,58 @@ if (/Electron/i.test(navigator.userAgent) && window.oabDesktop) {
   const bm = document.querySelector('.menubar .dd [data-a="mLine"]');
   if (bm) { const d = document.createElement('div'); d.dataset.a = 'ytWindow'; d.textContent = 'YouTube window (through OAB)…'; bm.after(d); }
 }
+
+// ---------------- desktop app: ALL computer sound through OAB ----------------
+// Windows plays everything into the VB-Audio virtual cable, OAB takes it as LINE IN (with the ducker)
+// and plays the programme on your real speakers / headphones. Switched back when OAB closes.
+if (window.oabDesktop && window.oabDesktop.pcRoute) {
+  let pcOn = false;
+  const syncPc = () => { $$('.dd [data-a="pcThrough"]').forEach(el => el.classList.toggle('on', pcOn)); const t = $('#pcThroughT'); if (t) t.classList.toggle('on', pcOn); };
+  const devList = async kind => (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === kind && d.deviceId !== 'default' && d.deviceId !== 'communications');
+  function needCable(){
+    $('#miH').textContent = 'All computer sound through OAB';
+    $('#miBody').innerHTML = `<div style="line-height:1.7;font-size:13px">This needs the free <b>VB-Audio Virtual Cable</b> (a virtual sound card):<ol style="margin:8px 0 8px 18px;padding:0"><li>Download it from <a href="https://vb-audio.com/Cable/" target="_blank">vb-audio.com/Cable</a> and unzip.</li><li>Right-click <b>VBCABLE_Setup_x64.exe</b> → <b>Run as administrator</b> → Install Driver.</li><li>Restart the computer, open OAB Studio and turn this on again.</li></ol>Nothing else to set: OAB switches Windows to the cable while it is open and back to your speakers when it closes.</div>`;
+    openModal('mInfo');
+  }
+  async function pcThrough(on){
+    if (!ctx) { toast('Press START first'); return; }
+    if (!on) {
+      await window.oabDesktop.pcRoute(false); pcOn = false; store.set('pcThrough', '0'); syncPc();
+      if (inputs[2].on) await setInput(inputs[2], false);
+      toast('Computer sound plays straight to the speakers again'); return;
+    }
+    try { const st = await navigator.mediaDevices.getUserMedia({ audio: true }); st.getTracks().forEach(t => t.stop()); } catch(e){}
+    const t = await window.oabDesktop.pcRouteTarget();
+    if (t.error) { toast('Could not read the Windows sound devices: ' + t.error); return; }
+    if (t.cable === false) { needCable(); return; }
+    // 1. OAB itself must play on the real speakers / headphones (not on the cable)
+    const outs = await devList('audiooutput'), nm = (t.name || '').toLowerCase();
+    const real = outs.find(d => d.label && d.label.toLowerCase() === nm) || outs.find(d => d.label && nm && (d.label.toLowerCase().includes(nm) || nm.includes(d.label.toLowerCase()))) || outs.find(d => !/cable/i.test(d.label));
+    if (!real) { toast('Could not find your speakers – choose Main output in Options → Sound outputs'); return; }
+    store.set('devOut', real.deviceId); try { await ctx.setSinkId(real.deviceId); } catch(e){}
+    if (!store.get('devPfl', '')) { try { await pfl.setSinkId(real.deviceId); } catch(e){} }
+    // 2. Windows plays everything into the cable
+    const r = await window.oabDesktop.pcRoute(true);
+    if (r.error === 'nocable') { needCable(); return; }
+    if (r.error) { toast('Could not switch the Windows sound: ' + r.error); return; }
+    // 3. LINE IN = CABLE Output, heard in the headphones, with the ducker
+    await new Promise(res => setTimeout(res, 400));
+    const cable = (await devList('audioinput')).find(d => /CABLE Output/i.test(d.label));
+    if (!cable) { toast('CABLE Output not found – restart the computer after installing VB-Cable'); await window.oabDesktop.pcRoute(false); return; }
+    store.set('lineSrc', ''); store.set('dev_line', cable.deviceId); syncLineSrc();
+    if (!lineMon) $('#lineMon').click();
+    if (store.get('duckLine', '1') !== '1') $('#duckLine').click();
+    if (inputs[2].on) await setInput(inputs[2], false);
+    await setInput(inputs[2], true);
+    pcOn = true; store.set('pcThrough', '1'); syncPc();
+    toast('All computer sound now goes through OAB → ' + (real.label || 'speakers'));
+  }
+  ACT.pcThrough = () => pcThrough(!pcOn);
+  const bm = document.querySelector('.menubar .dd [data-a="mLine"]');
+  if (bm) { const d = document.createElement('div'); d.className = 'chk'; d.dataset.a = 'pcThrough'; d.textContent = 'All computer sound through OAB'; bm.before(d); }
+  const sec = document.querySelector('.optSec[data-sec="line"] .frm');
+  if (sec) { sec.insertAdjacentHTML('afterbegin', '<label>Computer sound</label><span class="tgl" id="pcThroughT"><b></b>All computer sound goes through OAB while it is open (ducker works on everything)</span>'); $('#pcThroughT').onclick = () => pcThrough(!pcOn); }
+  // turn it on again by itself when the studio starts
+  $('#startBtn').addEventListener('click', () => { if (store.get('pcThrough', '0') === '1') setTimeout(() => pcThrough(true), 1500); });
+  syncPc();
+}

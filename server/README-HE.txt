@@ -1,4 +1,4 @@
-﻿OAB – On Air Broadcast 1.2.1 – רדיו אינטרנטי משלך
+﻿OAB – On Air Broadcast 1.2.3 – רדיו אינטרנטי משלך
 ================================
 
 1. הפעלה
@@ -298,3 +298,7 @@ Options מחולק לקטגוריות בצד: General, Sound outputs, Microphone
 34. תוכנה למחשב (OAB Studio.exe)
 מתקינים עם OAB-Studio-Setup. ההגדרות נשמרות ב־%APPDATA%\OAB.
 LINE IN מיוטיוב: Broadcast → YouTube window. חלון היוטיוב של OAB שקט במחשב ונשמע רק דרך OAB – כולל Ducker.
+
+35. כל הסאונד של המחשב דרך OAB
+צריך להתקין פעם אחת את VB-Audio Virtual Cable (חינם) ולהפעיל מחדש את המחשב.
+Broadcast → All computer sound through OAB: כל עוד OAB פתוחה, כל הסאונד של המחשב נכנס ל־LINE IN, עובר Ducker ויוצא לאוזניות דרך OAB. בסגירה – Windows חוזר לרמקולים.

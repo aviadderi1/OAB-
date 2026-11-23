@@ -1,7 +1,7 @@
 // OAB Studio – desktop app (Windows)
 // Starts the OAB server (bundled Python) and shows the studio in its own window.
 const { app, BrowserWindow, session, shell, dialog, desktopCapturer, Menu, ipcMain } = require('electron');
-const { spawn } = require('child_process');
+const { spawn, execFile, execFileSync } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const http = require('http');
@@ -80,6 +80,36 @@ function openYouTube(){
   return true;
 }
 ipcMain.handle('yt-open', () => openYouTube());
+
+// ---------- all computer sound through OAB (Windows default playback -> VB-Audio "CABLE Input") ----------
+const PS1 = app.isPackaged ? path.join(process.resourcesPath, 'scripts', 'audio-route.ps1') : path.join(__dirname, 'scripts', 'audio-route.ps1');
+const PREV = () => path.join(DATA, 'audio-prev.json');
+function ps(args){ return new Promise(res => {
+  if (process.platform !== 'win32') return res({ error: 'windows only' });
+  execFile('powershell.exe', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', PS1, ...args], { windowsHide: true, timeout: 20000, encoding: 'utf8' }, (err, out) => {
+    if (err) { log('audio-route: ' + err.message); return res({ error: err.message }); }
+    try { res(JSON.parse(String(out).trim())); } catch(e){ res({ error: 'bad output: ' + String(out).slice(0, 200) }); } });
+}); }
+function restoreDefaultSync(){
+  try { if (!fs.existsSync(PREV())) return; const p = JSON.parse(fs.readFileSync(PREV(), 'utf8'));
+    if (process.platform === 'win32' && p.id) execFileSync('powershell.exe', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', PS1, 'set', p.id], { windowsHide: true, timeout: 15000 });
+    fs.unlinkSync(PREV()); log('playback device restored: ' + p.name);
+  } catch(e){ log('restore failed: ' + e.message); }
+}
+ipcMain.handle('pc-devices', () => ps(['list']));
+ipcMain.handle('pc-route', async (e, on) => {
+  if (!on) { restoreDefaultSync(); return { ok: true }; }
+  const l = await ps(['list']); if (l.error) return l;
+  const devs = l.devices || [], cable = devs.find(d => /CABLE Input/i.test(d.name));
+  if (!cable) return { error: 'nocable' };
+  let prev = null; try { prev = JSON.parse(fs.readFileSync(PREV(), 'utf8')); } catch(e){}
+  if (!prev) { const cur = devs.find(d => d.default && d.id !== cable.id) || devs.find(d => d.id !== cable.id); if (!cur) return { error: 'noreal' }; prev = { id: cur.id, name: cur.name }; fs.writeFileSync(PREV(), JSON.stringify(prev)); }
+  const r = await ps(['set', cable.id]); if (r.error || !r.ok) return { error: r.error || ('set failed ' + r.code) };
+  log('playback device -> ' + cable.name + ' (was ' + prev.name + ')');
+  return { ok: true, prevName: prev.name, cableName: cable.name };
+});
+ipcMain.handle('pc-route-target', async () => { let prev = null; try { prev = JSON.parse(fs.readFileSync(PREV(), 'utf8')); } catch(e){}
+  if (prev) return { name: prev.name }; const l = await ps(['list']); if (l.error) return l; const d = (l.devices || []).find(x => x.default) || {}; return { name: d.name || '', cable: (l.devices || []).some(x => /CABLE Input/i.test(x.name)) }; });
 ipcMain.handle('yt-is-open', () => !!(ytWin && !ytWin.isDestroyed()));
 ipcMain.handle('yt-close', () => { if (ytWin && !ytWin.isDestroyed()) ytWin.close(); return true; });
 
@@ -115,6 +145,7 @@ function checkUpdates(){
 
 app.whenReady().then(async () => {
   fs.mkdirSync(DATA, { recursive: true });
+  restoreDefaultSync();                      // after a crash: give Windows its own speakers back
   importOldSettings();
   permissions();
   const ok = await startServer();
@@ -124,4 +155,4 @@ app.whenReady().then(async () => {
 });
 app.on('before-quit', () => { quitting = true; });
 app.on('window-all-closed', () => { quitting = true; if (server) { try { server.kill(); } catch(e){} } app.quit(); });
-app.on('will-quit', () => { if (server) { try { server.kill(); } catch(e){} } });
+app.on('will-quit', () => { restoreDefaultSync(); if (server) { try { server.kill(); } catch(e){} } });
