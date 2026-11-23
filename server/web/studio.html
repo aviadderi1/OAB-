@@ -365,68 +365,111 @@ html.light [style*="color:#8CC2FF"]{color:#003673!important}
 html.light body{background:var(--bg);color:var(--txt)}html.light .tgl b{background:#C3C8D1}html.light .tgl.on b{background:var(--acc)}html.light .dd{box-shadow:0 12px 30px rgba(20,24,32,.14)}
 /*ENDLIGHT*/
 /*GLASS*/
-html.glass body{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto auto minmax(0,1fr) auto auto auto auto;grid-template-areas:"menu menu" "tool tool" "stage main" "np main" "led main" "dock dock" "st st";column-gap:12px;background:transparent}
-html.glass{background:#06080C;--gw:max(100vw,calc(100vh * 1.791667));--gs:calc(var(--gw) / 1376)}
-#glassBg{display:none}
-html.glass #glassBg{display:block;position:fixed;left:0;top:0;width:100vw;height:100vh;z-index:-1;pointer-events:none;background:linear-gradient(180deg,rgba(6,8,12,.55) 0%,rgba(6,8,12,.05) 16%,rgba(6,8,12,0) 46%,rgba(6,8,12,.6) 70%,rgba(6,8,12,.9) 100%),url(/studio-bg.jpg) 50% 50%/var(--gw) auto no-repeat}
-html.glass .menubar{grid-area:menu;background:rgba(6,8,12,.55);border-bottom:1px solid rgba(255,255,255,.06)}
-html.glass .tool{grid-area:tool;position:relative;z-index:3;margin:8px 12px 0;height:50px;border-radius:14px;background:rgba(10,13,19,.6);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.09)}
-html.glass .player,html.glass .transport>.tpSide:empty{display:contents}
-html.glass #pNow{grid-area:np;margin:0 0 0 12px;border-radius:16px 16px 0 0;background:rgba(10,13,19,.32);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.1);border-bottom:0;padding:14px 18px!important}
-html.glass .ledbar{grid-area:led;margin:0 0 0 12px;border-radius:0 0 16px 16px;background:rgba(10,13,19,.32);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.1);border-top:0;padding:4px 18px 12px}
-html.glass #pNow .vinyl{display:none}
-html.glass #nowLbl{color:#2EE88A}
-html.glass #nowTitle{font-size:24px!important}
-html.glass #nowRem{color:#FFB020;font-size:clamp(30px,4.4vh,40px)!important;font-weight:700!important}
-html.glass #micCard{grid-area:stage;align-self:start;justify-self:start;width:236px;margin:12px 0 0 12px;background:none;border:0;padding:0!important}
-html.glass #micCard .microw:nth-of-type(2){display:none}
-html.glass .tool #micLink{width:34px;height:34px;margin-left:4px}
-html.glass #micCard .micTop{display:flex!important;justify-content:center}
-html.glass #micCard .microw:nth-of-type(3){display:none}
-html.glass .micbtn{position:fixed;z-index:4;width:calc(124 * var(--gs));height:calc(124 * var(--gs));top:calc(50vh - 91 * var(--gs))}
-html.glass #mic1{left:calc(50vw - 185 * var(--gs))}
-html.glass #mic2{left:calc(50vw + 50 * var(--gs));top:calc(50vh - 86 * var(--gs))}
-html.glass .micbtn .mi{background:rgba(0,0,0,.04);border:2px dashed rgba(255,255,255,.4);box-shadow:none;color:transparent;animation:none}
-html.glass .micbtn .mi svg{opacity:0}
-html.glass .micbtn:hover .mi{border-color:rgba(255,255,255,.8);background:rgba(255,255,255,.05)}
-html.glass .micbtn.on .mi{background:rgba(46,232,138,.06);border:3px solid #2EE88A;animation:glassPulse 1.6s ease-in-out infinite}
-html.glass .micbtn::after{content:attr(aria-label);position:absolute;left:50%;top:calc(100% + 10px);transform:translateX(-50%);height:30px;min-width:96px;padding:0 14px;box-sizing:border-box;border-radius:15px;display:flex;align-items:center;justify-content:center;white-space:nowrap;background:rgba(10,13,19,.7);border:1px solid rgba(255,255,255,.25);color:#C8CFDA;font:700 12px Inter,sans-serif;letter-spacing:1px}
-html.glass .micbtn.on::after{content:"● " attr(aria-label) " · LIVE";background:#12301F;border-color:#2EE88A;color:#6FF0A8;box-shadow:0 0 14px rgba(46,232,138,.4)}
-@keyframes glassPulse{0%,100%{box-shadow:0 0 22px rgba(46,232,138,.55),inset 0 0 20px rgba(46,232,138,.2)}50%{box-shadow:0 0 44px rgba(46,232,138,.9),inset 0 0 30px rgba(46,232,138,.35)}}
-#glassSign{display:none}
-html.glass #glassSign{display:block;position:fixed;left:calc(50vw + 293 * var(--gs));top:calc(50vh - 379 * var(--gs));width:calc(150 * var(--gs));height:calc(76 * var(--gs));z-index:2;pointer-events:none;border-radius:50%;background:radial-gradient(ellipse,rgba(255,50,40,.65),rgba(255,50,40,0) 70%);opacity:0;transition:opacity .6s}
+html.glass{--vw:calc(1vw / var(--uiz,1));--vh:calc(1vh / var(--uiz,1));background:#06080C;--gw:max(calc(100 * var(--vw)),calc(calc(100 * var(--vh)) * 1.791667));--gs:calc(var(--gw) / 1376)}
+html.glass body{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto minmax(0,1fr) auto auto auto;grid-template-areas:"tool tool" "stage main" "np np" "dock dock" "st st";background:transparent}
+#glassBg,#glassNeon,#glassSign{display:none}
+html.glass #glassBg{display:block;position:fixed;left:0;top:0;width:calc(100 * var(--vw));height:calc(100 * var(--vh));z-index:-1;pointer-events:none;background:linear-gradient(180deg,rgba(6,8,12,.5) 0%,rgba(6,8,12,0) 12%,rgba(6,8,12,0) 52%,rgba(6,8,12,.55) 74%,rgba(6,8,12,.92) 100%),url(/studio-bg.jpg) 50% 50%/var(--gw) auto no-repeat}
+/* OAB neon sign: a brightened copy of the sign that flickers every few seconds */
+html.glass #glassNeon{display:block;position:fixed;z-index:-1;pointer-events:none;left:calc(calc(50 * var(--vw)) - 523 * var(--gs));top:calc(calc(50 * var(--vh)) - 354 * var(--gs));width:calc(340 * var(--gs));height:calc(340 * var(--gs));background:url(/studio-bg.jpg) calc(-165 * var(--gs)) calc(-30 * var(--gs))/var(--gw) auto no-repeat;filter:brightness(1.55) saturate(1.35);-webkit-mask:radial-gradient(circle,#000 52%,transparent 70%);mask:radial-gradient(circle,#000 52%,transparent 70%);animation:neonFlicker 7s linear infinite}
+@keyframes neonFlicker{0%,84%{opacity:.7}85%{opacity:.05}86%{opacity:.6}87%{opacity:0}88.5%{opacity:.65}90%{opacity:.15}91.5%{opacity:.7}100%{opacity:.7}}
+html.glass #glassNeon::after{content:"";position:absolute;inset:0;background:radial-gradient(circle,rgba(0,0,0,.55),transparent 70%);opacity:0;animation:neonShade 7s linear infinite}
+@keyframes neonShade{0%,84%{opacity:0}85%{opacity:1}86%{opacity:.1}87%{opacity:1}88.5%{opacity:0}90%{opacity:.8}91.5%,100%{opacity:0}}
+html.glass #glassSign{display:block;position:fixed;z-index:-1;pointer-events:none;left:calc(calc(50 * var(--vw)) + 290 * var(--gs));top:calc(calc(50 * var(--vh)) - 380 * var(--gs));width:calc(150 * var(--gs));height:calc(76 * var(--gs));border-radius:50%;background:radial-gradient(ellipse,rgba(255,50,40,.7),rgba(255,50,40,0) 70%);mix-blend-mode:screen;opacity:0;transition:opacity .6s}
 html.glass body:has(#onair.live) #glassSign{opacity:1;animation:glassSign 2.4s ease-in-out infinite}
 @keyframes glassSign{0%,100%{opacity:.8}50%{opacity:1}}
-html.glass .transport{grid-area:dock;margin:12px 12px 0;padding:10px 16px;border-radius:18px;background:rgba(10,13,19,.42);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.09)}
-html.glass .tp.play{background:#2EE88A;color:#06210F;box-shadow:0 0 22px rgba(46,232,138,.5)}
-html.glass .tp.play svg{fill:#06210F}
-html.glass .main{grid-area:main;display:grid;width:clamp(380px,34.5vw,640px);padding:12px 12px 0 0;box-sizing:border-box}
-html.glass .main:not(.noLib){width:calc(clamp(380px,34.5vw,640px) + clamp(240px,17vw,310px))}
-html.glass .main:not(.noReq){width:calc(clamp(380px,34.5vw,640px) + clamp(300px,21vw,360px))}
-html.glass .main:not(.noLib):not(.noReq){width:calc(clamp(380px,34.5vw,640px) + clamp(240px,17vw,310px) + clamp(300px,21vw,360px))}
-html.glass .main>.card,html.glass .main>aside>.card{background:rgba(8,14,22,.62);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(200,225,255,.2);border-radius:12px;box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 20px 50px rgba(0,0,0,.35);overflow:hidden}
+/* top bar: logo, menus, listeners, clock, message, antenna, GO LIVE */
+html.glass .tool{grid-area:tool;position:relative;z-index:20;margin:10px 14px 0;height:50px;padding:0 12px;gap:10px;border-radius:14px;background:rgba(10,13,19,.6);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.08)}
+html.glass .tool>.tb,html.glass .tool>.sep,html.glass #srcName,html.glass #qualLbl,html.glass #srcName+br,html.glass .tool span.sub,html.glass #rec,html.glass #linkBtn,html.glass .tool [data-a="options"],html.glass #srvState{display:none!important}
+html.glass .tool>div[style*="margin-left:auto"]{display:contents!important}
+html.glass .tool>div:first-child span{display:none}
+html.glass .tool>div:first-child img{width:32px!important;height:32px!important;margin:0!important}
+html.glass .tool>div:first-child b{font-size:15px;letter-spacing:2px}
+html.glass .tool .menubar{height:auto;padding:0;margin-left:6px;background:none;border:0;gap:1px;order:1}
+html.glass .tool .menubar>.m>span{padding:6px 10px;border-radius:7px;font-size:13px;font-weight:500;color:#C8CFDA}
+html.glass .tool .menubar>.m:hover>span,html.glass .tool .menubar>.m.open>span{background:rgba(255,255,255,.08);color:#fff}
+html.glass .tool .menubar>div:last-child{display:none}
+html.glass #lisTop{order:2;margin-left:auto;background:none;border:0}
+html.glass #clock{order:3;font-size:22px!important;font-weight:700!important;margin:0 4px!important}
+html.glass .tool #micLink{order:4;width:34px;height:34px}
+html.glass #msgOpen{order:5;height:34px;width:34px;padding:0;justify-content:center;border-radius:10px;background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.14)}
+html.glass #onair{order:6}
+html.glass #golive{order:7;height:34px;padding:0 16px;border-radius:10px;border:0;background:#E5484D;color:#fff;font-weight:700;letter-spacing:1px;box-shadow:0 0 18px rgba(229,72,77,.5)}
+html.glass #golive:hover{background:#F0585D}
+/* playlist behind the glass, leaning in */
+html.glass .main{grid-area:main;display:grid;width:clamp(380px,calc(34.5 * var(--vw)),640px);padding:16px 14px 0 0;margin-bottom:calc(3.5 * var(--vh));box-sizing:border-box;transform:perspective(1600px) rotateY(-6deg);transform-origin:100% 50%}
+html.glass .main:not(.noLib){width:calc(clamp(380px,calc(34.5 * var(--vw)),640px) + clamp(240px,calc(17 * var(--vw)),310px))}
+html.glass .main:not(.noReq){width:calc(clamp(380px,calc(34.5 * var(--vw)),640px) + clamp(300px,calc(21 * var(--vw)),360px))}
+html.glass .main:not(.noLib):not(.noReq){width:calc(clamp(380px,calc(34.5 * var(--vw)),640px) + clamp(240px,calc(17 * var(--vw)),310px) + clamp(300px,calc(21 * var(--vw)),360px))}
+html.glass .main>.card,html.glass .main>aside>.card{background:rgba(8,14,22,.6);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(200,225,255,.2);border-radius:12px;box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 20px 50px rgba(0,0,0,.35);overflow:hidden}
 html.glass .plCard{position:relative}
 html.glass .plCard::before{content:"";position:absolute;inset:0;pointer-events:none;z-index:3;background:linear-gradient(115deg,rgba(255,255,255,.07) 0%,rgba(255,255,255,0) 30%,rgba(255,255,255,.03) 31%,rgba(255,255,255,0) 45%)}
-html.glass .plh{background:rgba(8,14,22,.85)}
-html.glass .plr{border-bottom-color:rgba(255,255,255,.06)}
+html.glass .plh,html.glass .info{display:none!important}
+html.glass .plr{grid-template-columns:24px 30px minmax(0,1fr) 54px;gap:10px;height:46px;border-bottom-color:rgba(255,255,255,.06);position:relative}
+html.glass .plr>:nth-child(3),html.glass .plr>:nth-child(5){display:none}
 html.glass .plr.playing{background:rgba(46,232,138,.13);box-shadow:inset 3px 0 0 #2EE88A}
-html.glass .info{background:rgba(6,10,16,.6);border-top-color:rgba(255,255,255,.08)}
+html.glass .plr>.acts{position:absolute;right:8px;top:50%;transform:translateY(-50%);display:none;padding:3px;border-radius:9px;background:rgba(8,14,22,.94);border:1px solid rgba(255,255,255,.12)}
+html.glass .plr:hover>.acts{display:flex}
 html.glass .tabs{border-bottom-color:rgba(255,255,255,.08)}
-html.glass .status{grid-area:st;background:transparent;border-top:0;color:#6F7C8E}
-html.glass #glassSign{z-index:5;mix-blend-mode:screen}
+/* now playing */
+html.glass .player{display:contents}
+html.glass #pNow{grid-area:np;justify-self:start;width:clamp(560px,calc(52.8 * var(--vw)),1100px);box-sizing:border-box;margin:0 0 0 14px;border-radius:16px;background:rgba(10,13,19,.32);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.1);padding:14px 18px!important}
+html.glass #pNow .vinyl,html.glass #nowType,html.glass #nowTimes{display:none!important}
+html.glass #nowLbl{color:#2EE88A}
+html.glass #nowTitle{font-size:24px!important}
+html.glass #nowRem{color:#FFB020;font-size:clamp(30px,calc(4.4 * var(--vh)),40px)!important;font-weight:700!important}
+/* mic rings on the photo microphones; the green ring is the mic level meter */
+html.glass #micCard{grid-area:stage;align-self:start;justify-self:start;width:236px;margin:12px 0 0 14px;background:none;border:0;padding:0!important}
+html.glass #micCard .microw:nth-of-type(2),html.glass #micCard .microw:nth-of-type(3){display:none}
+html.glass #micCard .micTop{display:flex!important;justify-content:center}
 html.glass .micpop{left:0;right:auto}
-html.glass body:has(.main:not(.noLib)) .micbtn,html.glass body:has(.main:not(.noReq)) .micbtn{position:relative;left:auto;top:auto;width:52px;height:52px}
+html.glass .micbtn{position:fixed;z-index:4;width:calc(124 * var(--gs));height:calc(124 * var(--gs));top:calc(calc(50 * var(--vh)) - 91 * var(--gs))}
+html.glass #mic1{left:calc(calc(50 * var(--vw)) - 185 * var(--gs))}
+html.glass #mic2{left:calc(calc(50 * var(--vw)) + 50 * var(--gs));top:calc(calc(50 * var(--vh)) - 86 * var(--gs))}
+html.glass .micbtn .mi{position:relative;background:rgba(0,0,0,.04);border:2px dashed rgba(255,255,255,.4);box-shadow:none;color:transparent;animation:none}
+html.glass .micbtn .mi svg{opacity:0}
+html.glass .micbtn:hover .mi{border-color:rgba(255,255,255,.8);background:rgba(255,255,255,.05)}
+html.glass .micbtn.on .mi{background:rgba(46,232,138,.05);border:3px solid rgba(46,232,138,.3);animation:none;box-shadow:0 0 calc(8px + var(--lv,0) * 46px) rgba(46,232,138,calc(.3 + var(--lv,0) * .6)),inset 0 0 calc(6px + var(--lv,0) * 26px) rgba(46,232,138,calc(.15 + var(--lv,0) * .35))}
+html.glass .micbtn.on .mi::before{content:"";position:absolute;inset:-3px;border-radius:50%;background:conic-gradient(from -90deg,#2EE88A 0deg,#B8F43A calc(var(--lv,0) * 300deg),#F5A524 calc(var(--lv,0) * 340deg),transparent calc(var(--lv,0) * 360deg));-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 5px),#000 calc(100% - 5px));mask:radial-gradient(farthest-side,transparent calc(100% - 5px),#000 calc(100% - 5px))}
+html.glass .micbtn::after{content:attr(aria-label);position:absolute;left:50%;top:calc(100% + 10px);transform:translateX(-50%);height:30px;min-width:96px;padding:0 14px;box-sizing:border-box;border-radius:15px;display:flex;align-items:center;justify-content:center;white-space:nowrap;background:rgba(10,13,19,.7);border:1px solid rgba(255,255,255,.25);color:#C8CFDA;font:700 12px Inter,sans-serif;letter-spacing:1px}
+html.glass .micbtn.on::after{content:"● " attr(aria-label) " · LIVE";background:#12301F;border-color:#2EE88A;color:#6FF0A8;box-shadow:0 0 14px rgba(46,232,138,.4)}
+html.glass body:has(.main:not(.noLib)) .micbtn,html.glass body:has(.main:not(.noReq)) .micbtn{position:relative;width:52px;height:52px}
+html.glass body:has(.main:not(.noLib)) #micCard .micbtn,html.glass body:has(.main:not(.noReq)) #micCard .micbtn{left:auto!important;top:auto!important}
 html.glass body:has(.main:not(.noLib)) .micbtn .mi svg,html.glass body:has(.main:not(.noReq)) .micbtn .mi svg{opacity:1}
 html.glass body:has(.main:not(.noLib)) .micbtn .mi,html.glass body:has(.main:not(.noReq)) .micbtn .mi{color:#C9CDD6;border-style:solid}
 html.glass body:has(.main:not(.noLib)) .micbtn::after,html.glass body:has(.main:not(.noReq)) .micbtn::after{display:none}
-html.glass body:has(.main:not(.noLib)) #micCard .micTop,html.glass body:has(.main:not(.noReq)) #micCard .micTop{display:flex!important;gap:16px;justify-content:flex-start}
-html.glass .plh,html.glass .plr{grid-template-columns:24px 30px minmax(0,1fr) 54px;gap:10px}
-html.glass .plh>:nth-child(3),html.glass .plh>:nth-child(5),html.glass .plh>:nth-child(7),html.glass .plr>:nth-child(3),html.glass .plr>:nth-child(5){display:none}
-html.glass .info{grid-template-columns:44px minmax(0,1.2fr) minmax(0,1fr) auto;gap:10px}html.glass .info>:nth-child(4){display:none}html.glass .info .art{width:44px!important;height:44px!important;font-size:15px!important}
-html.glass .plr{position:relative}
-html.glass .plr>.acts{position:absolute;right:8px;top:50%;transform:translateY(-50%);display:none;padding:3px;border-radius:9px;background:rgba(8,14,22,.94);border:1px solid rgba(255,255,255,.12)}
-html.glass .plr:hover>.acts{display:flex}
-html.glass body:has(.main:not(.noLib)) #micCard .micbtn,html.glass body:has(.main:not(.noReq)) #micCard .micbtn{left:auto!important;top:auto!important}
+html.glass body:has(.main:not(.noLib)) #micCard .micTop,html.glass body:has(.main:not(.noReq)) #micCard .micTop{gap:16px;justify-content:flex-start}
+/* bottom dock: LED meter | stop prev play next volume | 8 hot buttons */
+html.glass .transport{grid-area:dock;margin:12px 14px 0;height:84px;box-sizing:border-box;padding:0 18px;border-radius:18px;background:rgba(10,13,19,.42);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.08)}
+html.glass .transport>.tpSide:first-child{visibility:hidden}
+html.glass body:has(#pfl.live) .transport>.tpSide:first-child{visibility:visible}
+html.glass body:has(#pfl.live) .ledbar{display:none}
+html.glass .ledbar{grid-area:dock;align-self:center;justify-self:start;z-index:2;width:clamp(220px,calc(23 * var(--vw)),420px);margin:12px 0 0 34px;padding:0;background:none;border:0}
+html.glass #ledDb{display:none}
+html.glass .tpBtns{gap:14px}
+html.glass .tpBtns>.sep,html.glass #bRepTrack,html.glass #bStopAfter,html.glass #bShuffle,html.glass #bRepList{display:none}
+html.glass #bStop{order:1;width:42px;height:42px}html.glass #bPrev{order:2;width:46px;height:46px}html.glass #bPlay,html.glass #bPause{order:3;width:62px;height:62px}html.glass #bNext{order:4;width:46px;height:46px}
+html.glass .tpBtns .tp{border-radius:50%;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);color:#fff}
+html.glass #bPlay,html.glass #bPause{border:0;background:#2EE88A;color:#06210F;box-shadow:0 0 24px rgba(46,232,138,.5)}
+html.glass #bPlay svg,html.glass #bPause svg{fill:#06210F;width:22px;height:22px}
+html.glass #bPause{display:none}
+html.glass.isPlay #bPause{display:flex}html.glass.isPlay #bPlay{display:none}
+#dockVolW{display:none}
+html.glass #dockVolW{order:5;display:flex;align-items:center;gap:8px;margin-left:10px;color:#9FB4CC}
+html.glass #dockVol{width:110px}
+/* status line */
+html.glass .status{grid-area:st;background:transparent;border-top:0;color:#6F7C8E}
+html.glass #fSrv,html.glass #stPl,html.glass #stXf,html.glass .status>span:nth-child(3){display:none}
+/* intro after the opening screen */
+html.glassIn .tool{animation:gInDown .7s cubic-bezier(.2,.8,.2,1) both}
+html.glassIn .main{animation:gInRight 1s cubic-bezier(.2,.8,.2,1) .2s both}
+html.glassIn #pNow{animation:gInLeft .95s cubic-bezier(.2,.8,.2,1) .35s both}
+html.glassIn .transport,html.glassIn .ledbar{animation:gInUp .8s cubic-bezier(.2,.8,.2,1) .5s both}
+html.glassIn .micbtn{animation:gInPop .7s cubic-bezier(.2,.8,.2,1) .8s both}
+@keyframes gInDown{from{opacity:0;transform:translateY(-30px)}}
+@keyframes gInRight{from{opacity:0;transform:perspective(1600px) translateX(70%) rotateY(-28deg)}to{opacity:1;transform:perspective(1600px) rotateY(-6deg)}}
+@keyframes gInLeft{from{opacity:0;transform:translateX(-60%)}}
+@keyframes gInUp{from{opacity:0;transform:translateY(60px)}}
+@keyframes gInPop{from{opacity:0;transform:scale(.6)}}
 /*ENDGLASS*/
 </style>
 </head>
@@ -438,12 +481,12 @@ html.glass body:has(.main:not(.noLib)) #micCard .micbtn,html.glass body:has(.mai
 <button class="btn pri" id="startBtn" style="padding:12px;justify-content:center">Open studio</button>
 </div></div>
 
-<div id="glassBg" aria-hidden="true"></div><div id="glassSign" aria-hidden="true"></div>
+<div id="glassBg" aria-hidden="true"></div><div id="glassNeon" aria-hidden="true"></div><div id="glassSign" aria-hidden="true"></div>
 <nav class="menubar" id="menubar">
 <div class="m"><span>File</span><div class="dd"><div data-a="newPl">New playlist <kbd>Ctrl+N</kbd></div><div data-a="openM3u">Open playlist… <kbd>Ctrl+O</kbd></div><div data-a="savePl">Save playlists <kbd>Ctrl+S</kbd></div><div data-a="exportM3u">Export as M3U…</div><hr><div class="grp">SETTINGS</div><div data-a="settingsBackup">Backup settings…</div><div data-a="restoreBackup">Restore settings…</div></div></div>
 <div class="m"><span>Edit</span><div class="dd"><div data-a="cut">Cut <kbd>Ctrl+X</kbd></div><div data-a="copy">Copy <kbd>Ctrl+C</kbd></div><div data-a="paste">Paste <kbd>Ctrl+V</kbd></div><div data-a="selAll">Select all <kbd>Ctrl+A</kbd></div><hr><div data-a="crop">Crop selected</div><div data-a="del">Delete <kbd>Del</kbd></div><div data-a="delAll">Delete all</div></div></div>
-<div class="m"><span>Playlist</span><div class="dd"><div class="grp">ADD</div><div data-a="addFiles">File…</div><div data-a="addFolder">Folder…</div><div data-a="addYt">YouTube link… <kbd>Ctrl+V</kbd></div><div data-a="addUrl">Stream / podcast URL…</div><div data-a="addLine">LINE IN item</div><hr><div class="grp">ADD SPECIAL</div><div data-a="voiceTrack">Voice track…</div><div data-a="addPause">Timed pause…</div><div data-a="addCmd">Command…</div><div data-a="addComment">Comment…</div><hr><div class="grp">TOOLS</div><div data-a="genPro">Playlist generator…</div><div data-a="trackEdit">Track editor (cue / intro / mix)…</div><div data-a="find">Find… <kbd>Ctrl+F</kbd></div><hr><div class="grp">PLAY</div><div class=" chk on"data-a="tAutoMix">Auto mix (next item by itself)</div><div data-a="shuffleList">Shuffle</div><div data-a="resetPlayed">Reset played state</div><div data-a="showDup">Show duplicates</div></div></div>
-<div class="m"><span>Broadcast</span><div class="dd"><div data-a="liveToggle">GO LIVE / stop <kbd>Ctrl+E</kbd></div><div data-a="msgListeners">Message to listeners…</div><div data-a="listenLinks">Listen link and WhatsApp…</div><div data-a="whoListens">Who is listening</div><div data-a="castTitle">Set cast title…</div><hr><div class="grp">INPUTS</div><div data-a="micA">MIC 1 on / off <kbd>Space</kbd></div><div data-a="micB">MIC 2 on / off <kbd>Shift+Space</kbd></div><div class=" chk"data-a="mLink">Link MIC 1 + MIC 2</div><div class=" chk"data-a="mLine">LINE IN on</div><hr><div data-a="recordings">Recordings (stream archive)</div><div data-a="remoteInfo">Remote control page</div><div data-a="public">Public link</div></div></div>
+<div class="m"><span>Playlist</span><div class="dd"><div class="grp">ADD</div><div data-a="addFiles">File…</div><div data-a="addFolder">Folder…</div><div data-a="addYt">YouTube link… <kbd>Ctrl+V</kbd></div><div data-a="addUrl">Stream / podcast URL…</div><div data-a="addLine">LINE IN item</div><hr><div class="grp">ADD SPECIAL</div><div data-a="voiceTrack">Voice track…</div><div data-a="addPause">Timed pause…</div><div data-a="addCmd">Command…</div><div data-a="addComment">Comment…</div><hr><div class="grp">TOOLS</div><div data-a="genPro">Playlist generator…</div><div data-a="trackEdit">Track editor (cue / intro / mix)…</div><div data-a="find">Find… <kbd>Ctrl+F</kbd></div><hr><div class="grp">PLAY</div><div class=" chk on"data-a="tAutoMix">Auto mix (next item by itself)</div><div data-a="rTrack">Repeat current track</div><div data-a="rStopAfter">Stop after current track</div><div data-a="rShuffle">Shuffle play order</div><div data-a="rList">Repeat playlist</div><hr><div data-a="shuffleList">Shuffle</div><div data-a="resetPlayed">Reset played state</div><div data-a="showDup">Show duplicates</div></div></div>
+<div class="m"><span>Broadcast</span><div class="dd"><div data-a="liveToggle">GO LIVE / stop <kbd>Ctrl+E</kbd></div><div data-a="msgListeners">Message to listeners…</div><div data-a="recToggle">Record on / off</div><div data-a="listenLinks">Listen link and WhatsApp…</div><div data-a="whoListens">Who is listening</div><div data-a="castTitle">Set cast title…</div><hr><div class="grp">INPUTS</div><div data-a="micA">MIC 1 on / off <kbd>Space</kbd></div><div data-a="micB">MIC 2 on / off <kbd>Shift+Space</kbd></div><div class=" chk"data-a="mLink">Link MIC 1 + MIC 2</div><div class=" chk"data-a="mLine">LINE IN on</div><hr><div data-a="recordings">Recordings (stream archive)</div><div data-a="remoteInfo">Remote control page</div><div data-a="public">Public link</div></div></div>
 <div class="m"><span>Tools</span><div class="dd"><div data-a="library">Music library</div><div data-a="rescan">Rescan music folders</div><hr><div class="grp">PLANNING</div><div data-a="tabScheduler">Scheduler</div><div data-a="adsSched">Ads scheduler…</div><div data-a="adBreakNow">Ad break now</div><div data-a="reports">Report generator…</div><hr><div class="grp">VOICE</div><div data-a="ttsTool">Text to speech…</div><div data-a="annTime">Announce the time</div><div data-a="annWeather">Announce the weather</div><hr><div data-a="requests">Song requests</div><div data-a="pbQueue">Playback queue</div></div></div>
 <div class="m"><span>View</span><div class="dd"><div class="grp">COLUMNS</div><div class=" chk"data-a="tLib">Library column</div><div class=" chk on"data-a="tReq">Requests column</div><div class=" chk on"data-a="tInfo">Track information</div><hr><div class="grp">LOOK</div><div class=" chk"data-a="tGlass">Studio look (glass)</div><hr><div class="grp">LIBRARY</div><div data-a="tabExplorer">File explorer</div><div data-a="tabSearch">Search</div><div data-a="tabScheduler">Scheduler</div><div data-a="tabFx">FX</div><hr><div class="grp">PLAYLIST</div><div class=" chk on"data-a="tAutoscroll">Auto-scroll</div><div class=" chk"data-a="tFollow">Selection follows playback</div><hr><div class="chk" data-a="tLight">Light interface</div><div class="subm"><span>Waveform style</span><b>▸</b><div class="dd2"><div class=" chk"data-a="wf0">Mirror gradient</div><div class=" chk"data-a="wf1">Smooth envelope</div><div class=" chk"data-a="wf2">Frequency colours</div><div class=" chk"data-a="wf3">LED dots</div><div class=" chk"data-a="wf4">Neon line</div><div class=" chk"data-a="wf5">Rounded capsules</div></div></div><div class="subm"><span>Playlist meter style</span><b>▸</b><div class="dd2"><div class=" chk"data-a="rm0">Lime spectrum</div><div class=" chk"data-a="rm1">LED spectrum</div><div class=" chk"data-a="rm2">Peak caps</div><div class=" chk"data-a="rm3">Mirror spectrum</div><div class=" chk"data-a="rm4">Rainbow spectrum</div><div class=" chk"data-a="rm5">Stereo LED bars</div><div class=" chk"data-a="rm6">Horizontal stereo</div><div class=" chk"data-a="rm7">Scope line</div></div></div></div></div>
 <div class="m"><span>Settings</span><div class="dd"><div data-a="options">Options… <kbd>Ctrl+P</kbd></div><hr><div class="grp">GO STRAIGHT TO</div><div data-a="optOutputs">Sound outputs…</div><div data-a="optMics">Microphones and ducker…</div><div data-a="optLine">LINE IN…</div><div data-a="optHot">Hot buttons…</div><div data-a="optLight">Studio light (USB)…</div><div data-a="optFolders">Folders…</div><div data-a="optAnn">Announcements…</div><div data-a="optGeneral">Stream quality and password…</div><hr><div data-a="crossfades">Crossfades & file types…</div><div data-a="hotkeys">Hot keys…</div></div></div>
@@ -535,7 +578,7 @@ html.glass body:has(.main:not(.noLib)) #micCard .micbtn,html.glass body:has(.mai
 <button class="tp play" id="bPlay" title="Play selected (Enter)"><svg width="21" height="21" viewBox="0 0 24 24" fill="#fff"><path d="M7 4.5v15l13-7.5z"/></svg></button>
 <button class="tp" id="bPause" title="Pause"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg></button>
 <button class="tp" id="bStop" title="Stop"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg></button>
-<button class="tp" id="bNext" title="Next (crossfade)"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M4 5v14l11-7zM16 5h2v14h-2z"/></svg></button>
+<button class="tp" id="bNext" title="Next (crossfade)"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M4 5v14l11-7zM16 5h2v14h-2z"/></svg></button><span id="dockVolW"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg><input type="range" class="gray" id="dockVol" min="0" max="100" value="100" aria-label="Music volume" title="Music volume" style="--c:#DCE3EC;--p:100%"></span>
 <div class="sep"></div>
 <button class="tp" id="bRepTrack" title="Repeat the current track"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 12V9a3 3 0 0 1 3-3h12l-3-3M20 12v3a3 3 0 0 1-3 3H5l3 3"/><text x="10" y="14.6" font-size="7" fill="currentColor" stroke="none" font-family="Inter">1</text></svg></button>
 <button class="tp" id="bStopAfter" title="Stop after the current track"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 12h9"/><rect x="15" y="7" width="5" height="10" rx="1"/></svg></button>
@@ -601,7 +644,7 @@ html.glass body:has(.main:not(.noLib)) #micCard .micbtn,html.glass body:has(.mai
 </aside>
 </div>
 
-<div class="status"><span id="fSrv">Server –</span><span id="stPl"></span><span>Limiter −1 dB</span><span id="stXf"></span><span style="margin-left:auto">OAB Studio 1.3.2</span><span style="letter-spacing:1.5px">AD SOUND &amp; SERVICE</span></div>
+<div class="status"><span id="fSrv">Server –</span><span id="stPl"></span><span>Limiter −1 dB</span><span id="stXf"></span><span style="margin-left:auto">OAB Studio 1.3.3</span><span style="letter-spacing:1.5px">AD SOUND &amp; SERVICE</span></div>
 
 <!-- modals -->
 <div class="modal" id="mMsg"><div class="card" style="width:min(560px,94vw)">
@@ -1703,7 +1746,7 @@ const ACT = {
   options: () => openOptions(), lightSettings: async () => { await openOptions(); const q = $('#optLight'); if (q) q.scrollIntoView({ block: 'start' }); }, hotSettings: async () => { await openOptions(); const q = $('#optHot'); if (q) q.scrollIntoView({ block: 'start' }); }, streamQual: async () => { await openOptions(); const q = $('#sQual'); if (q) { q.scrollIntoView({ block: 'center' }); q.focus(); } }, crossfades: () => { renderFt(); openModal('mXf'); },
   hotkeys: () => { $('#miH').textContent = 'Hot keys'; $('#miBody').innerHTML = [['Space / Shift+Space', 'MIC 1 / MIC 2 (both when linked)'], ['Enter', 'Play selected'], ['Ctrl+E', 'Start / stop broadcasting'], ['1 … 0', 'Cart wall cells 1–10'], ['−', 'Stop all jingles'], ['Insert', 'Insert last library song after the playing track'], ['Num −', 'Add last library song to the end'], ['Delete', 'Remove selected'], ['Ctrl+↑ / Ctrl+↓', 'Move selected'], ['Ctrl+A / C / X / V', 'Select all / copy / cut / paste'], ['Ctrl+, / Ctrl+.', 'Seek −10 s / +10 s'], ['Ctrl+N / O / S / F / P', 'New / open / save / find / options'], ['Alt+click', 'Prelisten']].map(r => `<div style="display:flex;gap:12px"><span class="mono" style="min-width:170px;color:#8CC2FF">${r[0]}</span><span>${r[1]}</span></div>`).join(''); openModal('mInfo'); },
   help: () => { $('#miH').textContent = 'Guide'; $('#miBody').innerHTML = 'The full Hebrew guide is in <b>README-HE.txt</b> in the Radio folder.'; openModal('mInfo'); },
-  about: () => { $('#miH').textContent = 'OAB Studio 1.3.2'; $('#miBody').innerHTML = '<img src="/oab-logo.png" alt="" style="width:96px;height:96px;display:block;margin:0 auto 8px">OAB – On Air Broadcast · radio automation studio · version 1.3.2<br>Playlist engine, scheduler, generator, ads scheduler, voice tracking, announcements, reports, DSP, AUX players.<br>AD SOUND &amp; SERVICE'; openModal('mInfo'); },
+  about: () => { $('#miH').textContent = 'OAB Studio 1.3.3'; $('#miBody').innerHTML = '<img src="/oab-logo.png" alt="" style="width:96px;height:96px;display:block;margin:0 auto 8px">OAB – On Air Broadcast · radio automation studio · version 1.3.3<br>Playlist engine, scheduler, generator, ads scheduler, voice tracking, announcements, reports, DSP, AUX players.<br>AD SOUND &amp; SERVICE'; openModal('mInfo'); },
 };
 function doAct(a){ $$('.menubar .m').forEach(m => m.classList.remove('open')); if (ACT[a]) ACT[a](); }
 document.addEventListener('click', e => { const a = e.target.closest('[data-a]'); if (a && (a.closest('.dd') || a.closest('.tool') || a.closest('.transport'))) doAct(a.dataset.a); });
@@ -2365,7 +2408,7 @@ ACT.public = openLinks;
 // ---------------- fit everything on any screen (no hidden parts) ----------------
 function fitScreen(){
   const z = Math.min(1, innerWidth / 1366, innerHeight / 800);
-  window.UIZ = z; document.documentElement.style.zoom = z < 0.995 ? String(z) : '';
+  window.UIZ = z; document.documentElement.style.zoom = z < 0.995 ? String(z) : ''; document.documentElement.style.setProperty('--uiz', z < 0.995 ? String(z) : '1');
 }
 addEventListener('resize', fitScreen); fitScreen();
 
@@ -2539,7 +2582,7 @@ function drawVu(idx, dt){
     rms = Math.sqrt(s2 / MTR.vbuf.length);
   }
   const target = active && rms > 0 ? Math.max(-0.1, vuP(20 * Math.log10(rms) + 18)) : -0.1;
-  st.pos += (target - st.pos) * (1 - Math.exp(-dt / 0.065)); if (active && pk > 0.708) st.peakT = performance.now();
+  st.pos += (target - st.pos) * (1 - Math.exp(-dt / 0.065)); { const mb = $('#mic' + (idx + 1)); if (mb) mb.style.setProperty('--lv', active ? Math.max(0, Math.min(1, st.pos)).toFixed(3) : '0'); } if (active && pk > 0.708) st.peakT = performance.now();
   st.lamp = (st.lamp || 0) + ((active ? 1 : 0) - (st.lamp || 0)) * (1 - Math.exp(-dt / 0.12));   // lamp fades in / out
   const L = st.lamp;
   g.clearRect(0, 0, W, H);
@@ -3318,6 +3361,7 @@ Object.assign(ACT, {
   liveToggle: () => $('#golive').click(), msgListeners: () => $('#msgOpen').click(), listenLinks: () => openLinks(),
   whoListens: () => setTimeout(() => $('#lisTop').click(), 0), micA: () => toggleMicN(0), micB: () => toggleMicN(1),
   tLight: () => setTheme(document.documentElement.classList.contains('light') ? 'dark' : 'light'),
+  rTrack: () => $('#bRepTrack').click(), rStopAfter: () => $('#bStopAfter').click(), rShuffle: () => $('#bShuffle').click(), rList: () => $('#bRepList').click(), recToggle: () => $('#rec').onclick(),
   tGlass: () => setTheme(document.documentElement.classList.contains('glass') ? 'dark' : 'glass')
 });
 // ---------------- light / dark interface ----------------
@@ -3330,11 +3374,19 @@ function setTheme(t){
 $('#uiTheme').value = document.documentElement.classList.contains('light') ? 'light' : document.documentElement.classList.contains('glass') ? 'glass' : 'dark';
 // studio (glass) look: the mic rings and the ON AIR glow are placed in CSS (viewport units, same as the photo)
 function placeGlass(){
-  const l = $('#micLink'); if (!l) return;
-  if (document.documentElement.classList.contains('glass')) { const c = $('#clock'); if (c && l.previousElementSibling !== c) c.after(l); }
-  else { const m = $('#mic1'); if (m && l.previousElementSibling !== m) m.after(l); }
+  const glass = document.documentElement.classList.contains('glass'), l = $('#micLink'), mb = $('#menubar'), tool = $('.tool');
+  if (glass) { const c = $('#clock'); if (l && c && l.previousElementSibling !== c) c.after(l); if (mb && tool && mb.parentNode !== tool) tool.firstElementChild.after(mb); }
+  else { const m = $('#mic1'); if (l && m && l.previousElementSibling !== m) m.after(l); if (mb && tool && mb.parentNode === tool) tool.before(mb); }
 }
 placeGlass();
+// play / pause share one button in the studio look
+setInterval(() => document.documentElement.classList.toggle('isPlay', !!(curDeck && curDeck.audio && !curDeck.audio.paused)), 250);
+// dock volume = playlist volume
+(() => { const d = $('#dockVol'), p = $('#plVol'); if (!d || !p) return;
+  const sync = () => { d.value = p.value; d.style.setProperty('--p', p.value + '%'); };
+  d.oninput = () => { p.value = d.value; p.oninput(); sync(); }; p.addEventListener('input', sync); sync(); setInterval(sync, 1000); })();
+// intro animation after the opening screen
+$('#startBtn').addEventListener('click', () => { const H = document.documentElement; if (!H.classList.contains('glass')) return; H.classList.add('glassIn'); setTimeout(() => H.classList.remove('glassIn'), 2200); });
 $('#uiTheme').onchange = () => setTheme($('#uiTheme').value);
 
 // remaining time on the playing row

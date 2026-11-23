@@ -633,7 +633,7 @@ ACT.public = openLinks;
 // ---------------- fit everything on any screen (no hidden parts) ----------------
 function fitScreen(){
   const z = Math.min(1, innerWidth / 1366, innerHeight / 800);
-  window.UIZ = z; document.documentElement.style.zoom = z < 0.995 ? String(z) : '';
+  window.UIZ = z; document.documentElement.style.zoom = z < 0.995 ? String(z) : ''; document.documentElement.style.setProperty('--uiz', z < 0.995 ? String(z) : '1');
 }
 addEventListener('resize', fitScreen); fitScreen();
 
@@ -807,7 +807,7 @@ function drawVu(idx, dt){
     rms = Math.sqrt(s2 / MTR.vbuf.length);
   }
   const target = active && rms > 0 ? Math.max(-0.1, vuP(20 * Math.log10(rms) + 18)) : -0.1;
-  st.pos += (target - st.pos) * (1 - Math.exp(-dt / 0.065)); if (active && pk > 0.708) st.peakT = performance.now();
+  st.pos += (target - st.pos) * (1 - Math.exp(-dt / 0.065)); { const mb = $('#mic' + (idx + 1)); if (mb) mb.style.setProperty('--lv', active ? Math.max(0, Math.min(1, st.pos)).toFixed(3) : '0'); } if (active && pk > 0.708) st.peakT = performance.now();
   st.lamp = (st.lamp || 0) + ((active ? 1 : 0) - (st.lamp || 0)) * (1 - Math.exp(-dt / 0.12));   // lamp fades in / out
   const L = st.lamp;
   g.clearRect(0, 0, W, H);
@@ -1586,6 +1586,7 @@ Object.assign(ACT, {
   liveToggle: () => $('#golive').click(), msgListeners: () => $('#msgOpen').click(), listenLinks: () => openLinks(),
   whoListens: () => setTimeout(() => $('#lisTop').click(), 0), micA: () => toggleMicN(0), micB: () => toggleMicN(1),
   tLight: () => setTheme(document.documentElement.classList.contains('light') ? 'dark' : 'light'),
+  rTrack: () => $('#bRepTrack').click(), rStopAfter: () => $('#bStopAfter').click(), rShuffle: () => $('#bShuffle').click(), rList: () => $('#bRepList').click(), recToggle: () => $('#rec').onclick(),
   tGlass: () => setTheme(document.documentElement.classList.contains('glass') ? 'dark' : 'glass')
 });
 // ---------------- light / dark interface ----------------
@@ -1598,11 +1599,19 @@ function setTheme(t){
 $('#uiTheme').value = document.documentElement.classList.contains('light') ? 'light' : document.documentElement.classList.contains('glass') ? 'glass' : 'dark';
 // studio (glass) look: the mic rings and the ON AIR glow are placed in CSS (viewport units, same as the photo)
 function placeGlass(){
-  const l = $('#micLink'); if (!l) return;
-  if (document.documentElement.classList.contains('glass')) { const c = $('#clock'); if (c && l.previousElementSibling !== c) c.after(l); }
-  else { const m = $('#mic1'); if (m && l.previousElementSibling !== m) m.after(l); }
+  const glass = document.documentElement.classList.contains('glass'), l = $('#micLink'), mb = $('#menubar'), tool = $('.tool');
+  if (glass) { const c = $('#clock'); if (l && c && l.previousElementSibling !== c) c.after(l); if (mb && tool && mb.parentNode !== tool) tool.firstElementChild.after(mb); }
+  else { const m = $('#mic1'); if (l && m && l.previousElementSibling !== m) m.after(l); if (mb && tool && mb.parentNode === tool) tool.before(mb); }
 }
 placeGlass();
+// play / pause share one button in the studio look
+setInterval(() => document.documentElement.classList.toggle('isPlay', !!(curDeck && curDeck.audio && !curDeck.audio.paused)), 250);
+// dock volume = playlist volume
+(() => { const d = $('#dockVol'), p = $('#plVol'); if (!d || !p) return;
+  const sync = () => { d.value = p.value; d.style.setProperty('--p', p.value + '%'); };
+  d.oninput = () => { p.value = d.value; p.oninput(); sync(); }; p.addEventListener('input', sync); sync(); setInterval(sync, 1000); })();
+// intro animation after the opening screen
+$('#startBtn').addEventListener('click', () => { const H = document.documentElement; if (!H.classList.contains('glass')) return; H.classList.add('glassIn'); setTimeout(() => H.classList.remove('glassIn'), 2200); });
 $('#uiTheme').onchange = () => setTheme($('#uiTheme').value);
 
 // remaining time on the playing row
