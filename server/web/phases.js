@@ -1617,10 +1617,8 @@ function placeGlass(){
 placeGlass();
 // play / pause share one button in the studio look
 setInterval(() => document.documentElement.classList.toggle('isPlay', !!(curDeck && curDeck.audio && !curDeck.audio.paused)), 250);
-// dock volume = playlist volume
-(() => { const d = $('#dockVol'), p = $('#plVol'); if (!d || !p) return;
-  const sync = () => { d.value = p.value; d.style.setProperty('--p', p.value + '%'); };
-  d.oninput = () => { p.value = d.value; p.oninput(); sync(); }; p.addEventListener('input', sync); sync(); setInterval(sync, 1000); })();
+// message to listeners from the bottom bar
+$('#dockMsg').onclick = () => $('#msgOpen').click();
 // intro animation after the opening screen
 $('#startBtn').addEventListener('click', () => { const H = document.documentElement; if (!H.classList.contains('glass')) return; H.classList.add('glassIn'); setTimeout(() => H.classList.remove('glassIn'), 2200); });
 

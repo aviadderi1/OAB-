@@ -370,7 +370,7 @@ html.glass body{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-templ
 #glassBg,#glassNeon,#glassSign{display:none}
 html.glass #glassBg{display:block;position:fixed;left:0;top:0;width:calc(100 * var(--vw));height:calc(100 * var(--vh));z-index:-1;pointer-events:none;background:linear-gradient(180deg,rgba(6,8,12,.5) 0%,rgba(6,8,12,0) 12%,rgba(6,8,12,0) 52%,rgba(6,8,12,.55) 74%,rgba(6,8,12,.92) 100%),url(/studio-bg.jpg) 50% 50%/var(--gw) auto no-repeat}
 /* OAB neon sign: a brightened copy of the sign that flickers every few seconds */
-html.glass #glassNeon{display:block;position:fixed;z-index:-1;pointer-events:none;left:calc(calc(50 * var(--vw)) - 523 * var(--gs));top:calc(calc(50 * var(--vh)) - 354 * var(--gs));width:calc(340 * var(--gs));height:calc(340 * var(--gs));background:url(/studio-bg.jpg) calc(-165 * var(--gs)) calc(-30 * var(--gs))/var(--gw) auto no-repeat;filter:brightness(1.55) saturate(1.35);-webkit-mask:radial-gradient(circle,#000 52%,transparent 70%);mask:radial-gradient(circle,#000 52%,transparent 70%);animation:neonFlicker 7s linear infinite}
+html.glass #glassNeon{display:block;position:fixed;z-index:-1;pointer-events:none;left:calc(calc(50 * var(--vw)) - 523 * var(--gs));top:calc(calc(50 * var(--vh)) - 354 * var(--gs));width:calc(340 * var(--gs));height:calc(340 * var(--gs));background:url(/studio-bg.jpg) calc(-165 * var(--gs)) calc(-30 * var(--gs))/var(--gw) auto no-repeat;filter:brightness(1.55) saturate(1.35);-webkit-mask:radial-gradient(circle,#000 47%,transparent 63%);mask:radial-gradient(circle,#000 47%,transparent 63%);animation:neonFlicker 7s linear infinite}
 @keyframes neonFlicker{0%,84%{opacity:.7}85%{opacity:.05}86%{opacity:.6}87%{opacity:0}88.5%{opacity:.65}90%{opacity:.15}91.5%{opacity:.7}100%{opacity:.7}}
 html.glass #glassNeon::after{content:"";position:absolute;inset:0;background:radial-gradient(circle,rgba(0,0,0,.55),transparent 70%);opacity:0;animation:neonShade 7s linear infinite}
 @keyframes neonShade{0%,84%{opacity:0}85%{opacity:1}86%{opacity:.1}87%{opacity:1}88.5%{opacity:0}90%{opacity:.8}91.5%,100%{opacity:0}}
@@ -446,16 +446,19 @@ html.glass body:has(#pfl.live) .ledbar{display:none}
 html.glass .ledbar{grid-area:dock;align-self:center;justify-self:start;z-index:2;width:clamp(220px,calc(23 * var(--vw)),420px);margin:12px 0 0 34px;padding:0;background:none;border:0}
 html.glass #ledDb{display:none}
 html.glass .tpBtns{gap:14px}
-html.glass .tpBtns>.sep,html.glass #bRepTrack,html.glass #bStopAfter,html.glass #bShuffle,html.glass #bRepList{display:none}
+html.glass .tpBtns>.sep,html.glass #bRepTrack,html.glass #bStopAfter,html.glass #bShuffle{display:none}
 html.glass #bStop{order:1;width:42px;height:42px}html.glass #bPrev{order:2;width:46px;height:46px}html.glass #bPlay,html.glass #bPause{order:3;width:62px;height:62px}html.glass #bNext{order:4;width:46px;height:46px}
 html.glass .tpBtns .tp{border-radius:50%;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);color:#fff}
 html.glass #bPlay,html.glass #bPause{border:0;background:#2EE88A;color:#06210F;box-shadow:0 0 24px rgba(46,232,138,.5)}
 html.glass #bPlay svg,html.glass #bPause svg{fill:#06210F;width:22px;height:22px}
 html.glass #bPause{display:none}
 html.glass.isPlay #bPause{display:flex}html.glass.isPlay #bPlay{display:none}
-#dockVolW{display:none}
-html.glass #dockVolW{order:5;display:flex;align-items:center;gap:8px;margin-left:10px;color:#9FB4CC}
-html.glass #dockVol{width:110px}
+.dockMsg{display:none}
+html.glass .dockMsg{order:6;display:flex;align-items:center;justify-content:center;width:46px;height:46px;margin-left:12px;padding:0;border-radius:50%;border:0;background:#2D8CEB;color:#fff;box-shadow:0 0 18px rgba(45,140,235,.5);cursor:pointer}
+html.glass .dockMsg:hover{background:#4A9EF0}
+html.glass #msgOpen{display:none!important}
+html.glass #bRepList{display:flex;order:5;width:42px;height:42px}
+html.glass #bRepList.on{border-color:#2EE88A;color:#2EE88A;background:rgba(46,232,138,.14)}
 /* status line */
 html.glass .status{grid-area:st;background:transparent;border-top:0;color:#6F7C8E}
 html.glass #fSrv,html.glass #stPl,html.glass #stXf,html.glass .status>span:nth-child(3){display:none}
@@ -645,7 +648,7 @@ html.glass.toolHidden .main{padding-top:24px}
 <button class="tp play" id="bPlay" title="Play selected (Enter)"><svg width="21" height="21" viewBox="0 0 24 24" fill="#fff"><path d="M7 4.5v15l13-7.5z"/></svg></button>
 <button class="tp" id="bPause" title="Pause"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg></button>
 <button class="tp" id="bStop" title="Stop"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg></button>
-<button class="tp" id="bNext" title="Next (crossfade)"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M4 5v14l11-7zM16 5h2v14h-2z"/></svg></button><span id="dockVolW"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg><input type="range" class="gray" id="dockVol" min="0" max="100" value="100" aria-label="Music volume" title="Music volume" style="--c:#DCE3EC;--p:100%"></span>
+<button class="tp" id="bNext" title="Next (crossfade)"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M4 5v14l11-7zM16 5h2v14h-2z"/></svg></button><button class="dockMsg" id="dockMsg" title="Send a message to listeners" aria-label="Send a message to listeners"><svg width="20" height="18" viewBox="0 0 26 22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1.5" y="2" width="17" height="12.5" rx="2"/><path d="m2.5 3.5 7.5 5.5 7.5-5.5"/><path d="M14 18.5h9.5"/><path d="m20.5 15.5 3 3-3 3"/></svg></button>
 <div class="sep"></div>
 <button class="tp" id="bRepTrack" title="Repeat the current track"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 12V9a3 3 0 0 1 3-3h12l-3-3M20 12v3a3 3 0 0 1-3 3H5l3 3"/><text x="10" y="14.6" font-size="7" fill="currentColor" stroke="none" font-family="Inter">1</text></svg></button>
 <button class="tp" id="bStopAfter" title="Stop after the current track"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 12h9"/><rect x="15" y="7" width="5" height="10" rx="1"/></svg></button>
@@ -711,7 +714,7 @@ html.glass.toolHidden .main{padding-top:24px}
 </aside>
 </div>
 
-<div class="status"><span id="fSrv">Server –</span><span id="stPl"></span><span>Limiter −1 dB</span><span id="stXf"></span><span style="margin-left:auto">OAB Studio 1.3.6</span><span style="letter-spacing:1.5px">AD SOUND &amp; SERVICE</span></div>
+<div class="status"><span id="fSrv">Server –</span><span id="stPl"></span><span>Limiter −1 dB</span><span id="stXf"></span><span style="margin-left:auto">OAB Studio 1.3.7</span><span style="letter-spacing:1.5px">AD SOUND &amp; SERVICE</span></div>
 
 <div class="cs" id="chStrip" hidden role="dialog" aria-label="Microphone channel strip">
 <header class="csHead"><span class="csIcon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="2.5" width="6" height="11.5" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg></span>
@@ -1841,7 +1844,7 @@ const ACT = {
   options: () => openOptions(), lightSettings: async () => { await openOptions(); const q = $('#optLight'); if (q) q.scrollIntoView({ block: 'start' }); }, hotSettings: async () => { await openOptions(); const q = $('#optHot'); if (q) q.scrollIntoView({ block: 'start' }); }, streamQual: async () => { await openOptions(); const q = $('#sQual'); if (q) { q.scrollIntoView({ block: 'center' }); q.focus(); } }, crossfades: () => { renderFt(); openModal('mXf'); },
   hotkeys: () => { $('#miH').textContent = 'Hot keys'; $('#miBody').innerHTML = [['Space / Shift+Space', 'MIC 1 / MIC 2 (both when linked)'], ['Enter', 'Play selected'], ['Ctrl+E', 'Start / stop broadcasting'], ['1 … 0', 'Cart wall cells 1–10'], ['−', 'Stop all jingles'], ['Insert', 'Insert last library song after the playing track'], ['Num −', 'Add last library song to the end'], ['Delete', 'Remove selected'], ['Ctrl+↑ / Ctrl+↓', 'Move selected'], ['Ctrl+A / C / X / V', 'Select all / copy / cut / paste'], ['Ctrl+, / Ctrl+.', 'Seek −10 s / +10 s'], ['Ctrl+N / O / S / F / P', 'New / open / save / find / options'], ['Alt+click', 'Prelisten']].map(r => `<div style="display:flex;gap:12px"><span class="mono" style="min-width:170px;color:#8CC2FF">${r[0]}</span><span>${r[1]}</span></div>`).join(''); openModal('mInfo'); },
   help: () => { $('#miH').textContent = 'Guide'; $('#miBody').innerHTML = 'The full Hebrew guide is in <b>README-HE.txt</b> in the Radio folder.'; openModal('mInfo'); },
-  about: () => { $('#miH').textContent = 'OAB Studio 1.3.6'; $('#miBody').innerHTML = '<img src="/oab-logo.png" alt="" style="width:96px;height:96px;display:block;margin:0 auto 8px">OAB – On Air Broadcast · radio automation studio · version 1.3.6<br>Playlist engine, scheduler, generator, ads scheduler, voice tracking, announcements, reports, DSP, AUX players.<br>AD SOUND &amp; SERVICE'; openModal('mInfo'); },
+  about: () => { $('#miH').textContent = 'OAB Studio 1.3.7'; $('#miBody').innerHTML = '<img src="/oab-logo.png" alt="" style="width:96px;height:96px;display:block;margin:0 auto 8px">OAB – On Air Broadcast · radio automation studio · version 1.3.7<br>Playlist engine, scheduler, generator, ads scheduler, voice tracking, announcements, reports, DSP, AUX players.<br>AD SOUND &amp; SERVICE'; openModal('mInfo'); },
 };
 function doAct(a){ $$('.menubar .m').forEach(m => m.classList.remove('open')); if (ACT[a]) ACT[a](); }
 document.addEventListener('click', e => { const a = e.target.closest('[data-a]'); if (a && (a.closest('.dd') || a.closest('.tool') || a.closest('.transport'))) doAct(a.dataset.a); });
@@ -3487,10 +3490,8 @@ function placeGlass(){
 placeGlass();
 // play / pause share one button in the studio look
 setInterval(() => document.documentElement.classList.toggle('isPlay', !!(curDeck && curDeck.audio && !curDeck.audio.paused)), 250);
-// dock volume = playlist volume
-(() => { const d = $('#dockVol'), p = $('#plVol'); if (!d || !p) return;
-  const sync = () => { d.value = p.value; d.style.setProperty('--p', p.value + '%'); };
-  d.oninput = () => { p.value = d.value; p.oninput(); sync(); }; p.addEventListener('input', sync); sync(); setInterval(sync, 1000); })();
+// message to listeners from the bottom bar
+$('#dockMsg').onclick = () => $('#msgOpen').click();
 // intro animation after the opening screen
 $('#startBtn').addEventListener('click', () => { const H = document.documentElement; if (!H.classList.contains('glass')) return; H.classList.add('glassIn'); setTimeout(() => H.classList.remove('glassIn'), 2200); });
 
