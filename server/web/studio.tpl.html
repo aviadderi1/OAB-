@@ -396,13 +396,14 @@ html.glass #onair{order:6}
 html.glass #golive{order:7;height:34px;padding:0 16px;border-radius:10px;border:0;background:#E5484D;color:#fff;font-weight:700;letter-spacing:1px;box-shadow:0 0 18px rgba(229,72,77,.5)}
 html.glass #golive:hover{background:#F0585D}
 /* playlist behind the glass, leaning in */
-html.glass .main{grid-area:main;display:grid;width:clamp(380px,calc(34.5 * var(--vw)),640px);padding:16px 14px 0 0;margin-bottom:calc(3.5 * var(--vh));box-sizing:border-box;transform:perspective(1600px) rotateY(-6deg);transform-origin:100% 50%}
+html.glass .main{grid-area:main;display:grid;width:clamp(380px,calc(34.5 * var(--vw)),640px);padding:16px 14px 0 0;margin-bottom:calc(3.5 * var(--vh));box-sizing:border-box}
 html.glass .main:not(.noLib){width:calc(clamp(380px,calc(34.5 * var(--vw)),640px) + clamp(240px,calc(17 * var(--vw)),310px))}
 html.glass .main:not(.noReq){width:calc(clamp(380px,calc(34.5 * var(--vw)),640px) + clamp(300px,calc(21 * var(--vw)),360px))}
 html.glass .main:not(.noLib):not(.noReq){width:calc(clamp(380px,calc(34.5 * var(--vw)),640px) + clamp(240px,calc(17 * var(--vw)),310px) + clamp(300px,calc(21 * var(--vw)),360px))}
 html.glass .main>.card,html.glass .main>aside>.card{background:rgba(8,14,22,.6);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(200,225,255,.2);border-radius:12px;box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 20px 50px rgba(0,0,0,.35);overflow:hidden}
-html.glass .plCard{position:relative}
-html.glass .plCard::before{content:"";position:absolute;inset:0;pointer-events:none;z-index:3;background:linear-gradient(115deg,rgba(255,255,255,.07) 0%,rgba(255,255,255,0) 30%,rgba(255,255,255,.03) 31%,rgba(255,255,255,0) 45%)}
+html.glass .main>.plCard{position:relative;isolation:isolate;background:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;border:0!important;box-shadow:none!important;overflow:visible!important;padding:14px 6px 14px 14px}
+html.glass .plCard::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;clip-path:polygon(0 3.2%,100% 0,100% 100%,0 96.8%);background:linear-gradient(115deg,rgba(255,255,255,.08) 0%,rgba(255,255,255,0) 30%,rgba(255,255,255,.035) 31%,rgba(255,255,255,0) 45%),rgba(8,14,22,.66);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+html.glass .plCard::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:rgba(200,225,255,.28);clip-path:polygon(0 3.2%,100% 0,100% 100%,0 96.8%,0 3.2%,1.5px calc(3.2% + 1.5px),1.5px calc(96.8% - 1.5px),calc(100% - 1.5px) calc(100% - 1.5px),calc(100% - 1.5px) 1.5px,1.5px calc(3.2% + 1.5px))}
 html.glass .plh,html.glass .info{display:none!important}
 html.glass .plr{grid-template-columns:24px 30px minmax(0,1fr) 54px;gap:10px;height:46px;border-bottom-color:rgba(255,255,255,.06);position:relative}
 html.glass .plr>:nth-child(3),html.glass .plr>:nth-child(5){display:none}
@@ -428,8 +429,7 @@ html.glass #mic2{left:calc(calc(50 * var(--vw)) + 50 * var(--gs));top:calc(calc(
 html.glass .micbtn .mi{position:relative;background:rgba(0,0,0,.04);border:2px dashed rgba(255,255,255,.4);box-shadow:none;color:transparent;animation:none}
 html.glass .micbtn .mi svg{opacity:0}
 html.glass .micbtn:hover .mi{border-color:rgba(255,255,255,.8);background:rgba(255,255,255,.05)}
-html.glass .micbtn.on .mi{background:rgba(46,232,138,.05);border:3px solid rgba(46,232,138,.3);animation:none;box-shadow:0 0 calc(8px + var(--lv,0) * 46px) rgba(46,232,138,calc(.3 + var(--lv,0) * .6)),inset 0 0 calc(6px + var(--lv,0) * 26px) rgba(46,232,138,calc(.15 + var(--lv,0) * .35))}
-html.glass .micbtn.on .mi::before{content:"";position:absolute;inset:-3px;border-radius:50%;background:conic-gradient(from -90deg,#2EE88A 0deg,#B8F43A calc(var(--lv,0) * 300deg),#F5A524 calc(var(--lv,0) * 340deg),transparent calc(var(--lv,0) * 360deg));-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 5px),#000 calc(100% - 5px));mask:radial-gradient(farthest-side,transparent calc(100% - 5px),#000 calc(100% - 5px))}
+html.glass .micbtn.on .mi{background:rgba(46,232,138,.05);border:2px solid transparent;animation:none;box-shadow:0 0 14px rgba(46,232,138,.35)}
 html.glass .micbtn::after{content:attr(aria-label);position:absolute;left:50%;top:calc(100% + 10px);transform:translateX(-50%);height:30px;min-width:96px;padding:0 14px;box-sizing:border-box;border-radius:15px;display:flex;align-items:center;justify-content:center;white-space:nowrap;background:rgba(10,13,19,.7);border:1px solid rgba(255,255,255,.25);color:#C8CFDA;font:700 12px Inter,sans-serif;letter-spacing:1px}
 html.glass .micbtn.on::after{content:"● " attr(aria-label) " · LIVE";background:#12301F;border-color:#2EE88A;color:#6FF0A8;box-shadow:0 0 14px rgba(46,232,138,.4)}
 html.glass body:has(.main:not(.noLib)) .micbtn,html.glass body:has(.main:not(.noReq)) .micbtn{position:relative;width:52px;height:52px}
@@ -466,10 +466,15 @@ html.glassIn #pNow{animation:gInLeft .95s cubic-bezier(.2,.8,.2,1) .35s both}
 html.glassIn .transport,html.glassIn .ledbar{animation:gInUp .8s cubic-bezier(.2,.8,.2,1) .5s both}
 html.glassIn .micbtn{animation:gInPop .7s cubic-bezier(.2,.8,.2,1) .8s both}
 @keyframes gInDown{from{opacity:0;transform:translateY(-30px)}}
-@keyframes gInRight{from{opacity:0;transform:perspective(1600px) translateX(70%) rotateY(-28deg)}to{opacity:1;transform:perspective(1600px) rotateY(-6deg)}}
+@keyframes gInRight{from{opacity:0;transform:translateX(70%)}to{opacity:1;transform:none}}
 @keyframes gInLeft{from{opacity:0;transform:translateX(-60%)}}
 @keyframes gInUp{from{opacity:0;transform:translateY(60px)}}
 @keyframes gInPop{from{opacity:0;transform:scale(.6)}}
+svg.lvRing{display:none}
+html.glass .micbtn.on svg.lvRing{display:block;position:absolute;inset:-2px;width:calc(100% + 4px);height:calc(100% + 4px);opacity:1!important;transform:rotate(-90deg);overflow:visible;pointer-events:none}
+svg.lvRing circle{fill:none;stroke-width:3.4;vector-effect:non-scaling-stroke}
+svg.lvRing .tr{stroke:rgba(46,232,138,.28)}svg.lvRing .lv{stroke:#2EE88A;stroke-linecap:butt;transition:stroke .15s}
+html.glass body:has(.main:not(.noLib)) svg.lvRing,html.glass body:has(.main:not(.noReq)) svg.lvRing{display:none!important}
 /*ENDGLASS*/
 </style>
 </head>
@@ -644,7 +649,7 @@ html.glassIn .micbtn{animation:gInPop .7s cubic-bezier(.2,.8,.2,1) .8s both}
 </aside>
 </div>
 
-<div class="status"><span id="fSrv">Server –</span><span id="stPl"></span><span>Limiter −1 dB</span><span id="stXf"></span><span style="margin-left:auto">OAB Studio 1.3.3</span><span style="letter-spacing:1.5px">AD SOUND &amp; SERVICE</span></div>
+<div class="status"><span id="fSrv">Server –</span><span id="stPl"></span><span>Limiter −1 dB</span><span id="stXf"></span><span style="margin-left:auto">OAB Studio 1.3.4</span><span style="letter-spacing:1.5px">AD SOUND &amp; SERVICE</span></div>
 
 <!-- modals -->
 <div class="modal" id="mMsg"><div class="card" style="width:min(560px,94vw)">

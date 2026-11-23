@@ -807,7 +807,7 @@ function drawVu(idx, dt){
     rms = Math.sqrt(s2 / MTR.vbuf.length);
   }
   const target = active && rms > 0 ? Math.max(-0.1, vuP(20 * Math.log10(rms) + 18)) : -0.1;
-  st.pos += (target - st.pos) * (1 - Math.exp(-dt / 0.065)); { const mb = $('#mic' + (idx + 1)); if (mb) mb.style.setProperty('--lv', active ? Math.max(0, Math.min(1, st.pos)).toFixed(3) : '0'); } if (active && pk > 0.708) st.peakT = performance.now();
+  st.pos += (target - st.pos) * (1 - Math.exp(-dt / 0.065)); { const mb = $('#mic' + (idx + 1)), c = mb && mb.querySelector('svg.lvRing .lv'); if (c) { const v = active ? Math.max(0, Math.min(1, st.pos)) : 0; c.style.strokeDasharray = (v * 100).toFixed(1) + ' 100'; c.style.stroke = v > 0.92 ? '#F04444' : v > 0.75 ? '#F5C542' : '#2EE88A'; } } if (active && pk > 0.708) st.peakT = performance.now();
   st.lamp = (st.lamp || 0) + ((active ? 1 : 0) - (st.lamp || 0)) * (1 - Math.exp(-dt / 0.12));   // lamp fades in / out
   const L = st.lamp;
   g.clearRect(0, 0, W, H);
@@ -1603,6 +1603,7 @@ function placeGlass(){
   if (glass) { const c = $('#clock'); if (l && c && l.previousElementSibling !== c) c.after(l); if (mb && tool && mb.parentNode !== tool) tool.firstElementChild.after(mb); }
   else { const m = $('#mic1'); if (l && m && l.previousElementSibling !== m) m.after(l); if (mb && tool && mb.parentNode === tool) tool.before(mb); }
 }
+['#mic1', '#mic2'].forEach(id => { const mi = $(id + ' .mi'); if (mi && !mi.querySelector('svg.lvRing')) mi.insertAdjacentHTML('beforeend', '<svg class="lvRing" viewBox="0 0 100 100" aria-hidden="true"><circle class="tr" cx="50" cy="50" r="49" pathLength="100"/><circle class="lv" cx="50" cy="50" r="49" pathLength="100" stroke-dasharray="0 100"/></svg>'); });
 placeGlass();
 // play / pause share one button in the studio look
 setInterval(() => document.documentElement.classList.toggle('isPlay', !!(curDeck && curDeck.audio && !curDeck.audio.paused)), 250);
