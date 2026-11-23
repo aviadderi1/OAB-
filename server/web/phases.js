@@ -1597,7 +1597,12 @@ function setTheme(t){
 }
 $('#uiTheme').value = document.documentElement.classList.contains('light') ? 'light' : document.documentElement.classList.contains('glass') ? 'glass' : 'dark';
 // studio (glass) look: the mic rings and the ON AIR glow are placed in CSS (viewport units, same as the photo)
-function placeGlass(){}
+function placeGlass(){
+  const l = $('#micLink'); if (!l) return;
+  if (document.documentElement.classList.contains('glass')) { const c = $('#clock'); if (c && l.previousElementSibling !== c) c.after(l); }
+  else { const m = $('#mic1'); if (m && l.previousElementSibling !== m) m.after(l); }
+}
+placeGlass();
 $('#uiTheme').onchange = () => setTheme($('#uiTheme').value);
 
 // remaining time on the playing row
