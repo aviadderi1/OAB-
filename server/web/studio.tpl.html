@@ -481,6 +481,62 @@ html.glass .toolHide:hover,html.glass .toolShow:hover{color:#fff;background:rgba
 html.glass.toolHidden .tool{display:none}
 html.glass.toolHidden .toolShow{display:flex;position:fixed;z-index:30;top:0;left:50%;transform:translateX(-50%);align-items:center;justify-content:center;width:54px;height:20px;padding:0;border:1px solid rgba(255,255,255,.14);border-top:0;border-radius:0 0 10px 10px;background:rgba(10,13,19,.7);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:#9FB4CC;cursor:pointer}
 html.glass.toolHidden .main{padding-top:24px}
+.cs{position:fixed;z-index:60;left:max(12px,calc(50 * var(--vw,1vw) - 250px));top:max(12px,calc(50 * var(--vh,1vh) - 395px));width:740px;box-sizing:border-box;padding:16px 18px;display:flex;flex-direction:column;gap:11px;border-radius:20px;background:rgba(10,14,22,.86);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);border:1px solid rgba(200,225,255,.2);box-shadow:0 30px 80px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.08);color:#F2F4F8;font-family:Inter,system-ui,sans-serif}
+.cs[hidden]{display:none}
+.csHead{display:flex;align-items:center;gap:10px;position:relative}
+.csIcon{width:34px;height:34px;border-radius:10px;background:rgba(46,232,138,.14);border:1px solid rgba(46,232,138,.4);display:flex;align-items:center;justify-content:center;color:#2EE88A;flex:none}
+.csT{flex:1;min-width:0;display:flex;flex-direction:column}.csT b{font-size:16px}.csT small{font-size:12px;color:#8C9AAC}
+.csSel{height:32px;width:178px;padding:0 10px;border-radius:9px;background:#151B27;border:1px solid rgba(255,255,255,.14);color:#DCE3EC;font:500 12.5px Inter,sans-serif}
+.csSaveB{height:32px;padding:0 12px;border-radius:9px;border:1px solid #2EE88A;background:rgba(46,232,138,.14);color:#6FF0A8;font:700 12px Inter,sans-serif;display:flex;align-items:center;gap:6px;cursor:pointer}
+.csSaveB:hover{background:rgba(46,232,138,.24)}
+.csIc{width:32px;height:32px;border-radius:9px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.04);color:#9FB4CC;font-size:14px;cursor:pointer}.csIc:hover{color:#fff;background:rgba(255,255,255,.1)}
+.csPop{position:absolute;right:40px;top:40px;z-index:5;width:290px;padding:12px;border-radius:14px;background:rgba(14,19,29,.98);border:1px solid rgba(200,225,255,.22);box-shadow:0 18px 50px rgba(0,0,0,.6);display:flex;flex-direction:column;gap:8px}
+.csPop[hidden]{display:none}.csPop small{font-size:10.5px;color:#6F7C8E}
+.csLbl{font-size:11px;letter-spacing:2px;font-weight:700;color:#9FB4CC}
+.csSep{height:1px;background:rgba(255,255,255,.08)}
+.csPI{display:flex;gap:4px}.csPI button{flex:1;text-align:left;height:28px;padding:0 8px;border-radius:8px;border:0;background:none;color:#DCE3EC;font:500 12.5px Inter,sans-serif;cursor:pointer}.csPI button:hover{background:rgba(46,232,138,.12);color:#6FF0A8}
+.csPI .csDel{flex:none;width:28px;text-align:center;color:#6F7C8E}.csPI .csDel:hover{background:rgba(240,68,68,.15);color:#FF8A8A}
+.csIn{flex:1;min-width:0;height:30px;padding:0 10px;border-radius:8px;background:rgba(255,255,255,.06);border:1px solid rgba(46,232,138,.5);color:#F2F4F8;font:500 12.5px Inter,sans-serif;outline:none}
+.csGo{height:30px;padding:0 12px;border-radius:8px;border:0;background:#2EE88A;color:#06210F;font:700 12px Inter,sans-serif;cursor:pointer}
+.csSecH{display:flex;align-items:center;gap:10px}.csSecH>span{font-size:11px;letter-spacing:2px;font-weight:700;color:#9FB4CC}.csSecH>i{flex:1;height:1px;background:rgba(255,255,255,.08)}.csSecH small{font-size:10.5px;color:#6F7C8E}
+.csOn{height:22px;padding:0 10px;border-radius:11px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.04);color:#8C9AAC;font:700 10.5px Inter,sans-serif;letter-spacing:1px;cursor:pointer}
+.csOn.on{border-color:#2EE88A;background:rgba(46,232,138,.16);color:#6FF0A8}.csOn.amber.on{border-color:#F5A524;background:rgba(245,165,36,.14);color:#F5C46B}
+.csGraph{position:relative;height:170px;flex:none;border-radius:14px;background:linear-gradient(180deg,rgba(4,8,14,.72),rgba(4,8,14,.48));border:1px solid rgba(255,255,255,.07);overflow:hidden}
+.csGraph canvas{display:block;width:100%;height:100%;touch-action:none}
+.csHint{position:absolute;right:10px;top:8px;font-size:10.5px;color:#8C9AAC;pointer-events:none}
+.csBands{display:grid;grid-template-columns:minmax(0,.8fr) repeat(4,minmax(0,1fr));gap:8px}
+.csBand{border-radius:12px;padding:8px 9px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);display:flex;flex-direction:column;gap:4px;cursor:pointer}
+.csBand.sel{background:rgba(46,232,138,.07);border-color:rgba(46,232,138,.45)}
+.csBH{display:flex;align-items:center;justify-content:space-between;gap:4px}.csBH span{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;white-space:nowrap}
+.csBH i{width:16px;height:16px;border-radius:50%;border:2px solid var(--bc);color:var(--bc);font:700 9px Inter,sans-serif;font-style:normal;display:flex;align-items:center;justify-content:center;box-sizing:border-box}.lc .csBH i{font-size:7px}
+.csSw{width:26px;height:14px;border-radius:7px;border:0;padding:0;position:relative;background:rgba(255,255,255,.14);cursor:pointer;flex:none}
+.csSw::after{content:"";position:absolute;left:2px;top:2px;width:10px;height:10px;border-radius:50%;background:#8C9AAC;transition:left .15s}
+.csSw.on{background:var(--bc,#C8CFDA)}.csSw.on::after{left:14px;background:#0B1220}
+.csBK{display:flex;justify-content:space-between;align-items:center;gap:2px}
+.knob{display:flex;flex-direction:column;align-items:center;gap:1px;flex:1;min-width:0;cursor:ns-resize;outline:none;touch-action:none;user-select:none}
+.knob svg{width:34px;height:34px}.knob .kt,.knob .ka{fill:none;stroke-width:3.4;transform:rotate(135deg);transform-origin:20px 20px}
+.knob .kt{stroke:rgba(255,255,255,.1);stroke-dasharray:70.69 94.25}.knob .ka{stroke:var(--kc);stroke-linecap:round}
+.knob .kc{fill:#161C28;stroke:rgba(255,255,255,.14)}.knob:hover .kc,.knob:focus-visible .kc{fill:#1F2736}
+.knob b{font:500 10.5px 'JetBrains Mono',monospace;color:#E6EBF2;white-space:nowrap}.knob small{font-size:9px;letter-spacing:1px;color:#6F7C8E}
+.knob.off{opacity:.45}
+.csSlope{display:flex;flex-direction:column;gap:3px;align-items:center}.csSlope button{height:20px;width:30px;border-radius:6px;border:0;background:rgba(255,255,255,.06);color:#8C9AAC;font:600 10px 'JetBrains Mono',monospace;cursor:pointer}.csSlope button.on{background:#C8CFDA;color:#0B1220;font-weight:700}.csSlope small{font-size:8.5px;color:#6F7C8E}
+.csRow{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:10px}
+.csCard{border-radius:14px;padding:12px 14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);display:flex;flex-direction:column;gap:10px}
+.csComp{display:flex;gap:12px;align-items:center;flex:1}
+#csTf{width:124px;height:124px;flex:none;border-radius:10px;background:rgba(4,8,14,.6);border:1px solid rgba(255,255,255,.07)}
+.csGr{width:12px;height:124px;flex:none;border-radius:4px;background:rgba(255,255,255,.06);position:relative;overflow:hidden}.csGr div{position:absolute;left:0;right:0;top:0;height:0;background:linear-gradient(180deg,#F5A524,#F5C542)}
+.csGrS{height:124px;display:flex;flex-direction:column;justify-content:space-between;font:500 9px 'JetBrains Mono',monospace;color:#6F7C8E;width:30px}.csGrS b{color:#F5C46B;font-size:10.5px}
+.csCK{flex:1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px 2px}.csCK .knob small{letter-spacing:.4px}
+.csAuto{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);color:#8C9AAC;text-align:left;cursor:pointer}
+.csAuto span{flex:1;min-width:0;display:flex;flex-direction:column}.csAuto b{font-size:13px;color:#DCE3EC}.csAuto small{font-size:11px;color:#8C9AAC}
+.csAuto.on{background:rgba(63,208,255,.1);border-color:rgba(63,208,255,.5);color:#3FD0FF}
+.csSw2{width:38px;height:20px;border-radius:10px;background:rgba(255,255,255,.14);position:relative;flex:none}
+.csSw2::after{content:"";position:absolute;left:3px;top:3px;width:14px;height:14px;border-radius:50%;background:#8C9AAC;transition:left .15s}
+.on>.csSw2{background:#3FD0FF}.on>.csSw2::after{left:21px;background:#0B1220}
+.csSl{display:flex;flex-direction:column;gap:4px}.csSl>div{display:flex;justify-content:space-between;font-size:11.5px;color:#B5BFCC}.csSl output{font:500 11px 'JetBrains Mono',monospace;color:#E6EBF2}.csSl.dim{opacity:.45}
+.csLineT{display:flex;align-items:center;justify-content:space-between;padding:0;border:0;background:none;color:#B5BFCC;font:500 11.5px Inter,sans-serif;cursor:pointer}.csLineT .csSw2{width:32px;height:18px}.csLineT .csSw2::after{width:12px;height:12px}.csLineT.on .csSw2::after{left:17px}
+.csFoot{display:flex;align-items:center;gap:10px;font-size:12px;color:#8C9AAC}.csFoot output{font-size:11.5px;color:#DCE3EC;min-width:58px}
+.csB{height:30px;padding:0 12px;border-radius:8px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.04);color:#DCE3EC;font:600 12px Inter,sans-serif;cursor:pointer}.csB:hover{background:rgba(255,255,255,.1)}
 /*ENDGLASS*/
 </style>
 </head>
@@ -655,8 +711,32 @@ html.glass.toolHidden .main{padding-top:24px}
 </aside>
 </div>
 
-<div class="status"><span id="fSrv">Server –</span><span id="stPl"></span><span>Limiter −1 dB</span><span id="stXf"></span><span style="margin-left:auto">OAB Studio 1.3.5</span><span style="letter-spacing:1.5px">AD SOUND &amp; SERVICE</span></div>
+<div class="status"><span id="fSrv">Server –</span><span id="stPl"></span><span>Limiter −1 dB</span><span id="stXf"></span><span style="margin-left:auto">OAB Studio 1.3.6</span><span style="letter-spacing:1.5px">AD SOUND &amp; SERVICE</span></div>
 
+<div class="cs" id="chStrip" hidden role="dialog" aria-label="Microphone channel strip">
+<header class="csHead"><span class="csIcon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="2.5" width="6" height="11.5" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg></span>
+<div class="csT"><b id="csTitle">MIC 1 · Channel strip</b><small>Changes are heard at once</small></div>
+<label for="csPreset" class="sr">Preset</label><select id="csPreset" class="csSel"></select>
+<button class="csSaveB" id="csSave" title="Save all microphone settings as a preset"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 3h11l3 3v15H5z"/><path d="M8 3v6h8M8 21v-7h8v7"/></svg>Save</button>
+<button class="csIc" id="csX" aria-label="Close">✕</button>
+<div class="csPop" id="csPop" hidden><span class="csLbl">MY PRESETS</span><div id="csMine"></div><div class="csSep"></div><div style="display:flex;gap:6px"><label for="csName" class="sr">Preset name</label><input id="csName" class="csIn" maxlength="40" placeholder="Name, e.g. My morning show"><button class="csGo" id="csDoSave">Save</button></div><small>Saves EQ, low cut, compressor and ducker.</small></div>
+</header>
+<div class="csSecH"><span>PARAMETRIC EQ</span><i></i><button class="csOn" id="csEqOn">ON</button></div>
+<div class="csGraph"><canvas id="csEq" aria-label="EQ curve – drag the points"></canvas><span class="csHint">Drag a point · scroll = Q · double-click = reset</span></div>
+<div class="csBands" id="csBands"></div>
+<div class="csRow">
+<section class="csCard"><div class="csSecH"><span>COMPRESSOR</span><i></i><button class="csOn amber" id="csCompOn">ON</button></div>
+<div class="csComp"><canvas id="csTf" aria-label="Compressor curve"></canvas><div class="csGr" title="Gain reduction"><div id="csGrBar"></div></div><div class="csGrS"><span>GR</span><b id="csGrV">0.0</b><span>dB</span></div><div class="csCK" id="csCompK"></div></div></section>
+<section class="csCard"><div class="csSecH"><span>DUCKER</span><i></i><small>both mics</small></div>
+<button class="csAuto" id="csAuto"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 12h2l2-5 3 10 3-14 3 12 2-3h3"/></svg><span><b>AUTO DUCKER</b><small>Music goes down only while you talk</small></span><i class="csSw2"></i></button>
+<div class="csSl"><div><label for="csDepth">Music goes down by</label><output></output></div><input type="range" class="gray" id="csDepth" min="0" max="30" step="1" style="--c:#3FD0FF"></div>
+<div class="csSl"><div><label for="csSens">Voice sensitivity</label><output></output></div><input type="range" class="gray" id="csSens" min="-60" max="-10" step="1" style="--c:#3FD0FF"></div>
+<div class="csSl"><div><label for="csDown">Fade down</label><output></output></div><input type="range" class="gray" id="csDown" min="0.05" max="1" step="0.05" style="--c:#3FD0FF"></div>
+<div class="csSl"><div><label for="csUp">Fade back up</label><output></output></div><input type="range" class="gray" id="csUp" min="0.1" max="3" step="0.1" style="--c:#3FD0FF"></div>
+<button class="csLineT" id="csLine"><span>Also lower LINE IN</span><i class="csSw2"></i></button></section>
+</div>
+<footer class="csFoot"><label for="csOut">Output</label><input type="range" class="gray" id="csOut" min="-12" max="12" step="0.5" style="--c:#DCE3EC;width:160px"><output id="csOutV" class="mono"></output><span style="flex:1"></span><button class="csB" id="csReset">Reset</button><button class="csB" id="csCopy">Copy to MIC 2</button></footer>
+</div>
 <!-- modals -->
 <div class="modal" id="mMsg"><div class="card" style="width:min(560px,94vw)">
 <div style="display:flex;justify-content:space-between;align-items:center"><h3>Message to listeners</h3><button class="btn sm" data-close>Close</button></div>

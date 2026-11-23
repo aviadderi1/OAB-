@@ -1142,16 +1142,20 @@ ACT.audioDevices = async () => { await openOptions(); setTimeout(() => { const e
 
 
 // ---------------- microphone compressor (per mic) + GR meters ----------------
-const MCDEF = { on: true, thr: -24, ratio: 4, att: 5, rel: 200, knee: 6, makeup: 4, hp: 80 };
+const MCDEF = { on: true, thr: -24, ratio: 4, att: 5, rel: 200, knee: 6, makeup: 4, hp: 80, lcOn: true, slope: 12, eqOn: true, out: 0,
+  eq: [{ on: true, f: 100, g: 0, q: 0.7 }, { on: true, f: 300, g: 0, q: 1 }, { on: true, f: 2500, g: 0, q: 1 }, { on: true, f: 10000, g: 0, q: 0.7 }] };
+const EQ_TYPES = ['lowshelf', 'peaking', 'peaking', 'highshelf'];
 let MC = (() => { try { return JSON.parse(store.get('micComp', '{}')) || {}; } catch(e){ return {}; } })();
-const mcOf = key => Object.assign({}, MCDEF, MC[key] || {});
+const mcOf = key => { const m = Object.assign(JSON.parse(JSON.stringify(MCDEF)), JSON.parse(JSON.stringify(MC[key] || {}))); if (!Array.isArray(m.eq) || m.eq.length !== 4) m.eq = JSON.parse(JSON.stringify(MCDEF.eq)); return m; };
 function saveMC(){ store.set('micComp', JSON.stringify(MC)); }
 function applyMC(inp){
   const c = inp.chain; if (!c || !c.comp || !ctx) return; const m = mcOf(inp.key), t = ctx.currentTime;
-  c.hp.frequency.setTargetAtTime(m.hp, t, 0.02);
+  c.hp.frequency.setTargetAtTime(m.lcOn ? m.hp : 10, t, 0.02);
+  if (c.hp2) c.hp2.frequency.setTargetAtTime(m.lcOn && +m.slope === 24 ? m.hp : 10, t, 0.02);
+  if (c.eq) c.eq.forEach((b, i) => { const e = m.eq[i]; b.frequency.setTargetAtTime(e.f, t, 0.02); b.Q.setTargetAtTime(e.q, t, 0.02); b.gain.setTargetAtTime(m.eqOn && e.on ? e.g : 0, t, 0.02); });
   if (m.on) { c.comp.threshold.setTargetAtTime(m.thr, t, 0.02); c.comp.ratio.setTargetAtTime(m.ratio, t, 0.02); c.comp.knee.setTargetAtTime(m.knee, t, 0.02);
-    c.comp.attack.setTargetAtTime(m.att / 1000, t, 0.02); c.comp.release.setTargetAtTime(m.rel / 1000, t, 0.02); c.makeup.gain.setTargetAtTime(dbToG(m.makeup), t, 0.03); }
-  else { c.comp.threshold.setTargetAtTime(0, t, 0.02); c.comp.ratio.setTargetAtTime(1, t, 0.02); c.comp.knee.setTargetAtTime(0, t, 0.02); c.makeup.gain.setTargetAtTime(1, t, 0.03); }
+    c.comp.attack.setTargetAtTime(m.att / 1000, t, 0.02); c.comp.release.setTargetAtTime(m.rel / 1000, t, 0.02); c.makeup.gain.setTargetAtTime(dbToG(m.makeup + (+m.out || 0)), t, 0.03); }
+  else { c.comp.threshold.setTargetAtTime(0, t, 0.02); c.comp.ratio.setTargetAtTime(1, t, 0.02); c.comp.knee.setTargetAtTime(0, t, 0.02); c.makeup.gain.setTargetAtTime(dbToG(+m.out || 0), t, 0.03); }
 }
 const _openInputPrev = openInput;
 openInput = async function(inp){
@@ -1167,8 +1171,10 @@ openInput = async function(inp){
   const anL = ctx.createAnalyser(), anR = ctx.createAnalyser(); anL.fftSize = anR.fftSize = 1024;
   src.connect(split); split.connect(gL, 0); split.connect(gR, 1); split.connect(anL, 0); split.connect(anR, 1); gL.connect(mono); gR.connect(mono);
   const stG = ctx.createGain(); src.connect(stG);
-  mono.connect(hp); stG.connect(hp); hp.connect(comp); comp.connect(makeup); makeup.connect(level); level.connect(onG); onG.connect(masterIn);
-  inp.chain = { stream, src, hp, comp, makeup, level, onG, split, gL, gR, mono, stG, anL, anR, buf: new Float32Array(1024), pick: null }; applyMC(inp); applyMch(inp); listDevices();
+  const hp2 = ctx.createBiquadFilter(); hp2.type = 'highpass'; hp2.Q.value = 0.7; hp2.frequency.value = 10;
+  const eq = EQ_TYPES.map(ty => { const b = ctx.createBiquadFilter(); b.type = ty; b.gain.value = 0; return b; });
+  mono.connect(hp); stG.connect(hp); hp.connect(hp2); hp2.connect(eq[0]); eq[0].connect(eq[1]); eq[1].connect(eq[2]); eq[2].connect(eq[3]); eq[3].connect(comp); comp.connect(makeup); makeup.connect(level); level.connect(onG); onG.connect(masterIn);
+  inp.chain = { stream, src, hp, hp2, eq, comp, makeup, level, onG, split, gL, gR, mono, stG, anL, anR, buf: new Float32Array(1024), pick: null }; applyMC(inp); applyMch(inp); listDevices();
   return stream;
 };
 function syncCmpBtns(){ [0, 1].forEach(i => $('#cmp' + (i + 1)).classList.toggle('on', mcOf(inputs[i].key).on)); }
@@ -1715,3 +1721,187 @@ if (window.oabDesktop && window.oabDesktop.pcRoute) {
   $('#startBtn').addEventListener('click', () => { if (store.get('pcThrough', '0') === '1') setTimeout(() => pcThrough(true), 1500); });
   syncPc();
 }
+
+// ---------------- MIC channel strip: right-click a mic ring → EQ + low cut + compressor + ducker + presets ----------------
+const DUCK = (() => { try { return Object.assign({ auto: false, sens: -38, down: 0.2, up: 0.8 }, JSON.parse(store.get('duckCfg', '{}'))); } catch(e){ return { auto: false, sens: -38, down: 0.2, up: 0.8 }; } })();
+const saveDuck = () => store.set('duckCfg', JSON.stringify(DUCK));
+// auto ducker: the music goes down only while a live microphone hears a voice
+const VOX = { talk: false, last: 0, buf: new Float32Array(2048) };
+setInterval(() => {
+  if (!DUCK.auto || !micOn || !ctx) { if (VOX.talk) { VOX.talk = false; applyDuck(); } return; }
+  let db = -120;
+  [0, 1].forEach(i => { const inp = inputs[i]; if (!inp.on || !inp._an) return; inp._an.getFloatTimeDomainData(VOX.buf); let s2 = 0; for (let k = 0; k < VOX.buf.length; k++) s2 += VOX.buf[k] * VOX.buf[k]; const d = 10 * Math.log10(s2 / VOX.buf.length + 1e-12); if (d > db) db = d; });
+  const now = performance.now(); if (db > DUCK.sens) VOX.last = now;
+  const talk = now - VOX.last < 650; if (talk !== VOX.talk) { VOX.talk = talk; applyDuck(); }
+}, 30);
+const _applyDuckCS = applyDuck;
+applyDuck = function(){
+  _applyDuckCS(); if (!ctx) return;
+  const d = micOn && (!DUCK.auto || VOX.talk), t = ctx.currentTime, tc = Math.max(0.01, (d ? DUCK.down : DUCK.up) / 3);
+  if (musicBus) { musicBus.gain.cancelScheduledValues(t); musicBus.gain.setTargetAtTime(d ? duckGain() : 1, t, tc); }
+  const L = inputs[2]; if (L && L.on && L.chain && L.chain.onG) { L.chain.onG.gain.cancelScheduledValues(t); L.chain.onG.gain.setTargetAtTime(d && store.get('duckLine', '1') === '1' ? duckGain() : 1, t, tc); }
+};
+
+const CS_PRESETS = [
+  { name: 'Radio voice', mc: { on: true, thr: -22, ratio: 4, att: 5, rel: 180, knee: 6, makeup: 5, hp: 90, lcOn: true, slope: 24, eqOn: true, out: 0, eq: [{ on: true, f: 120, g: 2, q: 0.7 }, { on: true, f: 300, g: -3, q: 1.2 }, { on: true, f: 3000, g: 3, q: 1 }, { on: true, f: 10000, g: 2, q: 0.7 }] } },
+  { name: 'Warm & close', mc: { on: true, thr: -20, ratio: 3, att: 8, rel: 220, knee: 8, makeup: 4, hp: 70, lcOn: true, slope: 12, eqOn: true, out: 0, eq: [{ on: true, f: 150, g: 3, q: 0.7 }, { on: true, f: 400, g: -1.5, q: 1 }, { on: true, f: 2500, g: 1, q: 1 }, { on: true, f: 9000, g: -1, q: 0.7 }] } },
+  { name: 'Flat (off)', mc: { on: false, lcOn: false, eqOn: false, out: 0 } }
+];
+let CSU = (() => { try { return JSON.parse(store.get('micPresets', '[]')) || []; } catch(e){ return []; } })();
+const saveCSU = () => store.set('micPresets', JSON.stringify(CSU));
+const CS_COL = ['#FF8A3D', '#F5C542', '#2EE88A', '#3FD0FF'], CS_LC = '#C8CFDA', CS_NAMES = ['Low shelf', 'Low mid', 'High mid', 'High shelf'];
+const CS = { i: 0, sel: 2, tmp: null, raf: 0 };
+const csKey = () => inputs[CS.i].key, csM = () => mcOf(csKey());
+function csSet(fn){ const k = csKey(), m = mcOf(k); fn(m); MC[k] = m; saveMC(); applyMC(inputs[CS.i]); syncCmpBtns(); try { renderMC(); } catch(e){} csDraw(); }
+const fmtHz = f => f >= 1000 ? (f / 1000).toFixed(f >= 10000 ? 0 : 1) + ' kHz' : Math.round(f) + ' Hz';
+const fmtDb = (g, d = 1) => (g > 0 ? '+' : g < 0 ? '−' : '') + Math.abs(g).toFixed(d);
+// knobs
+const KARC = 70.69;
+function knobHtml(id, label, color){ return `<div class="knob" data-knob="${id}" style="--kc:${color}" tabindex="0" role="slider" aria-label="${label}"><svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="15" class="kt"/><circle cx="20" cy="20" r="15" class="ka"/><circle cx="20" cy="20" r="9" class="kc"/></svg><b></b><small>${label}</small></div>`; }
+const KN = {};
+function defKnob(id, o){ KN[id] = o; }
+function knobNorm(o, v){ return o.log ? Math.log(v / o.min) / Math.log(o.max / o.min) : (v - o.min) / (o.max - o.min); }
+function knobVal(o, n){ n = Math.max(0, Math.min(1, n)); let v = o.log ? o.min * Math.pow(o.max / o.min, n) : o.min + n * (o.max - o.min); if (o.step) v = Math.round(v / o.step) * o.step; return +v.toFixed(3); }
+function knobPaint(el){ const o = KN[el.dataset.knob]; if (!o) return; const v = o.get(); el.querySelector('.ka').style.strokeDasharray = (Math.max(0.001, knobNorm(o, v)) * KARC).toFixed(2) + ' 94.25'; el.querySelector('b').textContent = o.fmt(v); el.classList.toggle('off', !!(o.off && o.off())); }
+function csPaintKnobs(){ $$('#chStrip .knob').forEach(knobPaint); }
+$('#chStrip').addEventListener('pointerdown', e => {
+  const el = e.target.closest('.knob'); if (!el) return; const o = KN[el.dataset.knob]; if (!o) return; e.preventDefault(); el.setPointerCapture(e.pointerId);
+  const y0 = e.clientY, n0 = knobNorm(o, o.get());
+  const mv = ev => { const n = n0 + (y0 - ev.clientY) / (ev.shiftKey ? 600 : 160); o.set(knobVal(o, n)); knobPaint(el); };
+  const up = () => { el.removeEventListener('pointermove', mv); el.removeEventListener('pointerup', up); el.removeEventListener('pointercancel', up); };
+  el.addEventListener('pointermove', mv); el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
+});
+$('#chStrip').addEventListener('wheel', e => { const el = e.target.closest('.knob'); if (!el) return; const o = KN[el.dataset.knob]; e.preventDefault(); o.set(knobVal(o, knobNorm(o, o.get()) + (e.deltaY < 0 ? 1 : -1) / 60)); knobPaint(el); }, { passive: false });
+$('#chStrip').addEventListener('dblclick', e => { const el = e.target.closest('.knob'); if (!el) return; const o = KN[el.dataset.knob]; if (o.def != null) { o.set(o.def); knobPaint(el); } });
+$('#chStrip').addEventListener('keydown', e => { const el = e.target.closest('.knob'); if (!el || !['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return; const o = KN[el.dataset.knob]; e.preventDefault(); o.set(knobVal(o, knobNorm(o, o.get()) + (e.key === 'ArrowUp' || e.key === 'ArrowRight' ? 1 : -1) / 60)); knobPaint(el); });
+// build the strips (low cut + 4 bands) and the compressor knobs
+function csBuild(){
+  let h = `<div class="csBand lc"><div class="csBH"><span><i style="--bc:${CS_LC}">LC</i>Low cut</span><button class="csSw" id="csLcOn" aria-label="Low cut on / off"></button></div><div class="csBK">${knobHtml('lcF', 'FREQ', CS_LC)}<div class="csSlope"><button data-slope="12">12</button><button data-slope="24">24</button><small>dB/oct</small></div></div></div>`;
+  CS_NAMES.forEach((n, i) => { h += `<div class="csBand" data-band="${i}"><div class="csBH"><span><i style="--bc:${CS_COL[i]}">${i + 1}</i>${n}</span><button class="csSw" data-bon="${i}" style="--bc:${CS_COL[i]}" aria-label="${n} on / off"></button></div><div class="csBK">${knobHtml('f' + i, 'FREQ', CS_COL[i])}${knobHtml('g' + i, 'GAIN', CS_COL[i])}${knobHtml('q' + i, 'Q', CS_COL[i])}</div></div>`;
+    defKnob('f' + i, { min: 20, max: 20000, log: true, get: () => csM().eq[i].f, set: v => csSet(m => m.eq[i].f = Math.round(v)), fmt: fmtHz, def: MCDEF.eq[i].f, off: () => !csM().eq[i].on || !csM().eqOn });
+    defKnob('g' + i, { min: -15, max: 15, step: 0.5, get: () => csM().eq[i].g, set: v => csSet(m => m.eq[i].g = v), fmt: v => fmtDb(v), def: 0, off: () => !csM().eq[i].on || !csM().eqOn });
+    defKnob('q' + i, { min: 0.3, max: 8, log: true, get: () => csM().eq[i].q, set: v => csSet(m => m.eq[i].q = +v.toFixed(2)), fmt: v => v.toFixed(1), def: MCDEF.eq[i].q, off: () => !csM().eq[i].on || !csM().eqOn }); });
+  $('#csBands').innerHTML = h;
+  defKnob('lcF', { min: 20, max: 300, log: true, get: () => csM().hp, set: v => csSet(m => m.hp = Math.round(v)), fmt: fmtHz, def: 80, off: () => !csM().lcOn });
+  const CK = [['thr', 'THRESH', -50, 0, 1, v => fmtDb(v, 0) + ' dB', -24], ['ratio', 'RATIO', 1, 20, 0.5, v => v + ':1', 4], ['knee', 'KNEE', 0, 30, 1, v => v + ' dB', 6], ['att', 'ATTACK', 1, 100, 1, v => v + ' ms', 5], ['rel', 'RELEASE', 20, 1000, 10, v => v + ' ms', 200], ['makeup', 'MAKE-UP', 0, 18, 0.5, v => fmtDb(v) + ' dB', 4]];
+  $('#csCompK').innerHTML = CK.map(c => knobHtml('c_' + c[0], c[1], '#F5A524')).join('');
+  CK.forEach(c => defKnob('c_' + c[0], { min: c[2], max: c[3], step: c[4], log: c[0] === 'ratio' || c[0] === 'att' || c[0] === 'rel', get: () => csM()[c[0]], set: v => csSet(m => m[c[0]] = v), fmt: c[5], def: c[6], off: () => !csM().on }));
+}
+function csSync(){
+  const m = csM();
+  $('#csTitle').textContent = inputs[CS.i].name + ' · Channel strip'; $('#csCopy').textContent = 'Copy to ' + inputs[1 - CS.i].name;
+  $('#csEqOn').classList.toggle('on', m.eqOn); $('#csEqOn').textContent = m.eqOn ? 'ON' : 'OFF';
+  $('#csCompOn').classList.toggle('on', m.on); $('#csCompOn').textContent = m.on ? 'ON' : 'OFF';
+  $('#csLcOn').classList.toggle('on', m.lcOn); $$('#chStrip [data-slope]').forEach(b => b.classList.toggle('on', +b.dataset.slope === +m.slope));
+  $$('#chStrip [data-bon]').forEach(b => b.classList.toggle('on', m.eq[+b.dataset.bon].on));
+  $$('#chStrip .csBand[data-band]').forEach(b => b.classList.toggle('sel', +b.dataset.band === CS.sel));
+  $('#csOut').value = m.out; $('#csOutV').textContent = fmtDb(+m.out) + ' dB'; $('#csOut').style.setProperty('--p', ((+m.out + 12) / 24 * 100) + '%');
+  $('#csAuto').classList.toggle('on', DUCK.auto); $('#csLine').classList.toggle('on', store.get('duckLine', '1') === '1');
+  const ds = [['csDepth', +($('#duckR').value || 14), v => (v == 0 ? '0' : '−' + v) + ' dB'], ['csSens', DUCK.sens, v => v + ' dB'], ['csDown', DUCK.down, v => (+v).toFixed(2) + ' s'], ['csUp', DUCK.up, v => (+v).toFixed(1) + ' s']];
+  ds.forEach(([id, v, f]) => { const el = $('#' + id); el.value = v; el.style.setProperty('--p', ((v - el.min) / (el.max - el.min) * 100) + '%'); el.parentElement.querySelector('output').textContent = f(v); });
+  $('#csSens').disabled = !DUCK.auto; $('#csSens').closest('.csSl').classList.toggle('dim', !DUCK.auto);
+  csPresetList(); csPaintKnobs(); csDraw();
+}
+function csPresetList(){
+  $('#csPreset').innerHTML = '<option value="">Presets…</option><optgroup label="My presets">' + (CSU.length ? CSU.map((p, i) => `<option value="u${i}">★ ${esc(p.name)}</option>`).join('') : '<option disabled>(none yet – press Save)</option>') + '</optgroup><optgroup label="Built-in">' + CS_PRESETS.map((p, i) => `<option value="b${i}">${esc(p.name)}</option>`).join('') + '</optgroup>';
+  $('#csMine').innerHTML = CSU.length ? CSU.map((p, i) => `<div class="csPI"><button data-load="${i}">★ ${esc(p.name)}</button><button class="csDel" data-del="${i}" aria-label="Delete ${esc(p.name)}">✕</button></div>`).join('') : '<div class="sub" style="font-size:11.5px;padding:2px 4px">No presets yet.</div>';
+}
+function csLoad(p){ if (!p) return; MC[csKey()] = Object.assign(JSON.parse(JSON.stringify(MCDEF)), JSON.parse(JSON.stringify(p.mc || {}))); saveMC(); applyMC(inputs[CS.i]);
+  if (p.duck) { Object.assign(DUCK, { auto: !!p.duck.auto, sens: p.duck.sens ?? DUCK.sens, down: p.duck.down ?? DUCK.down, up: p.duck.up ?? DUCK.up }); saveDuck();
+    if (p.duck.depth != null) { $('#duckR').value = p.duck.depth; store.set('duckDb', String(p.duck.depth)); if ($('#duckR').oninput) $('#duckR').oninput(); }
+    if (p.duck.line != null && (store.get('duckLine', '1') === '1') !== !!p.duck.line) $('#duckLine').click(); applyDuck(); }
+  syncCmpBtns(); try { renderMC(); } catch(e){} csSync(); toast(inputs[CS.i].name + ': preset "' + p.name + '" loaded'); }
+// EQ graph
+const CS_F = new Float32Array(240).map((_, i) => 20 * Math.pow(1000, i / 239));
+function csResp(m){
+  if (!ctx) return null;
+  if (!CS.tmp) CS.tmp = { hp: ctx.createBiquadFilter(), hp2: ctx.createBiquadFilter(), eq: EQ_TYPES.map(t => { const b = ctx.createBiquadFilter(); b.type = t; return b; }) };
+  const T = CS.tmp; T.hp.type = T.hp2.type = 'highpass'; T.hp.Q.value = T.hp2.Q.value = 0.7;
+  T.hp.frequency.value = m.lcOn ? m.hp : 10; T.hp2.frequency.value = m.lcOn && +m.slope === 24 ? m.hp : 10;
+  T.eq.forEach((b, i) => { const e = m.eq[i]; b.frequency.value = e.f; b.Q.value = e.q; b.gain.value = m.eqOn && e.on ? e.g : 0; });
+  const tot = new Float32Array(CS_F.length).fill(1), mag = new Float32Array(CS_F.length), ph = new Float32Array(CS_F.length);
+  [T.hp, T.hp2, ...T.eq].forEach(b => { b.getFrequencyResponse(CS_F, mag, ph); for (let i = 0; i < tot.length; i++) tot[i] *= mag[i]; });
+  return tot;
+}
+const fx = (f, W) => Math.log(f / 20) / Math.log(1000) * W, xf = (x, W) => 20 * Math.pow(1000, Math.max(0, Math.min(1, x / W)));
+const gy = (g, H) => H / 2 - g / 16 * (H / 2), yg = (y, H) => Math.max(-15, Math.min(15, (H / 2 - y) / (H / 2) * 16));
+function csPoints(m, W, H){ const pts = m.eq.map((e, i) => ({ id: i, x: fx(e.f, W), y: gy(m.eqOn && e.on ? e.g : 0, H), c: CS_COL[i], lab: String(i + 1), on: m.eqOn && e.on }));
+  pts.unshift({ id: 'lc', x: fx(m.hp, W), y: gy(m.lcOn ? (+m.slope === 24 ? -6 : -3) : 0, H), c: CS_LC, lab: 'LC', on: m.lcOn }); return pts; }
+function csDraw(){
+  const c = $('#csEq'); if (!c || $('#chStrip').hidden) return; const [W, H, d] = fitCanvas(c); const g = c.getContext('2d'), m = csM(); g.clearRect(0, 0, W, H);
+  g.strokeStyle = 'rgba(255,255,255,.06)'; g.lineWidth = d; g.font = `500 ${9.5 * d}px JetBrains Mono, monospace`; g.fillStyle = '#5E6B7D';
+  [50, 100, 200, 500, 1000, 2000, 5000, 10000].forEach(f => { const x = Math.round(fx(f, W)) + 0.5; g.beginPath(); g.moveTo(x, 0); g.lineTo(x, H); g.stroke(); g.fillText(f >= 1000 ? f / 1000 + 'k' : f, x + 3 * d, H - 5 * d); });
+  [-12, -6, 6, 12].forEach(v => { const y = Math.round(gy(v, H)) + 0.5; g.beginPath(); g.moveTo(0, y); g.lineTo(W, y); g.stroke(); g.fillText((v > 0 ? '+' : '−') + Math.abs(v), 5 * d, y - 3 * d); });
+  g.strokeStyle = 'rgba(255,255,255,.18)'; g.beginPath(); g.moveTo(0, Math.round(H / 2) + 0.5); g.lineTo(W, Math.round(H / 2) + 0.5); g.stroke();
+  const r = csResp(m);
+  if (r) { g.beginPath(); for (let i = 0; i < CS_F.length; i++) { const x = fx(CS_F[i], W), y = gy(Math.max(-16, 20 * Math.log10(r[i] + 1e-9)), H); i ? g.lineTo(x, y) : g.moveTo(x, y); }
+    g.save(); g.lineTo(W, H); g.lineTo(0, H); g.closePath(); const gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, 'rgba(46,232,138,.32)'); gr.addColorStop(1, 'rgba(46,232,138,0)'); g.fillStyle = gr; g.fill(); g.restore();
+    g.beginPath(); for (let i = 0; i < CS_F.length; i++) { const x = fx(CS_F[i], W), y = gy(Math.max(-16, 20 * Math.log10(r[i] + 1e-9)), H); i ? g.lineTo(x, y) : g.moveTo(x, y); }
+    g.strokeStyle = m.eqOn || m.lcOn ? '#2EE88A' : 'rgba(255,255,255,.35)'; g.lineWidth = 2.4 * d; g.lineJoin = 'round'; g.stroke(); }
+  csPoints(m, W, H).forEach(p => { const sel = p.id === CS.sel, rr = (sel ? 12 : 10) * d;
+    g.beginPath(); g.arc(p.x, p.y, rr, 0, Math.PI * 2); g.fillStyle = sel ? p.c : '#0B1220'; g.globalAlpha = p.on ? 1 : 0.45; g.fill(); g.lineWidth = 2.4 * d; g.strokeStyle = sel ? '#fff' : p.c; g.stroke();
+    g.fillStyle = sel ? '#06210F' : p.c; g.font = `700 ${(p.lab.length > 1 ? 8.5 : 10.5) * d}px Inter, sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(p.lab, p.x, p.y + 0.5 * d); g.textAlign = 'left'; g.textBaseline = 'alphabetic'; g.globalAlpha = 1; });
+  csTf();
+}
+function csTf(){
+  const c = $('#csTf'); if (!c) return; const [W, H, d] = fitCanvas(c); const g = c.getContext('2d'), m = csM(); g.clearRect(0, 0, W, H);
+  g.strokeStyle = 'rgba(255,255,255,.06)'; g.lineWidth = d; [1, 2].forEach(k => { g.beginPath(); g.moveTo(W * k / 3, 0); g.lineTo(W * k / 3, H); g.moveTo(0, H * k / 3); g.lineTo(W, H * k / 3); g.stroke(); });
+  g.setLineDash([3 * d, 3 * d]); g.strokeStyle = 'rgba(255,255,255,.16)'; g.beginPath(); g.moveTo(0, H); g.lineTo(W, 0); g.stroke(); g.setLineDash([]);
+  const X = v => (v + 60) / 60 * W, Y = v => H - (v + 60) / 60 * H, T = m.on ? m.thr : 0, R = m.on ? m.ratio : 1, K = m.on ? m.knee : 0;
+  const out = x => { if (2 * (x - T) < -K) return x; if (2 * Math.abs(x - T) <= K) return x + (1 / R - 1) * Math.pow(x - T + K / 2, 2) / (2 * Math.max(K, 1e-6)); return T + (x - T) / R; };
+  g.beginPath(); for (let x = -60; x <= 0; x += 0.5) { const y = out(x); x === -60 ? g.moveTo(X(x), Y(y)) : g.lineTo(X(x), Y(y)); } g.strokeStyle = m.on ? '#F5A524' : 'rgba(255,255,255,.35)'; g.lineWidth = 2.2 * d; g.stroke();
+  if (m.on) { g.beginPath(); g.arc(X(T), Y(out(T)), 3.5 * d, 0, Math.PI * 2); g.fillStyle = '#F5A524'; g.fill(); }
+}
+// drag points on the graph
+(() => { const c = $('#csEq'); let drag = null;
+  const hit = e => { const r = c.getBoundingClientRect(), W = c.width, H = c.height, sx = W / r.width, sy = H / r.height, x = (e.clientX - r.left) * sx, y = (e.clientY - r.top) * sy;
+    let best = null, bd = 22 * (window.devicePixelRatio || 1); csPoints(csM(), W, H).forEach(p => { const dd = Math.hypot(p.x - x, p.y - y); if (dd < bd) { bd = dd; best = p; } }); return { best, x, y, W, H }; };
+  c.addEventListener('pointerdown', e => { const h = hit(e); if (!h.best) return; e.preventDefault(); drag = h.best.id; CS.sel = drag; c.setPointerCapture(e.pointerId); csSync(); });
+  c.addEventListener('pointermove', e => { const h = hit(e); c.style.cursor = drag != null ? 'grabbing' : h.best ? 'grab' : 'default'; if (drag == null) return;
+    if (drag === 'lc') csSet(m => { m.hp = Math.round(Math.max(20, Math.min(300, xf(h.x, h.W)))); m.lcOn = true; });
+    else csSet(m => { const b = m.eq[drag]; b.f = Math.round(xf(h.x, h.W)); b.g = Math.round(yg(h.y, h.H) * 2) / 2; b.on = true; m.eqOn = true; });
+    csSync(); });
+  const end = () => { drag = null; }; c.addEventListener('pointerup', end); c.addEventListener('pointercancel', end);
+  c.addEventListener('wheel', e => { const h = hit(e); const id = h.best ? h.best.id : CS.sel; if (id === 'lc' || id == null) return; e.preventDefault(); CS.sel = id; csSet(m => { const b = m.eq[id]; b.q = +Math.max(0.3, Math.min(8, b.q * (e.deltaY < 0 ? 1.12 : 1 / 1.12))).toFixed(2); }); csSync(); }, { passive: false });
+  c.addEventListener('dblclick', e => { const h = hit(e); if (!h.best) return; const id = h.best.id; if (id === 'lc') csSet(m => m.hp = 80); else csSet(m => { m.eq[id].g = 0; m.eq[id].q = MCDEF.eq[id].q; }); csSync(); });
+  addEventListener('resize', () => { if (!$('#chStrip').hidden) csDraw(); });
+})();
+// buttons
+$('#chStrip').addEventListener('click', e => {
+  const t = e.target;
+  if (t.closest('#csX')) return closeCS();
+  if (t.closest('#csEqOn')) { csSet(m => m.eqOn = !m.eqOn); return csSync(); }
+  if (t.closest('#csCompOn')) { csSet(m => m.on = !m.on); return csSync(); }
+  if (t.closest('#csLcOn')) { csSet(m => m.lcOn = !m.lcOn); return csSync(); }
+  const sl = t.closest('[data-slope]'); if (sl) { csSet(m => { m.slope = +sl.dataset.slope; m.lcOn = true; }); return csSync(); }
+  const bo = t.closest('[data-bon]'); if (bo) { const i = +bo.dataset.bon; csSet(m => m.eq[i].on = !m.eq[i].on); return csSync(); }
+  const band = t.closest('.csBand[data-band]'); if (band && !t.closest('.knob')) { CS.sel = +band.dataset.band; csSync(); }
+  if (t.closest('#csAuto')) { DUCK.auto = !DUCK.auto; saveDuck(); applyDuck(); csSync(); return toast(DUCK.auto ? 'Auto ducker on – the music goes down only while you talk' : 'Auto ducker off – the music goes down while a mic is on'); }
+  if (t.closest('#csLine')) { $('#duckLine').click(); return csSync(); }
+  if (t.closest('#csReset')) { if (!confirm('Reset all ' + inputs[CS.i].name + ' settings (EQ, low cut, compressor)?')) return; delete MC[csKey()]; saveMC(); applyMC(inputs[CS.i]); syncCmpBtns(); try { renderMC(); } catch(e){} return csSync(); }
+  if (t.closest('#csCopy')) { const o = inputs[1 - CS.i]; MC[o.key] = JSON.parse(JSON.stringify(csM())); saveMC(); applyMC(o); syncCmpBtns(); try { renderMC(); } catch(e){} return toast('Settings copied to ' + o.name); }
+  if (t.closest('#csSave')) { const p = $('#csPop'); p.hidden = !p.hidden; if (!p.hidden) { $('#csName').value = ''; setTimeout(() => $('#csName').focus(), 0); } return; }
+  if (t.closest('#csDoSave')) return csSavePreset();
+  const ld = t.closest('[data-load]'); if (ld) { csLoad(CSU[+ld.dataset.load]); $('#csPop').hidden = true; return; }
+  const dl = t.closest('[data-del]'); if (dl) { const i = +dl.dataset.del; if (confirm('Delete preset "' + CSU[i].name + '"?')) { CSU.splice(i, 1); saveCSU(); csPresetList(); } return; }
+});
+function csSavePreset(){
+  const name = $('#csName').value.trim(); if (!name) { $('#csName').focus(); return; }
+  const p = { name, mc: csM(), duck: { auto: DUCK.auto, sens: DUCK.sens, down: DUCK.down, up: DUCK.up, depth: +($('#duckR').value || 14), line: store.get('duckLine', '1') === '1' } };
+  const i = CSU.findIndex(x => x.name.toLowerCase() === name.toLowerCase()); if (i > -1) { if (!confirm('Replace preset "' + CSU[i].name + '"?')) return; CSU[i] = p; } else CSU.push(p);
+  saveCSU(); csPresetList(); $('#csPop').hidden = true; toast('Preset "' + name + '" saved');
+}
+$('#csName').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); csSavePreset(); } });
+$('#csPreset').onchange = () => { const v = $('#csPreset').value; if (!v) return; csLoad(v[0] === 'u' ? CSU[+v.slice(1)] : CS_PRESETS[+v.slice(1)]); $('#csPreset').value = ''; };
+$('#csOut').oninput = () => { csSet(m => m.out = +$('#csOut').value); csSync(); };
+[['csDepth', v => { $('#duckR').value = v; store.set('duckDb', String(v)); if ($('#duckR').oninput) $('#duckR').oninput(); }], ['csSens', v => { DUCK.sens = v; saveDuck(); }], ['csDown', v => { DUCK.down = v; saveDuck(); }], ['csUp', v => { DUCK.up = v; saveDuck(); }]]
+  .forEach(([id, fn]) => { $('#' + id).oninput = () => { fn(+$('#' + id).value); applyDuck(); csSync(); }; });
+// GR meter while the window is open
+function csLoop(){ if ($('#chStrip').hidden) { CS.raf = 0; return; } const inp = inputs[CS.i], m = csM(); const red = inp.chain && inp.chain.comp && inp.on && m.on ? Math.max(0, -inp.chain.comp.reduction) : 0;
+  CS.gr = Math.max(red, (CS.gr || 0) - 0.4); $('#csGrBar').style.height = Math.min(100, CS.gr / 12 * 100) + '%'; $('#csGrV').textContent = CS.gr > 0.05 ? '−' + CS.gr.toFixed(1) : '0.0'; CS.raf = requestAnimationFrame(csLoop); }
+function openCS(i){ CS.i = i; const el = $('#chStrip'); el.hidden = false; $('#csPop').hidden = true; csBuild(); csSync(); if (!CS.raf) CS.raf = requestAnimationFrame(csLoop); }
+function closeCS(){ $('#chStrip').hidden = true; }
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#chStrip').hidden) { if (!$('#csPop').hidden) $('#csPop').hidden = true; else closeCS(); } });
+document.addEventListener('pointerdown', e => { const el = $('#chStrip'); if (el.hidden || el.contains(e.target) || e.target.closest('.micbtn') || e.target.closest('.modal')) return; closeCS(); });
+[0, 1].forEach(i => $(inputs[i].btn).addEventListener('contextmenu', e => { e.preventDefault(); e.stopPropagation(); openCS(i); }));
+ACT.micStrip1 = () => openCS(0); ACT.micStrip2 = () => openCS(1);
