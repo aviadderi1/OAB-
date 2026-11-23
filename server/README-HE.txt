@@ -302,3 +302,9 @@ LINE IN מיוטיוב: Broadcast → YouTube window. חלון היוטיוב ש
 35. כל הסאונד של המחשב דרך OAB
 צריך להתקין פעם אחת את VB-Audio Virtual Cable (חינם) ולהפעיל מחדש את המחשב.
 Broadcast → All computer sound through OAB: כל עוד OAB פתוחה, כל הסאונד של המחשב נכנס ל־LINE IN, עובר Ducker ויוצא לאוזניות דרך OAB. בסגירה – Windows חוזר לרמקולים.
+
+36. מראה אולפן (זכוכית)
+ברירת המחדל: תמונת האולפן ברקע, הפלייליסט בחלון זכוכית מימין.
+לוחצים על הטבעת סביב המיקרופון בתמונה כדי להדליק או לכבות אותו (נדלק בירוק). כשמשדרים, שלט ON AIR בתמונה זוהר.
+פותחים עמודת Library או Requests – כפתורי המיקרופון חוזרים לפאנל המיקרופונים למעלה משמאל.
+להחלפה: View → Studio look (glass), או Options → General → Interface (Studio / Dark / Light).
