@@ -1,7 +1,7 @@
 {
  "name": "oab-studio",
  "productName": "OAB Studio",
- "version": "1.0.0",
+ "version": "1.0.1",
  "description": "OAB – On Air Broadcast",
  "author": "AD SOUND & SERVICE",
  "main": "main.js",
@@ -50,7 +50,10 @@
    },
    {
     "from": "scripts",
-    "to": "scripts"
+    "to": "scripts",
+    "filter": [
+     "**/*"
+    ]
    }
   ],
   "asar": true,
@@ -87,7 +90,25 @@
     "repo": "OAB-"
    }
   ],
-  "afterPack": "./afterPack.js"
+  "afterPack": "./afterPack.js",
+  "mac": {
+   "target": [
+    {
+     "target": "dir"
+    }
+   ],
+   "icon": "build/icon.png",
+   "category": "public.app-category.music",
+   "identity": null,
+   "hardenedRuntime": false,
+   "gatekeeperAssess": false,
+   "extendInfo": {
+    "NSMicrophoneUsageDescription": "OAB Studio uses your microphones for live broadcasting.",
+    "NSCameraUsageDescription": "OAB Studio does not use the camera.",
+    "NSAudioCaptureUsageDescription": "OAB Studio records the LINE IN source you choose."
+   },
+   "artifactName": "OAB-Studio-${version}-${arch}.${ext}"
+  }
  },
  "scripts": {
   "start": "electron .",

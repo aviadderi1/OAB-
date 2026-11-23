@@ -18,6 +18,7 @@ import queue
 import random
 import re
 import socket
+import shutil
 import subprocess
 import sys
 import threading
@@ -33,7 +34,7 @@ STATION = os.environ.get("RADIO_NAME", "OAB")
 MAX_LISTENERS = int(os.environ.get("RADIO_MAX_LISTENERS", "0"))  # 0 = no limit
 # ---------------------------------------------------------
 
-VERSION = "1.0.0"
+VERSION = "1.0.1"
 APP_DIR = os.path.dirname(os.path.abspath(__file__))            # program files (code + web)
 BASE = os.environ.get("OAB_DATA") or APP_DIR                       # settings, playlists, recordings, downloaded tools
 os.makedirs(BASE, exist_ok=True)
@@ -46,6 +47,8 @@ VT_DIR = os.path.join(DATA_DIR, "voicetracks")
 PLAYLOG_FILE = os.path.join(DATA_DIR, "playlog.csv")
 os.makedirs(REC_DIR, exist_ok=True)
 IS_WIN = sys.platform.startswith("win")
+IS_MAC = sys.platform == "darwin"
+MAC_ARM = IS_MAC and __import__("platform").machine() == "arm64"
 AUDIO_EXT = {".mp3", ".m4a", ".aac", ".wav", ".flac", ".ogg", ".opus", ".webm"}
 
 lock = threading.Lock()
@@ -620,10 +623,18 @@ def start_public():
         try:
             if not os.path.isfile(exe):
                 pub["state"] = "downloading"
-                name = "cloudflared-windows-amd64.exe" if IS_WIN else "cloudflared-linux-amd64"
+                name = "cloudflared-windows-amd64.exe" if IS_WIN else ("cloudflared-darwin-%s.tgz" % ("arm64" if MAC_ARM else "amd64") if IS_MAC else "cloudflared-linux-amd64")
                 url = "https://github.com/cloudflare/cloudflared/releases/latest/download/" + name
                 tmp = exe + ".part"
                 urllib.request.urlretrieve(url, tmp)
+                if name.endswith(".tgz"):
+                    import tarfile
+                    with tarfile.open(tmp) as t:
+                        m = [x for x in t.getmembers() if os.path.basename(x.name) == "cloudflared"][0]
+                        with t.extractfile(m) as src, open(exe + ".bin", "wb") as dst:
+                            shutil.copyfileobj(src, dst)
+                    os.remove(tmp)
+                    tmp = exe + ".bin"
                 os.replace(tmp, exe)
                 if not IS_WIN:
                     os.chmod(exe, 0o755)
@@ -803,7 +814,7 @@ def ytdlp_exe():
     exe = os.path.join(BASE, "yt-dlp.exe" if IS_WIN else "yt-dlp")
     if os.path.isfile(exe):
         return exe
-    url = "https://github.com/yt-dlp/yt-dlp/releases/latest/download/" + ("yt-dlp.exe" if IS_WIN else "yt-dlp")
+    url = "https://github.com/yt-dlp/yt-dlp/releases/latest/download/" + ("yt-dlp.exe" if IS_WIN else ("yt-dlp_macos" if IS_MAC else "yt-dlp"))
     tmp = exe + ".part"
     urllib.request.urlretrieve(url, tmp)
     os.replace(tmp, exe)
@@ -821,7 +832,7 @@ def deno_exe():
     w = shutil.which("deno")
     if w:
         return w
-    name = "deno-x86_64-pc-windows-msvc.zip" if IS_WIN else "deno-x86_64-unknown-linux-gnu.zip"
+    name = "deno-x86_64-pc-windows-msvc.zip" if IS_WIN else (("deno-aarch64-apple-darwin.zip" if MAC_ARM else "deno-x86_64-apple-darwin.zip") if IS_MAC else "deno-x86_64-unknown-linux-gnu.zip")
     tmp = exe + ".zip.part"
     urllib.request.urlretrieve("https://github.com/denoland/deno/releases/latest/download/" + name, tmp)
     with zipfile.ZipFile(tmp) as z:

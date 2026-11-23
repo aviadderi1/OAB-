@@ -715,7 +715,7 @@ html.glass.toolHidden .main{padding-top:24px}
 </aside>
 </div>
 
-<div class="status"><span id="fSrv">Server –</span><span id="stPl"></span><span>Limiter −1 dB</span><span id="stXf"></span><span style="margin-left:auto">OAB Studio 1.0.0</span><span style="letter-spacing:1.5px">AD SOUND &amp; SERVICE</span></div>
+<div class="status"><span id="fSrv">Server –</span><span id="stPl"></span><span>Limiter −1 dB</span><span id="stXf"></span><span style="margin-left:auto">OAB Studio 1.0.1</span><span style="letter-spacing:1.5px">AD SOUND &amp; SERVICE</span></div>
 
 <div class="cs" id="chStrip" hidden role="dialog" aria-label="Microphone channel strip">
 <header class="csHead"><span class="csIcon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="2.5" width="6" height="11.5" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg></span>
@@ -1850,7 +1850,7 @@ const ACT = {
   options: () => openOptions(), lightSettings: async () => { await openOptions(); const q = $('#optLight'); if (q) q.scrollIntoView({ block: 'start' }); }, hotSettings: async () => { await openOptions(); const q = $('#optHot'); if (q) q.scrollIntoView({ block: 'start' }); }, streamQual: async () => { await openOptions(); const q = $('#sQual'); if (q) { q.scrollIntoView({ block: 'center' }); q.focus(); } }, crossfades: () => { renderFt(); openModal('mXf'); },
   hotkeys: () => { $('#miH').textContent = 'Hot keys'; $('#miBody').innerHTML = [['Space / Shift+Space', 'MIC 1 / MIC 2 (both when linked)'], ['Enter', 'Play selected'], ['Ctrl+E', 'Start / stop broadcasting'], ['1 … 0', 'Cart wall cells 1–10'], ['−', 'Stop all jingles'], ['Insert', 'Insert last library song after the playing track'], ['Num −', 'Add last library song to the end'], ['Delete', 'Remove selected'], ['Ctrl+↑ / Ctrl+↓', 'Move selected'], ['Ctrl+A / C / X / V', 'Select all / copy / cut / paste'], ['Ctrl+, / Ctrl+.', 'Seek −10 s / +10 s'], ['Ctrl+N / O / S / F / P', 'New / open / save / find / options'], ['Alt+click', 'Prelisten']].map(r => `<div style="display:flex;gap:12px"><span class="mono" style="min-width:170px;color:#8CC2FF">${r[0]}</span><span>${r[1]}</span></div>`).join(''); openModal('mInfo'); },
   help: () => { $('#miH').textContent = 'Guide'; $('#miBody').innerHTML = 'The full Hebrew guide is in <b>README-HE.txt</b> in the Radio folder.'; openModal('mInfo'); },
-  about: () => { $('#miH').textContent = 'OAB Studio 1.0.0'; $('#miBody').innerHTML = '<img src="/oab-logo.png" alt="" style="width:96px;height:96px;display:block;margin:0 auto 8px">OAB – On Air Broadcast · radio automation studio · version 1.0.0<br>Playlist engine, scheduler, generator, ads scheduler, voice tracking, announcements, reports, DSP, AUX players.<br>AD SOUND &amp; SERVICE'; openModal('mInfo'); },
+  about: () => { $('#miH').textContent = 'OAB Studio 1.0.1'; $('#miBody').innerHTML = '<img src="/oab-logo.png" alt="" style="width:96px;height:96px;display:block;margin:0 auto 8px">OAB – On Air Broadcast · radio automation studio · version 1.0.1<br>Playlist engine, scheduler, generator, ads scheduler, voice tracking, announcements, reports, DSP, AUX players.<br>AD SOUND &amp; SERVICE'; openModal('mInfo'); },
 };
 function doAct(a){ $$('.menubar .m').forEach(m => m.classList.remove('open')); if (ACT[a]) ACT[a](); }
 document.addEventListener('click', e => { const a = e.target.closest('[data-a]'); if (a && (a.closest('.dd') || a.closest('.tool') || a.closest('.transport'))) doAct(a.dataset.a); });

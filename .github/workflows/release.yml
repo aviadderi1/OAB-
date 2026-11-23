@@ -14,6 +14,9 @@ permissions:
 jobs:
   windows:
     runs-on: windows-latest
+    outputs:
+      ver: ${{ steps.v.outputs.ver }}
+      skip: ${{ steps.v.outputs.skip }}
     defaults:
       run:
         shell: bash
@@ -82,3 +85,49 @@ jobs:
           gh release create "v$V" "dist/OAB-Studio-Setup-$V.exe" dist/latest.yml \
             --title "OAB Studio $V" --notes "OAB Studio $V – download OAB-Studio-Setup-$V.exe and install. Installed copies update by themselves." \
             || gh release upload "v$V" "dist/OAB-Studio-Setup-$V.exe" dist/latest.yml --clobber
+
+  # macOS: two disk images (Apple Silicon + Intel), added to the same release
+  mac:
+    needs: windows
+    if: needs.windows.outputs.skip == '0'
+    runs-on: macos-14
+    defaults:
+      run:
+        working-directory: desktop
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install
+        run: npm ci
+      - name: Build the disk images
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: |
+          set -e
+          V=${{ needs.windows.outputs.ver }}
+          for ARCH in arm64 x64; do
+            PYA=$([ "$ARCH" = arm64 ] && echo aarch64 || echo x86_64)
+            rm -rf resources/python && mkdir -p resources
+            curl -sL -o py.tgz "https://github.com/astral-sh/python-build-standalone/releases/download/20241016/cpython-3.12.7+20241016-$PYA-apple-darwin-install_only.tar.gz"
+            tar -xzf py.tgz -C resources && rm py.tgz
+            ( cd resources/python && rm -rf include share lib/python3.12/test lib/python3.12/idlelib lib/python3.12/tkinter lib/python3.12/turtledemo lib/python3.12/ensurepip lib/python3.12/lib2to3 lib/python3.12/pydoc_data lib/tcl* lib/tk* lib/itcl* lib/thread* && find . -name "__pycache__" -type d -prune -exec rm -rf {} + )
+            npx electron-builder --mac --dir --$ARCH --publish never
+            if [ "$ARCH" = arm64 ]; then APP="dist/mac-arm64/OAB Studio.app"; else APP="dist/mac/OAB Studio.app"; fi
+            test -d "$APP"
+            echo "app: $APP"
+            # ad-hoc signature (no Apple developer account): every program inside, then the app
+            find "$APP/Contents/Resources/python" -type f \( -perm -u+x -o -name "*.dylib" -o -name "*.so" \) -exec codesign --force --sign - {} \; 2>/dev/null || true
+            codesign --force --deep --sign - "$APP"
+            rm -rf dmgsrc && mkdir dmgsrc && cp -R "$APP" dmgsrc/ && ln -s /Applications dmgsrc/Applications
+            hdiutil create -volname "OAB Studio $V" -srcfolder dmgsrc -ov -format UDZO "dist/OAB-Studio-$V-mac-$ARCH.dmg"
+            rm -rf dmgsrc
+          done
+          ls -la dist/*.dmg
+      - name: Add to the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          V=${{ needs.windows.outputs.ver }}
+          gh release upload "v$V" dist/OAB-Studio-$V-mac-arm64.dmg dist/OAB-Studio-$V-mac-x64.dmg --clobber -R "$GITHUB_REPOSITORY"
