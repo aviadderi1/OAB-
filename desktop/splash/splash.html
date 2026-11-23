@@ -4,8 +4,8 @@
 html,body{margin:0;height:100%;background:#000;overflow:hidden;user-select:none;-webkit-app-region:drag;font-family:Segoe UI,system-ui,sans-serif}
 .st{position:relative;width:100%;height:100%}
 .st img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
-#on{clip-path:inset(0.8% 100% 89.6% 72.6%)}
-#glow{position:absolute;left:76.5%;top:5.6%;width:26%;height:30%;transform:translate(-50%,-50%);background:radial-gradient(ellipse at center,rgba(255,60,40,.55),rgba(255,40,30,0) 65%);opacity:0;mix-blend-mode:screen;pointer-events:none}
+#on{-webkit-mask-image:conic-gradient(from 0deg at 24.71% 27.6%,#000 0deg,transparent 0deg);mask-image:conic-gradient(from 0deg at 24.71% 27.6%,#000 0deg,transparent 0deg)}
+#glow{position:absolute;left:24.71%;top:27.6%;width:42%;height:72%;transform:translate(-50%,-50%);background:radial-gradient(ellipse at center,rgba(90,160,255,.30),rgba(255,140,60,.12) 45%,rgba(0,0,0,0) 68%);opacity:0;mix-blend-mode:screen;pointer-events:none}
 .st.done #on{animation:flick .55s steps(1) 1}
 .st.done #glow{animation:pulse 1.6s ease-in-out infinite}
 @keyframes flick{0%{opacity:1}12%{opacity:.25}24%{opacity:1}36%{opacity:.4}48%,100%{opacity:1}}
@@ -18,12 +18,11 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden;user-select:none;
 <div class="bar"><span><b>OAB Studio</b> <span id="ver"></span> · AD SOUND &amp; SERVICE</span><span id="pct">Loading 0%</span></div>
 </div>
 <script>
-// the ON AIR sign lights up letter by letter with the loading progress
-const L = 72.6, R = 80.45;
+// the OAB sign on the wall lights up around the circle (clockwise) with the loading progress
 window.setP = p => {
   p = Math.max(0, Math.min(1, p));
-  const right = 100 - (L + p * (R - L));
-  document.getElementById('on').style.clipPath = `inset(0.8% ${right.toFixed(2)}% 89.6% 72.6%)`;
+  const a = (p * 360).toFixed(1) + 'deg', m = p >= 1 ? 'none' : `conic-gradient(from 0deg at 24.71% 27.6%,#000 ${a},transparent ${a})`;
+  const on = document.getElementById('on'); on.style.webkitMaskImage = m; on.style.maskImage = m;
   document.getElementById('glow').style.opacity = (p * 0.85).toFixed(2);
   document.getElementById('pct').textContent = p >= 1 ? 'ON AIR' : 'Loading ' + Math.round(p * 100) + '%';
   if (p >= 1) document.getElementById('st').classList.add('done');
