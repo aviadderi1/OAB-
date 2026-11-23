@@ -1596,18 +1596,8 @@ function setTheme(t){
   try { drawWaves(); } catch(e){}
 }
 $('#uiTheme').value = document.documentElement.classList.contains('light') ? 'light' : document.documentElement.classList.contains('glass') ? 'glass' : 'dark';
-// ---------------- studio (glass) look: mic rings sit on the two microphones of the studio photo ----------------
-const GLASS_IMG = { w: 1376, h: 768, mics: [[565, 355], [800, 360]], r: 60, sign: [1053, 42, 120, 62] };
-function placeGlass(){
-  if (!document.documentElement.classList.contains('glass')) return;
-  const W = window.innerWidth, H = window.innerHeight, sc = Math.max(W / GLASS_IMG.w, H / GLASS_IMG.h);
-  const ox = (W - GLASS_IMG.w * sc) / 2, oy = (H - GLASS_IMG.h * sc) / 2, d = Math.round(GLASS_IMG.r * 2 * sc);
-  ['#mic1', '#mic2'].forEach((id, i) => { const b = $(id); if (!b) return; const [x, y] = GLASS_IMG.mics[i];
-    b.style.setProperty('--mr', d + 'px'); b.style.setProperty('--mx', Math.round(ox + x * sc - d / 2) + 'px'); b.style.setProperty('--my', Math.round(oy + y * sc - d / 2) + 'px'); });
-  const g = $('#glassSign'), [sx, sy, sw, sh] = GLASS_IMG.sign;
-  if (g) Object.assign(g.style, { left: Math.round(ox + (sx - sw / 2 * 1.2) * sc) + 'px', top: Math.round(oy + (sy - sh / 2 * 1.2) * sc) + 'px', width: Math.round(sw * 1.2 * sc) + 'px', height: Math.round(sh * 1.2 * sc) + 'px' });
-}
-window.addEventListener('resize', placeGlass); placeGlass();
+// studio (glass) look: the mic rings and the ON AIR glow are placed in CSS (viewport units, same as the photo)
+function placeGlass(){}
 $('#uiTheme').onchange = () => setTheme($('#uiTheme').value);
 
 // remaining time on the playing row
