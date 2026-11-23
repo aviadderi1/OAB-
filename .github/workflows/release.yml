@@ -89,19 +89,28 @@ jobs:
   # macOS: two disk images (Apple Silicon + Intel), added to the same release
   mac:
     needs: windows
-    if: needs.windows.outputs.skip == '0'
-    runs-on: macos-14
+    runs-on: macos-latest
     defaults:
       run:
         working-directory: desktop
     steps:
       - uses: actions/checkout@v4
+      - name: Already built?
+        id: m
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          V=${{ needs.windows.outputs.ver }}
+          if gh release view "v$V" -R "$GITHUB_REPOSITORY" --json assets -q '.assets[].name' 2>/dev/null | grep -q 'mac-arm64.dmg'; then echo "skip=1" >> "$GITHUB_OUTPUT"; echo "mac images already in v$V"; else echo "skip=0" >> "$GITHUB_OUTPUT"; fi
       - uses: actions/setup-node@v4
+        if: steps.m.outputs.skip == '0'
         with:
           node-version: 20
       - name: Install
+        if: steps.m.outputs.skip == '0'
         run: npm ci
       - name: Build the disk images
+        if: steps.m.outputs.skip == '0'
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
         run: |
@@ -126,6 +135,7 @@ jobs:
           done
           ls -la dist/*.dmg
       - name: Add to the release
+        if: steps.m.outputs.skip == '0'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
