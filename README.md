@@ -19,6 +19,6 @@ python server/dev/assemble.py    # builds server/web/studio.html
 ## Releasing an update
 
 1. Raise the version in `desktop/package.json` (and `VERSION` in `server/server.py`).
-2. Commit, then push a tag: `git tag v1.2.3 && git push origin v1.2.3`.
-3. GitHub Actions builds `OAB-Studio-Setup-1.2.3.exe` and publishes the release.
+2. Commit and push to `main`.
+3. GitHub Actions sees the new version, builds `OAB-Studio-Setup-1.2.3.exe` and publishes the release.
    Installed copies of OAB Studio download it and offer to restart.

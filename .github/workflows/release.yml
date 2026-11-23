@@ -1,10 +1,11 @@
 name: Build and publish OAB Studio
 
-# Push a tag like v1.2.3 (or run it by hand) → builds OAB-Studio-Setup-x.y.z.exe on Windows
-# and publishes it as a GitHub release. Installed copies of OAB Studio update themselves from it.
+# Every push to main with a NEW version in desktop/package.json (or a run by hand) builds
+# OAB-Studio-Setup-x.y.z.exe on Windows and publishes it as release vx.y.z.
+# Installed copies of OAB Studio update themselves from the latest release.
 on:
   push:
-    tags: ['v*']
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -26,16 +27,19 @@ jobs:
 
       - name: Version
         id: v
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           VER=$(node -p "require('./package.json').version")
-          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then VER="${GITHUB_REF#refs/tags/v}"; npm pkg set version="$VER"; fi
           echo "ver=$VER" >> "$GITHUB_OUTPUT"
-          echo "Building $VER"
+          if gh release view "v$VER" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then echo "skip=1" >> "$GITHUB_OUTPUT"; echo "v$VER is already released – nothing to build"; else echo "skip=0" >> "$GITHUB_OUTPUT"; echo "Building $VER"; fi
 
       - name: Install
+        if: steps.v.outputs.skip == '0'
         run: npm ci
 
       - name: Python for the OAB server
+        if: steps.v.outputs.skip == '0'
         run: |
           curl -sL -o py.tgz "https://github.com/astral-sh/python-build-standalone/releases/download/20241016/cpython-3.12.7+20241016-x86_64-pc-windows-msvc-install_only.tar.gz"
           mkdir -p resources && tar -xzf py.tgz -C resources && rm py.tgz
@@ -45,15 +49,18 @@ jobs:
           find . -name "__pycache__" -type d -prune -exec rm -rf {} +
 
       - name: Package the app
+        if: steps.v.outputs.skip == '0'
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
         run: npx electron-builder --win --dir --x64 --publish never
 
       - name: Update settings
+        if: steps.v.outputs.skip == '0'
         run: |
           printf 'owner: aviadderi1\nrepo: OAB-\nprovider: github\nupdaterCacheDirName: oab-studio-updater\n' > "dist/win-unpacked/resources/app-update.yml"
 
       - name: Installer
+        if: steps.v.outputs.skip == '0'
         run: |
           "/c/Program Files (x86)/NSIS/makensis.exe" -V2 -DVERSION=${{ steps.v.outputs.ver }} installer.nsi
           node -e "
@@ -64,6 +71,7 @@ jobs:
               'version: ${{ steps.v.outputs.ver }}\nfiles:\n  - url: '+f+'\n    sha512: '+sha+'\n    size: '+b.length+'\npath: '+f+'\nsha512: '+sha+'\nreleaseDate: \''+new Date().toISOString()+'\'\n');"
 
       - name: Publish release
+        if: steps.v.outputs.skip == '0'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
