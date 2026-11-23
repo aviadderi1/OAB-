@@ -62,7 +62,10 @@ jobs:
       - name: Installer
         if: steps.v.outputs.skip == '0'
         run: |
-          "/c/Program Files (x86)/NSIS/makensis.exe" -V2 -DVERSION=${{ steps.v.outputs.ver }} installer.nsi
+          MK="/c/Program Files (x86)/NSIS/makensis.exe"
+          if [ ! -f "$MK" ]; then choco install nsis -y --no-progress >/dev/null; fi
+          if [ ! -f "$MK" ]; then MK="/c/Program Files/NSIS/makensis.exe"; fi
+          "$MK" -V2 -DVERSION=${{ steps.v.outputs.ver }} installer.nsi
           node -e "
             const fs=require('fs'),c=require('crypto');
             const f='OAB-Studio-Setup-${{ steps.v.outputs.ver }}.exe', b=fs.readFileSync('dist/'+f);
