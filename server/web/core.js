@@ -526,19 +526,23 @@ function updatePlayerUI(full){
 }
 
 // ---------------- selection, context menu, drag & drop, keys ----------------
+let plLastClick = {};
 $('#plBody').addEventListener('click', e => {
   const row = e.target.closest('.plr'); if (!row) return; const uid = row.dataset.uid; const f = findItem(uid); if (!f) return;
   const act = e.target.closest('[data-act]');
   if (act && act.dataset.act === 'del') { removeUids([uid]); return; }
   if (act && (act.dataset.act === 'up' || act.dataset.act === 'down')) { if (!PL.sel.has(uid)) PL.sel = new Set([uid]); moveSel(act.dataset.act); return; }
   if ((act && act.dataset.act === 'pfl') || e.altKey) { prelisten(f.item); return; }
+  const now = performance.now();
+  if (!act && !e.shiftKey && !e.ctrlKey && !e.metaKey && plLastClick.uid === uid && now - plLastClick.t < 450) { plLastClick = {}; PL.sel = new Set([uid]); PL.anchor = uid; if (ctx) playItem(f.item, { fadeOut: 1 }); renderPlaylist(); return; }
+  plLastClick = { uid, t: now };
   const items = viewTab().items;
   if (e.shiftKey && PL.anchor) { const a = items.findIndex(x => x.uid === PL.anchor), b = f.i; PL.sel = new Set(items.slice(Math.min(a, b), Math.max(a, b) + 1).map(x => x.uid)); }
   else if (e.ctrlKey || e.metaKey) { PL.sel.has(uid) ? PL.sel.delete(uid) : PL.sel.add(uid); PL.anchor = uid; }
   else { PL.sel = new Set([uid]); PL.anchor = uid; }
   renderPlaylist();
 });
-$('#plBody').addEventListener('dblclick', e => { const row = e.target.closest('.plr'); if (!row || e.target.closest('[data-act]')) return; const f = findItem(row.dataset.uid); if (f && ctx) playItem(f.item, { fadeOut: 1 }); });
+// double-click a row = play it now (detected here because a click re-draws the list, so the browser's dblclick never arrives)
 $('#plBody').addEventListener('contextmenu', e => {
   const row = e.target.closest('.plr'); if (!row) return; e.preventDefault(); const uid = row.dataset.uid; if (!PL.sel.has(uid)) { PL.sel = new Set([uid]); renderPlaylist(); }
   const f = findItem(uid); const it = f.item; const sel = [...PL.sel];
@@ -837,7 +841,7 @@ const ACT = {
   options: () => openOptions(), lightSettings: async () => { await openOptions(); const q = $('#optLight'); if (q) q.scrollIntoView({ block: 'start' }); }, hotSettings: async () => { await openOptions(); const q = $('#optHot'); if (q) q.scrollIntoView({ block: 'start' }); }, streamQual: async () => { await openOptions(); const q = $('#sQual'); if (q) { q.scrollIntoView({ block: 'center' }); q.focus(); } }, crossfades: () => { renderFt(); openModal('mXf'); },
   hotkeys: () => { $('#miH').textContent = 'Hot keys'; $('#miBody').innerHTML = [['Space / Shift+Space', 'MIC 1 / MIC 2 (both when linked)'], ['Enter', 'Play selected'], ['Ctrl+E', 'Start / stop broadcasting'], ['1 … 0', 'Cart wall cells 1–10'], ['−', 'Stop all jingles'], ['Insert', 'Insert last library song after the playing track'], ['Num −', 'Add last library song to the end'], ['Delete', 'Remove selected'], ['Ctrl+↑ / Ctrl+↓', 'Move selected'], ['Ctrl+A / C / X / V', 'Select all / copy / cut / paste'], ['Ctrl+, / Ctrl+.', 'Seek −10 s / +10 s'], ['Ctrl+N / O / S / F / P', 'New / open / save / find / options'], ['Alt+click', 'Prelisten']].map(r => `<div style="display:flex;gap:12px"><span class="mono" style="min-width:170px;color:#8CC2FF">${r[0]}</span><span>${r[1]}</span></div>`).join(''); openModal('mInfo'); },
   help: () => { $('#miH').textContent = 'Guide'; $('#miBody').innerHTML = 'The full Hebrew guide is in <b>README-HE.txt</b> in the Radio folder.'; openModal('mInfo'); },
-  about: () => { $('#miH').textContent = 'OAB Studio 1.3.4'; $('#miBody').innerHTML = '<img src="/oab-logo.png" alt="" style="width:96px;height:96px;display:block;margin:0 auto 8px">OAB – On Air Broadcast · radio automation studio · version 1.3.4<br>Playlist engine, scheduler, generator, ads scheduler, voice tracking, announcements, reports, DSP, AUX players.<br>AD SOUND &amp; SERVICE'; openModal('mInfo'); },
+  about: () => { $('#miH').textContent = 'OAB Studio 1.3.5'; $('#miBody').innerHTML = '<img src="/oab-logo.png" alt="" style="width:96px;height:96px;display:block;margin:0 auto 8px">OAB – On Air Broadcast · radio automation studio · version 1.3.5<br>Playlist engine, scheduler, generator, ads scheduler, voice tracking, announcements, reports, DSP, AUX players.<br>AD SOUND &amp; SERVICE'; openModal('mInfo'); },
 };
 function doAct(a){ $$('.menubar .m').forEach(m => m.classList.remove('open')); if (ACT[a]) ACT[a](); }
 document.addEventListener('click', e => { const a = e.target.closest('[data-a]'); if (a && (a.closest('.dd') || a.closest('.tool') || a.closest('.transport'))) doAct(a.dataset.a); });

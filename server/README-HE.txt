@@ -293,7 +293,6 @@ Options → LINE IN source → "A browser tab": לוחצים LINE IN ובוחר�
 33. חלון Options ותפריטים
 Options מחולק לקטגוריות בצד: General, Sound outputs, Microphones, LINE IN, Hot buttons, Studio light, Folders, Announcements, Online.
 תפריט Broadcast חדש: GO LIVE, הודעה למאזינים, לינק, מאזינים, מיקרופונים ו־LINE IN.
-ממשק בהיר: View → Light interface, או Options → General → Interface.
 
 34. תוכנה למחשב (OAB Studio.exe)
 מתקינים עם OAB-Studio-Setup. ההגדרות נשמרות ב־%APPDATA%\OAB.
@@ -307,6 +306,8 @@ Broadcast → All computer sound through OAB: כל עוד OAB פתוחה, כל �
 ברירת המחדל: תמונת האולפן ברקע, הפלייליסט בחלון זכוכית מימין.
 לוחצים על הטבעת סביב המיקרופון בתמונה כדי להדליק או לכבות אותו (נדלק בירוק). כשמשדרים, שלט ON AIR בתמונה זוהר.
 כפתור LINK (שני המיקרופונים יחד) נמצא בסרגל הכלים ליד השעון. פותחים עמודת Library או Requests – כפתורי המיקרופון עוברים לפינה השמאלית העליונה.
-להחלפה: View → Studio look (glass), או Options → General → Interface (Studio / Dark / Light).
+התוכנה עובדת רק במראה האולפן.
+החץ הקטן בקצה הימני של הסרגל העליון מסתיר אותו; החץ שנשאר למעלה באמצע מחזיר אותו.
+לחיצה כפולה על שיר בפלייליסט – השיר מתנגן מיד בנגן.
 במראה האולפן: התפריטים בסרגל העליון; הטבעת הירוקה של מיקרופון דלוק היא מד עוצמה (מתמלאת עם הקול). שלט OAB בתמונה מרצד כל כמה שניות.
 REC: Broadcast → Record on / off. חזרה / ערבוב / עצירה אחרי השיר: תפריט Playlist → PLAY. האזנה מקדימה מופיעה בפס התחתון כשהיא פועלת.

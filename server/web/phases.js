@@ -1592,11 +1592,15 @@ Object.assign(ACT, {
 // ---------------- light / dark interface ----------------
 function setTheme(t){
   const H = document.documentElement;
-  H.classList.toggle('light', t === 'light'); H.classList.toggle('glass', t === 'glass'); store.set('uiTheme', t);
+  t = 'glass'; H.classList.remove('light'); H.classList.add('glass');
   const sel = $('#uiTheme'); if (sel) sel.value = t; syncChecks(); placeGlass();
   try { drawWaves(); } catch(e){}
 }
-$('#uiTheme').value = document.documentElement.classList.contains('light') ? 'light' : document.documentElement.classList.contains('glass') ? 'glass' : 'dark';
+// the studio always runs in the glass look
+document.documentElement.classList.remove('light'); document.documentElement.classList.add('glass');
+// hide / show the top bar
+function setToolHidden(h){ document.documentElement.classList.toggle('toolHidden', h); store.set('toolHidden', h ? '1' : '0'); try { drawWaves(); } catch(e){} }
+$('#toolHide').onclick = () => setToolHidden(true); $('#toolShow').onclick = () => setToolHidden(false);
 // studio (glass) look: the mic rings and the ON AIR glow are placed in CSS (viewport units, same as the photo)
 function placeGlass(){
   const glass = document.documentElement.classList.contains('glass'), l = $('#micLink'), mb = $('#menubar'), tool = $('.tool');
@@ -1613,7 +1617,7 @@ setInterval(() => document.documentElement.classList.toggle('isPlay', !!(curDeck
   d.oninput = () => { p.value = d.value; p.oninput(); sync(); }; p.addEventListener('input', sync); sync(); setInterval(sync, 1000); })();
 // intro animation after the opening screen
 $('#startBtn').addEventListener('click', () => { const H = document.documentElement; if (!H.classList.contains('glass')) return; H.classList.add('glassIn'); setTimeout(() => H.classList.remove('glassIn'), 2200); });
-$('#uiTheme').onchange = () => setTheme($('#uiTheme').value);
+
 
 // remaining time on the playing row
 setInterval(() => { const r = document.querySelector('#plBody .plr.playing .pln'); if (!r || !curDeck || !curDeck.item) return; if (curDeck.item.uid !== r.closest('.plr').dataset.uid) return; r.textContent = '-' + fmtL(Math.max(0, itemDur(curDeck.item) - curDeck.audio.currentTime)); }, 500);
