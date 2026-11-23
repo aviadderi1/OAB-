@@ -1,0 +1,73 @@
+name: Build and publish OAB Studio
+
+# Push a tag like v1.2.3 (or run it by hand) → builds OAB-Studio-Setup-x.y.z.exe on Windows
+# and publishes it as a GitHub release. Installed copies of OAB Studio update themselves from it.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: desktop
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Version
+        id: v
+        run: |
+          VER=$(node -p "require('./package.json').version")
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then VER="${GITHUB_REF#refs/tags/v}"; npm pkg set version="$VER"; fi
+          echo "ver=$VER" >> "$GITHUB_OUTPUT"
+          echo "Building $VER"
+
+      - name: Install
+        run: npm ci
+
+      - name: Python for the OAB server
+        run: |
+          curl -sL -o py.tgz "https://github.com/astral-sh/python-build-standalone/releases/download/20241016/cpython-3.12.7+20241016-x86_64-pc-windows-msvc-install_only.tar.gz"
+          mkdir -p resources && tar -xzf py.tgz -C resources && rm py.tgz
+          cd resources/python
+          rm -rf Lib/test Lib/idlelib Lib/tkinter Lib/turtledemo tcl include Scripts libs Lib/ensurepip Lib/lib2to3 Lib/pydoc_data
+          find . -name "*.pdb" -delete
+          find . -name "__pycache__" -type d -prune -exec rm -rf {} +
+
+      - name: Package the app
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: npx electron-builder --win --dir --x64 --publish never
+
+      - name: Update settings
+        run: |
+          printf 'owner: aviadderi1\nrepo: OAB-\nprovider: github\nupdaterCacheDirName: oab-studio-updater\n' > "dist/win-unpacked/resources/app-update.yml"
+
+      - name: Installer
+        run: |
+          "/c/Program Files (x86)/NSIS/makensis.exe" -V2 -DVERSION=${{ steps.v.outputs.ver }} installer.nsi
+          node -e "
+            const fs=require('fs'),c=require('crypto');
+            const f='OAB-Studio-Setup-${{ steps.v.outputs.ver }}.exe', b=fs.readFileSync('dist/'+f);
+            const sha=c.createHash('sha512').update(b).digest('base64');
+            fs.writeFileSync('dist/latest.yml',
+              'version: ${{ steps.v.outputs.ver }}\nfiles:\n  - url: '+f+'\n    sha512: '+sha+'\n    size: '+b.length+'\npath: '+f+'\nsha512: '+sha+'\nreleaseDate: \''+new Date().toISOString()+'\'\n');"
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          V=${{ steps.v.outputs.ver }}
+          gh release create "v$V" "dist/OAB-Studio-Setup-$V.exe" dist/latest.yml \
+            --title "OAB Studio $V" --notes "OAB Studio $V – download OAB-Studio-Setup-$V.exe and install. Installed copies update by themselves." \
+            || gh release upload "v$V" "dist/OAB-Studio-Setup-$V.exe" dist/latest.yml --clobber

@@ -1,0 +1,12 @@
+node_modules/
+desktop/dist/
+desktop/resources/
+**/__pycache__/
+server/config.json
+server/playlists.json
+server/data/
+server/recordings/
+server/yt-dlp*
+server/deno*
+server/cloudflared*
+server/ffmpeg*

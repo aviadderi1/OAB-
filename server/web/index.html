@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>מחכים לכם, האזינו לשידור · OAB</title>
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon.png?v=3"><link rel="icon" type="image/x-icon" href="/oab.ico?v=3">
+<meta name="description" content="OAB · On Air Broadcast · שידור חי – לחצו כדי להאזין">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="OAB · On Air Broadcast">
+<meta property="og:title" content="מחכים לכם, האזינו לשידור">
+<meta property="og:description" content="OAB · On Air Broadcast · שידור חי – לחצו כדי להאזין">
+<meta property="og:url" content="{{BASE}}/listen">
+<meta property="og:image" content="{{BASE}}/share.jpg?v=2">
+<meta property="og:image:secure_url" content="{{BASE}}/share.jpg?v=2">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="מחכים לכם, האזינו לשידור">
+<meta property="og:locale" content="he_IL">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0D0E11">
+
+<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png?v=3">
+<link rel="manifest" href="/player.webmanifest?v=3">
+
+<link rel="apple-touch-icon" href="/apple-touch-icon.png?v=3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root{--acc:#2D8CEB;--bg:#0D0E11;--panel:#15171C;--line:#23262E;--line2:#2A2E37;--txt:#E8EAEF;--sub:#9097A6}
+*{box-sizing:border-box}
+html,body{margin:0;overflow-x:hidden;background:var(--bg);color:var(--txt);font-family:Heebo,system-ui,sans-serif}
+button{font-family:inherit;cursor:pointer;color:var(--txt)}
+.wrap{max-width:440px;margin:0 auto;padding:20px 20px 28px;display:flex;flex-direction:column;gap:16px;min-height:100vh}
+.top{display:flex;align-items:center;justify-content:space-between}
+.logo{width:30px;height:30px;border-radius:8px;background:var(--acc);display:flex;align-items:center;justify-content:center}
+@keyframes blink{50%{opacity:.35}}
+.live{display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:99px;font-size:13px;font-weight:700;background:#1B1E24;border:1px solid var(--line2);color:var(--sub)}
+.live i{width:7px;height:7px;border-radius:50%;background:#5B6170}
+.live.on{background:#3A1416;border-color:#7A2A2E;color:#FFD7D7}.live.on i{background:#FF5A5A;animation:blink 1.4s infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.deck{position:relative;width:min(100%,380px);aspect-ratio:1;margin:6vh auto 2vh;border-radius:50%;overflow:hidden;box-shadow:0 0 0 2px #1E2026,0 18px 40px rgba(0,0,0,.55)}
+.record{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at center,transparent 0 34%,#0B0B0D 34.5% 36%,transparent 36.5%),repeating-radial-gradient(circle at center,#101114 0 1.4px,#1A1B1F 1.6px 2.6px,#0E0F12 2.8px 3.6px),#0E0F12;animation:spin 2.2s linear infinite;animation-play-state:paused}
+.record.run{animation-play-state:running}
+.shine{position:absolute;inset:0;border-radius:50%;pointer-events:none;background:conic-gradient(from 20deg,transparent 0 8%,rgba(255,255,255,.07) 12%,transparent 18% 50%,rgba(255,255,255,.06) 62%,transparent 68%)}
+.label{position:absolute;left:31%;top:31%;width:38%;height:38%;border-radius:50%;background:#2A2E37 center/cover;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 3px #0B0B0D}
+.label .ini{font-size:22px;font-weight:800;color:#fff;letter-spacing:1px}
+.label::after{content:"";position:absolute;width:9%;height:9%;border-radius:50%;background:#0D0E11;box-shadow:0 0 0 2px #C9CCD3}
+.bars{display:flex;align-items:flex-end;gap:3px;height:36px;direction:ltr}
+.bars span{flex:1;border-radius:2px;background:var(--acc);height:8%;transition:height .08s}
+.ctrl{display:flex;align-items:center;gap:16px}
+.pp{width:72px;height:72px;border-radius:50%;border:0;background:var(--acc);display:flex;align-items:center;justify-content:center;flex:none}
+input[type=range]{flex:1;accent-color:var(--acc);direction:ltr}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.gate{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(8,9,11,.86);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.gate.hide{display:none}
+.msgOv{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;padding:22px;background:rgba(6,8,12,.72);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}.msgOv.on{display:flex;animation:msgIn .25s ease-out}
+.msgCard{width:min(380px,100%);background:var(--panel);border:1px solid var(--line2);border-radius:22px;padding:24px 22px 18px;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,.6)}
+.msgIco{width:58px;height:58px;margin:0 auto 10px;border-radius:50%;background:rgba(45,140,235,.14);color:#8CC2FF;display:flex;align-items:center;justify-content:center}
+.msgH{font-size:13px;font-weight:700;color:#8CC2FF;letter-spacing:.02em}.msgT{font-size:20px;font-weight:700;line-height:1.45;margin:8px 0 6px;white-space:pre-wrap;word-break:break-word}.msgTime{font-size:12px;color:var(--sub);margin-bottom:16px}
+.msgBtn{width:100%;height:48px;border:0;border-radius:14px;background:var(--acc);color:#fff;font-family:inherit;font-size:16px;font-weight:700;cursor:pointer}
+@keyframes msgIn{from{opacity:0;transform:scale(.96)}}
+.gcard{width:min(380px,100%);background:var(--panel);border:1px solid var(--line2);border-radius:20px;padding:26px 22px 22px;display:flex;flex-direction:column;gap:12px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.glogo{width:64px;height:64px;border-radius:18px;margin:0 auto 4px;background:linear-gradient(135deg,#2D8CEB,#1B5FB0);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(45,140,235,.35)}
+.glogoImg{width:150px;height:150px;margin:-6px auto 0;display:block;filter:drop-shadow(0 10px 28px rgba(0,0,0,.55))}
+.gh{margin:0;font-size:22px;font-weight:800}.gp{margin:0 0 4px;color:var(--sub);font-size:15px}
+.gcard .inp{text-align:center;font-size:17px;height:50px}
+.gbtn{height:52px!important;background:var(--acc)!important;border-color:var(--acc)!important;color:#fff;font-size:17px!important}
+.gerr{color:#FF8A8A;font-size:14px;min-height:0}.gerr:empty{display:none}
+.btn{height:46px;border-radius:12px;border:1px solid var(--line2);background:var(--panel);font-size:15px;font-weight:700}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:12px}
+.req{display:none;gap:8px;border-color:var(--acc)}.req.open{display:flex;flex-direction:column}
+.inp{height:44px;border-radius:10px;border:1px solid var(--line2);background:#0F1115;color:var(--txt);padding:0 12px;font-family:inherit;font-size:15px;outline:none}
+.inp:focus{border-color:var(--acc)}
+.it{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #20232A}.it:last-child{border-bottom:0}
+.art{width:40px;height:40px;border-radius:9px;flex:none;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#fff;background:#2A2E37 center/cover}
+.sub{color:var(--sub)}
+.mono{font-family:'JetBrains Mono',monospace}
+.foot{text-align:center;font-size:12px;color:#6B7080;margin-top:auto}
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1B1E24;border:1px solid var(--line2);padding:10px 16px;border-radius:10px;display:none}
+.cd{display:flex;align-items:center;justify-content:center;gap:12px;padding:10px 16px;border-radius:14px;background:#13233A;border:1px solid #24466E;color:#CFE3FB;font-size:16px;font-weight:700;transition:opacity .5s,max-height .5s;max-height:80px;overflow:hidden}
+.cd .cdn{width:40px;height:40px;border-radius:50%;background:var(--acc);color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;flex:none}
+.cd.hide{opacity:0;max-height:0;padding:0 16px;border-width:0;margin-top:-16px}
+</style>
+</head>
+<body>
+<div class="msgOv" id="msgOv" role="dialog" aria-modal="true" aria-labelledby="msgH"><div class="msgCard">
+<div class="msgIco"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="m3.5 6.5 8.5 6 8.5-6"/></svg></div>
+<div class="msgH" id="msgH">הודעה מהשידור · OAB</div>
+<div class="msgT" id="msgT"></div><div class="msgTime" id="msgTime"></div>
+<button class="msgBtn" id="msgOk" type="button">סגור</button></div></div>
+<div class="gate" id="gate"><form class="gcard" id="gForm" novalidate>
+<img class="glogoImg" src="/oab-logo.png" alt="OAB – On Air Broadcast">
+<h1 class="gh" id="gTitle">ברוכים הבאים ל-OAB</h1>
+<p class="gp">כדי להתחיל להאזין, כתבו את השם שלכם</p>
+<label for="gName" style="position:absolute;width:1px;height:1px;overflow:hidden">השם שלך</label>
+<input class="inp" id="gName" placeholder="השם שלך" maxlength="30" autocomplete="name" enterkeyhint="go">
+<div class="gerr" id="gErr"></div>
+<button class="btn gbtn" type="submit">▶ התחילו להאזין</button>
+</form></div>
+<div class="wrap">
+<div class="top">
+<div style="display:flex;align-items:center;gap:8px"><img src="/oab-logo.png" alt="OAB" style="width:40px;height:40px;display:block;filter:drop-shadow(0 2px 6px rgba(0,0,0,.5))"><span style="font-weight:800;letter-spacing:1.5px" id="station">OAB</span></div>
+<div class="live" id="live"><i></i><span id="liveT">מתחבר…</span></div>
+</div>
+
+<div class="deck"><div class="record" id="record"><div class="label" id="cover"><span class="ini" id="ini">♪</span></div></div><div class="shine"></div></div>
+
+<div class="cd" id="cd" role="status" aria-live="polite"><span class="cdn mono" id="cdN">5</span><span class="cdt" id="cdT">השידור יתחיל בעוד כ-5 שניות</span></div>
+<div class="bars" id="bars"></div>
+
+<div style="display:flex;align-items:center;gap:10px">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9097A6" stroke-width="2" stroke-linecap="round"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg>
+<label for="vol" style="position:absolute;width:1px;height:1px;overflow:hidden">עוצמה</label>
+<input id="vol" type="range" min="0" max="1" step="0.01" value="0.8">
+</div>
+
+<div class="two"><button class="btn" id="reqBtn">בקשת שיר</button><button class="btn" id="share">שיתוף</button></div>
+
+<div class="card req" id="req">
+<label for="rqSong" style="position:absolute;width:1px;height:1px;overflow:hidden">שם השיר</label>
+<input class="inp" id="rqSong" placeholder="איזה שיר לשים?">
+<label for="rqName" style="position:absolute;width:1px;height:1px;overflow:hidden">השם שלך</label>
+<input class="inp" id="rqName" placeholder="השם שלך (חובה)" required maxlength="40">
+<button class="btn" id="rqSend" style="background:var(--acc);border-color:var(--acc);color:#fff">שליחה לשדר</button>
+</div>
+<div class="foot">AD SOUND &amp; SERVICE</div>
+</div>
+<div id="toast"></div>
+<audio id="au" preload="none"></audio>
+<script>
+const $ = s => document.querySelector(s);
+const COLORS = ['#7C3AED','#0E7490','#9D174D','#B45309','#15803D','#1D4ED8','#BE185D','#4338CA'];
+const colorFor = s => { let h=0; for (const c of String(s)) h=(h*31+c.charCodeAt(0))|0; return COLORS[Math.abs(h)%COLORS.length]; };
+const initials = s => String(s||'').split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase() || '♪';
+function toast(t){ const e=$('#toast'); e.textContent=t; e.style.display='block'; clearTimeout(toast.t); toast.t=setTimeout(()=>e.style.display='none',2800); }
+const au = $('#au'); let ac, an, data;
+$('#bars').innerHTML = '<span></span>'.repeat(40);
+const bars = [...document.querySelectorAll('#bars span')];
+// ---- countdown: "the broadcast will start in about 5 seconds" (hidden as soon as the sound arrives) ----
+let listenerName = '';
+let revealed = false, cdLeft = 5, isBlocked = false, wantPlay = false, starting = false, lastMove = Date.now();
+au.volume = 0;
+$('#vol').oninput = e => { if (revealed) au.volume = +e.target.value; };
+function reveal(){
+  if (revealed) return; revealed = true; clearInterval(cdTimer);
+  const target = +$('#vol').value, t0 = performance.now();
+  (function fade(){ const k = Math.min(1, (performance.now() - t0) / 700); au.volume = target * k; if (k < 1) requestAnimationFrame(fade); })();
+  $('#cd').classList.add('hide');
+}
+let cdTimer = null;
+function startCountdown(){ if (cdTimer || revealed || isBlocked) return; cdTimer = setInterval(() => {
+  if (revealed || isBlocked) { clearInterval(cdTimer); return; }
+  cdLeft--;
+  if (cdLeft > 0) { $('#cdN').textContent = cdLeft; $('#cdT').textContent = cdLeft === 1 ? 'השידור יתחיל בעוד שנייה' : 'השידור יתחיל בעוד כ-' + cdLeft + ' שניות'; return; }
+  clearInterval(cdTimer); $('#cdN').textContent = '…'; $('#cdT').textContent = 'מתחבר לשידור';
+}, 1000); }
+
+au.addEventListener('timeupdate', () => { lastMove = Date.now(); if (!revealed && au.currentTime > 0.3) reveal(); });
+
+// only when the phone's browser blocks every kind of automatic sound (battery saver etc.)
+function blocked(){ isBlocked = true; clearInterval(cdTimer); $('#cd').classList.remove('hide'); $('#cdN').textContent = '▶'; $('#cdT').textContent = 'הדפדפן חוסם צליל אוטומטי – נגיעה במסך מפעילה את השידור'; }
+
+// Auto start: try with sound; if the browser does not allow it, start muted and turn the sound on at the first touch.
+function start(){
+  if (!listenerName) return Promise.resolve();
+  if (starting) return Promise.resolve(); starting = true; wantPlay = true;
+  const wasMuted = au.muted && playing;
+  au.src = '/live.mp3?name=' + encodeURIComponent(listenerName) + '&t=' + Date.now(); au.muted = wasMuted; lastMove = Date.now();
+  const ok = () => { playing = true; isBlocked = false; $('#record').classList.add('run'); if (!au.muted) setupViz(); };
+  return au.play().then(ok).catch(e => {
+      if (e && e.name !== 'NotAllowedError') { playing = false; return; }          // network: the watchdog retries
+      au.muted = true;
+      return au.play().then(ok).catch(e2 => { playing = false; if (e2 && e2.name === 'NotAllowedError') blocked(); });
+    }).finally(() => { starting = false; });
+}
+function unlock(){
+  if (starting || !listenerName) return;
+  if (playing && au.muted) { au.muted = false; au.play().catch(() => {}); setupViz(); return; }
+  if (!playing || au.paused) { isBlocked = false; $('#cdN').textContent = '…'; $('#cdT').textContent = 'מתחבר לשידור'; start(); }
+}
+['pointerdown', 'touchstart', 'keydown', 'click'].forEach(ev => document.addEventListener(ev, unlock, { passive: true }));
+// keep the connection alive: reconnect by itself after a network drop or a server restart
+['error', 'ended'].forEach(ev => au.addEventListener(ev, () => { lastMove = 0; }));
+setInterval(() => { if (wantPlay && !starting && !isBlocked && (au.paused || Date.now() - lastMove > 6000)) start(); }, 2000);
+window.addEventListener('online', () => { if (!isBlocked) start(); });
+document.addEventListener('visibilitychange', () => { if (!document.hidden && wantPlay && !isBlocked && Date.now() - lastMove > 4000) start(); });
+let playing = false;
+// listeners must write their name first (it is shown in the studio)
+try { $('#gName').value = localStorage.getItem('rqName') || ''; } catch(e){}
+$('#gForm').addEventListener('submit', e => {
+  e.preventDefault(); const n = $('#gName').value.trim().replace(/\s+/g, ' ');
+  if (n.length < 2) { $('#gErr').textContent = 'כתבו את השם שלכם כדי להתחיל'; $('#gName').focus(); return; }
+  listenerName = n; try { localStorage.setItem('rqName', n); } catch(er){}
+  $('#rqName').value = n; $('#gate').classList.add('hide');
+  startCountdown(); start();
+  if (pendingMsg) setTimeout(() => showMsg(pendingMsg), 600);
+});
+setTimeout(() => { if (!listenerName) $('#gName').focus(); }, 300);
+$('#msgOk').onclick = () => $('#msgOv').classList.remove('on');
+$('#msgOv').onclick = e => { if (e.target.id === 'msgOv') $('#msgOv').classList.remove('on'); };
+
+function setupViz(){
+  if (ac) { ac.resume(); return; }
+  try { const test = new (window.AudioContext||window.webkitAudioContext)();
+    if (test.state !== 'running') { test.close(); return; }   // never route sound through a blocked audio engine
+    ac = test; const src = ac.createMediaElementSource(au); an = ac.createAnalyser(); an.fftSize = 128; src.connect(an); an.connect(ac.destination); data = new Uint8Array(an.frequencyBinCount); } catch(e){ an = null; }
+}
+(function viz(){
+  if (an && playing) { an.getByteFrequencyData(data); bars.forEach((b,i) => b.style.height = Math.max(6, data[i+2] / 255 * 100) + '%'); }
+  else bars.forEach(b => b.style.height = '8%');
+  requestAnimationFrame(viz);
+})();
+
+let pendingMsg = null;
+function lastMsgId(){ try { return localStorage.getItem('oabMsg') || ''; } catch(e){ return ''; } }
+function showMsg(m){
+  if (!m || !m.text || String(m.id) === lastMsgId()) return;
+  if (!listenerName) { pendingMsg = m; return; }
+  pendingMsg = null; try { localStorage.setItem('oabMsg', String(m.id)); } catch(e){}
+  const F = ['Heebo', 'Rubik', 'Assistant', 'Varela Round', 'Secular One', 'Suez One', 'Frank Ruhl Libre', 'David Libre', 'Alef', 'Amatic SC', 'Karantina', 'Bellefair'], f = F.includes(m.font) ? m.font : 'Heebo';
+  if (!document.querySelector('link[data-f]')) { const l = document.createElement('link'); l.rel = 'stylesheet'; l.dataset.f = '1'; l.href = '/fonts/fonts.css'; document.head.appendChild(l); }
+  $('#msgT').style.fontFamily = `'${f}', Heebo, system-ui, sans-serif`;
+  $('#msgT').textContent = m.text; $('#msgTime').textContent = m.time ? 'נשלחה ב־' + m.time : '';
+  $('#msgOv').classList.add('on'); try { navigator.vibrate && navigator.vibrate([120, 60, 120]); } catch(e){}
+  setTimeout(() => $('#msgOk').focus(), 50);
+}
+async function poll(){
+  try {
+    const s = await (await fetch('/api/status', { cache: 'no-store' })).json();
+    showMsg(s.msg);
+    $('#live').classList.toggle('on', s.onAir);
+    $('#liveT').textContent = s.onAir ? 'בשידור חי' : 'לא בשידור';
+    const ad = s.title === 'Commercial break';
+    const c = $('#cover');
+    if (s.image && !ad) { c.style.backgroundImage = `url('${s.image}')`; $('#ini').textContent = ''; }
+    else { c.style.backgroundImage = ''; c.style.backgroundColor = '#0B1424'; c.style.backgroundImage = "url('/oab-logo.png')"; c.style.backgroundSize = '92%'; c.style.backgroundPosition = 'center'; c.style.backgroundRepeat = 'no-repeat'; $('#ini').textContent = ''; }
+    if ('mediaSession' in navigator) navigator.mediaSession.metadata = new MediaMetadata({ title: 'OAB · שידור חי', artist: '', artwork: [{ src: '/icon-512.png', sizes: '512x512', type: 'image/png' }] });
+  } catch(e) { $('#liveT').textContent = 'אין חיבור'; }
+}
+setInterval(poll, 4000); poll();
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+
+try { $('#rqName').value = localStorage.getItem('rqName') || ''; } catch(e){}
+$('#reqBtn').onclick = () => { $('#req').classList.toggle('open'); $('#rqSong').focus(); };
+$('#rqSend').onclick = async () => {
+  const song = $('#rqSong').value.trim(), who = $('#rqName').value.trim();
+  if (!song) { toast('כתבו את שם השיר'); $('#rqSong').focus(); return; }
+  if (!who) { toast('כתבו את השם שלכם'); $('#rqName').focus(); return; }
+  try { localStorage.setItem('rqName', who); } catch(e){}
+  try { const r = await fetch('/api/request', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ song, name: who }) });
+    if (r.ok) { toast('הבקשה נשלחה לשדר'); $('#rqSong').value = ''; $('#req').classList.remove('open'); } else toast('לא נשלח, נסו שוב'); } catch(e){ toast('אין חיבור לשרת'); }
+};
+$('#share').onclick = async () => {
+  const url = location.origin + '/listen';
+  if (navigator.share) { try { await navigator.share({ title: 'OAB · שידור חי', text: 'מחכים לכם, האזינו לשידור:', url }); } catch(e){} }
+  else { try { await navigator.clipboard.writeText(url); toast('הקישור הועתק'); } catch(e){ toast(url); } }
+};
+</script>
+</body>
+</html>

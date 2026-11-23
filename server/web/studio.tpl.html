@@ -1,0 +1,648 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OAB Studio · On Air Broadcast</title>
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon.png?v=3"><link rel="icon" type="image/x-icon" href="/oab.ico?v=3">
+<script>if (location.hostname === "localhost") location.replace(location.href.replace("//localhost", "//127.0.0.1"));</script>
+<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png?v=3"><link rel="manifest" href="/studio.webmanifest"><link rel="apple-touch-icon" href="/apple-touch-icon.png?v=3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="/lib/lame.min.js"></script>
+<script src="/lib/jsmediatags.min.js"></script>
+<script>try{if(localStorage.getItem('uiTheme')==='light')document.documentElement.classList.add('light')}catch(e){}</script>
+<style>
+:root{--bg:#0D0E11;--bar:#111317;--panel:#15171C;--panel2:#1B1E24;--inset:#0F1115;--line:#23262E;--line2:#2A2E37;--txt:#E8EAEF;--sub:#9097A6;--acc:#2D8CEB;--red:#F04444;--amber:#F5A524;--green:#22C55E;--mono:'JetBrains Mono',ui-monospace,monospace}
+*{box-sizing:border-box;scrollbar-width:none}*::-webkit-scrollbar{display:none}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--txt);font:12.5px Inter,system-ui,sans-serif}
+body{display:flex;flex-direction:column}
+button{font-family:inherit;cursor:pointer;color:var(--txt)}
+input,select,textarea{font-family:inherit}
+.mono{font-family:var(--mono)}.sub{color:var(--sub)}.ell{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lbl{font-size:11px;font-weight:600;letter-spacing:1.1px;color:var(--sub)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px}
+.btn{border:1px solid var(--line2);background:var(--panel2);border-radius:7px;padding:6px 11px;font-size:11.5px;font-weight:600;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn:hover{border-color:#3A3F4A;background:#20242B}
+.btn.pri{background:var(--acc);border-color:var(--acc);color:#fff}
+.btn.sm{padding:3px 8px;font-size:11px;border-radius:6px}
+.inp{height:30px;border-radius:7px;border:1px solid var(--line2);background:var(--inset);color:var(--txt);padding:0 9px;font-size:12.5px;outline:none;width:100%}
+.inp:focus{border-color:var(--acc)}
+select.inp{padding:0 6px}
+.dot{width:7px;height:7px;border-radius:50%;display:inline-block;background:var(--green)}
+@keyframes spin{to{transform:rotate(360deg)}}@keyframes onair{0%,100%{border-color:#22C55E;box-shadow:0 0 0 1px #22C55E,0 0 14px rgba(34,197,94,.45)}50%{border-color:#14532D;box-shadow:0 0 0 1px rgba(34,197,94,.25),0 0 2px rgba(34,197,94,.1)}}@keyframes blink{50%{opacity:.35}}@keyframes popIn{from{opacity:0;transform:translateX(20px)}}
+/* menu */
+.menubar{display:flex;align-items:center;gap:2px;height:28px;padding:0 8px;background:#0B0C0F;border-bottom:1px solid var(--line);flex:none;position:relative;z-index:40}
+.menubar>.m{position:relative}
+.menubar>.m>span{display:block;padding:4px 9px;border-radius:5px;color:#C9CDD6;cursor:default}
+.menubar>.m:hover>span,.menubar>.m.open>span{background:#1B1E24}
+.dd{position:absolute;left:0;top:26px;min-width:230px;background:#1B1E24;border:1px solid var(--line2);border-radius:9px;padding:5px;display:none;box-shadow:0 12px 30px rgba(0,0,0,.5)}
+.m.open .dd{display:block}
+.dd div{padding:6px 10px;border-radius:6px;display:flex;justify-content:space-between;gap:20px;cursor:pointer;white-space:nowrap}
+.dd div:hover{background:#262A33}.dd div kbd{font:11px var(--mono);color:var(--sub)}
+.dd hr{border:0;border-top:1px solid var(--line2);margin:4px 2px}
+.dd div[data-a]{padding-left:28px}.dd div.dd2 div[data-a]{padding-left:28px}.dd div.dd2:hover{background:var(--panel2)}
+.dd div.grp{font-size:10px;font-weight:700;letter-spacing:.09em;color:var(--sub);cursor:default;padding:6px 10px 2px}.dd div.grp:hover{background:none}
+.dd div.subm{position:relative;padding-left:28px}.dd div.subm>b{color:var(--sub);font-weight:400}
+.dd div.dd2{display:none;position:absolute;left:calc(100% + 4px);top:-6px;min-width:200px;flex-direction:column;gap:0;background:var(--panel2);border:1px solid var(--line2);border-radius:9px;padding:5px;box-shadow:0 12px 30px rgba(0,0,0,.35);cursor:default}
+.dd div.subm:hover>div.dd2{display:block}
+.dd div.chk{position:relative;padding-left:28px!important;justify-content:flex-start!important;text-align:left}.dd div.chk::before{content:"✓";position:absolute;left:10px;color:var(--acc);visibility:hidden}.dd div.chk.on::before{visibility:visible}
+/* toolbar */
+.tool{display:flex;align-items:center;gap:5px;height:44px;padding:0 10px;background:var(--bar);border-bottom:1px solid var(--line);flex:none}
+.tb{width:32px;height:32px;border-radius:7px;display:flex;align-items:center;justify-content:center;color:#C9CDD6;border:1px solid transparent;background:transparent;padding:0}
+.tb:hover{background:#1B1E24;border-color:var(--line2)}
+.sep{width:1px;height:24px;background:var(--line2);margin:0 4px;flex:none}
+.onair{display:flex;align-items:center;justify-content:center;width:34px;height:34px;color:#5B6170}
+.onair.live{color:#22C55E;filter:drop-shadow(0 0 5px rgba(34,197,94,.65))}.onair.live .w1{animation:airW 1.4s ease-in-out infinite}.onair.live .w2{animation:airW 1.4s ease-in-out .35s infinite}
+@keyframes airW{0%,100%{opacity:1}50%{opacity:.15}}
+#rec i{width:9px;height:9px;border-radius:50%;background:#FF5A5A;display:inline-block}#rec.on{background:#3A1416;border-color:#7A2A2E}#rec.on i{animation:blink 1s infinite}
+#golive.live{background:#B42318;border-color:#B42318}
+/* player */
+.player{display:grid;grid-template-columns:minmax(0,1fr) clamp(300px,21%,360px);grid-template-rows:auto auto;gap:10px;padding:10px 10px 0;flex:none}
+.vinyl{border-radius:50%;flex:none;background:repeating-radial-gradient(circle at center,#0A0B0D 0 2px,#14161A 2px 3px);box-shadow:0 0 0 1px var(--line2);display:flex;align-items:center;justify-content:center;animation:spin 1.8s linear infinite;animation-play-state:paused}
+.vinyl.run{animation-play-state:running}
+@keyframes nextBlink{0%,100%{opacity:1}50%{opacity:.25}}
+.nextIn{flex:0 1 auto;min-width:0;display:none;align-items:center;gap:6px;margin-left:6px;padding:2px 9px;border-radius:11px;border:1px solid #2D5C94;background:#13233A;color:#8CC2FF;font-size:11.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;animation:nextBlink 1.1s ease-in-out infinite}.nextIn.on{display:inline-block}.nextIn b{color:#E8EAEF}
+.lisTop{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 11px;border-radius:15px;border:1px solid var(--line2);background:var(--panel2);color:var(--sub);font-size:11.5px;font-weight:600;white-space:nowrap}.lisTop b{font-size:15px;color:var(--txt)}.lisTop.live{border-color:#1F5A43;background:#0F2219;color:#7FE0B5}.lisTop.live b{color:#B8F5D5}
+.audPop{position:fixed;z-index:75;display:none;width:300px;max-height:60vh;overflow:auto;padding:12px;background:var(--panel);border:1px solid var(--line2);border-radius:12px;box-shadow:0 14px 40px rgba(0,0,0,.55)}.audPop.on{display:block}
+.aud{display:flex;align-items:center;gap:9px;padding:6px 2px;border-bottom:1px solid #20232A}.aud:last-child{border-bottom:0}.aud .av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;flex:none}
+.clockWin{position:fixed;z-index:80;display:flex;flex-direction:column;min-width:170px;min-height:200px;background:#0B0C0F;border:1px solid var(--line2);border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.6);overflow:hidden}
+.clockWin[hidden]{display:none}
+.cwBar{display:flex;align-items:center;gap:8px;padding:6px 8px 6px 12px;background:var(--panel);border-bottom:1px solid var(--line);cursor:move;user-select:none;flex:none}
+#cwCanvas{flex:1;min-height:0;width:100%;display:block}
+.cwGrip{position:absolute;right:0;bottom:0;width:18px;height:18px;cursor:nwse-resize;background:linear-gradient(135deg,transparent 50%,#4A505B 50%,#4A505B 58%,transparent 58%,transparent 70%,#4A505B 70%,#4A505B 78%,transparent 78%)}
+.ledbar{grid-column:1;grid-row:2;display:flex;align-items:center;gap:8px;margin:0;padding:5px 10px;background:#0B0C0F;border:1px solid var(--line);border-radius:9px;flex:none}
+#ledM{flex:1;min-width:0;height:34px;display:block}
+.vu{width:100%;height:100%;min-height:60px;display:block;min-width:0}
+.micpop{position:absolute;right:0;top:calc(100% + 6px);width:330px;z-index:70;display:none;flex-direction:column;gap:8px;padding:12px;background:var(--panel);border:1px solid var(--line2);border-radius:10px;box-shadow:0 14px 40px rgba(0,0,0,.55)}
+.micpop.on{display:flex}
+.lab{border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;position:relative;box-shadow:0 0 0 3px #0A0B0D;background:#2A2E37 center/cover}
+.lab::after{content:"";position:absolute;width:7px;height:7px;border-radius:50%;background:#0A0B0D;top:calc(50% - 3.5px);left:calc(50% - 3.5px)}
+.lab::before{content:"";position:absolute;top:4px;left:calc(50% - 1px);width:2px;height:9px;border-radius:1px;background:#fff}
+.reqX{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:22px;height:22px;border:0;border-radius:50%;background:none;color:#7A808C;font-size:12px;line-height:22px;cursor:pointer;padding:0}.reqX:hover{background:#262A32;color:#C9CED6}
+.main.noReq{grid-template-columns:clamp(240px,17%,310px) minmax(0,1fr)}.main.noReq #reqAside{display:none}
+.main.noLib{grid-template-columns:minmax(0,1fr) clamp(300px,21%,360px)}.main.noLib.noReq{grid-template-columns:minmax(0,1fr)}.main.noLib #libCol{display:none}
+.reqX.libX{right:auto;left:6px}
+.msgBtn{width:38px;padding:0!important;display:inline-flex;align-items:center;justify-content:center}
+#msgTxt{width:100%;min-height:110px;resize:vertical;font-family:inherit;font-size:15px;line-height:1.5;direction:auto;box-sizing:border-box}
+.msgTools{display:flex;align-items:center;gap:8px}
+.emoPanel{border:1px solid var(--line2);border-radius:10px;background:var(--panel2);overflow:hidden}
+.emoTabs{display:flex;flex-wrap:wrap;gap:2px;padding:4px;border-bottom:1px solid var(--line)}
+.emoTabs button{flex:none;height:30px;padding:0 9px;border:0;border-radius:7px;background:none;color:var(--sub);font-family:inherit;font-size:11.5px;font-weight:600;cursor:pointer;white-space:nowrap}
+.emoTabs button.on{background:#262A32;color:var(--txt)}
+.emoGrid{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:2px;padding:6px;height:150px;overflow-y:auto;align-content:start}
+.emoGrid button{height:36px;border:0;border-radius:7px;background:none;font-size:21px;line-height:1;cursor:pointer;padding:0}
+.emoGrid button:hover,.emoGrid button:focus-visible{background:#262A32}
+.hpWrap{justify-content:flex-end;gap:8px;padding-right:4px;position:relative}
+.hp{position:relative;flex:0 1 50px;min-width:30px;aspect-ratio:1;height:auto;border:0;padding:0;border-radius:50%;background:none;cursor:pointer;color:#fff}
+.hpRing{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
+.hpTrack{fill:none;stroke:color-mix(in srgb,var(--hc) 28%,#1A1D23);stroke-width:4}
+.hpProg{fill:none;stroke:var(--hc);stroke-width:4;stroke-linecap:round;stroke-dasharray:157.08;stroke-dashoffset:157.08}
+.hpIn{position:absolute;inset:6px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;background:radial-gradient(circle at 35% 30%,color-mix(in srgb,var(--hc) 75%,#fff),var(--hc) 55%,color-mix(in srgb,var(--hc) 60%,#000));box-shadow:inset 0 -2px 4px rgba(0,0,0,.35),0 2px 6px rgba(0,0,0,.4)}
+.hpIn b{font-size:14px;font-weight:800;text-shadow:0 1px 2px rgba(0,0,0,.45)}.hpIn small{display:none;font-size:8.5px;font-weight:700;margin-top:2px;max-width:34px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;text-shadow:0 1px 2px rgba(0,0,0,.5)}
+.hp.empty .hpIn{background:#1A1D23;box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--hc) 55%,transparent);color:var(--hc)}
+.hp.empty .hpIn small{display:none}
+.hpTip{position:absolute;bottom:calc(100% + 8px);z-index:40;display:none;max-width:260px;padding:6px 10px;border-radius:8px;background:#0B0C0F;border:1px solid var(--line2);box-shadow:0 8px 20px rgba(0,0,0,.5);font-size:12px;white-space:nowrap;pointer-events:none;transform:translateX(-50%)}.hpTip.on{display:block}.hpTip b{color:#fff}.hpTip span{color:var(--sub)}
+.hp.on .hpIn{filter:brightness(1.15);box-shadow:0 0 14px var(--hc),inset 0 -2px 4px rgba(0,0,0,.35)}
+.hp.drop{outline:2px dashed var(--hc);outline-offset:2px}
+.modal>.card.optCard{width:min(920px,96vw);height:min(660px,90vh);max-height:90vh;overflow:hidden;text-align:left;display:flex;flex-direction:column;gap:10px;padding:16px 18px}
+.optHead{display:flex;justify-content:space-between;align-items:center}
+.optGrid{flex:1;min-height:0;display:grid;grid-template-columns:190px minmax(0,1fr);gap:14px}
+.optSide{display:flex;flex-direction:column;gap:2px;border-right:1px solid var(--line);padding-right:10px;overflow:auto}
+.optNav{display:flex;align-items:center;gap:9px;width:100%;text-align:left;border:0;border-radius:8px;padding:8px 10px;background:none;color:var(--sub);font:inherit;font-size:13px;cursor:pointer}
+.optNav:hover{background:var(--panel2);color:var(--txt)}.optNav.on{background:color-mix(in srgb,var(--acc) 16%,transparent);color:var(--txt)}.optNav.on svg{color:var(--acc)}
+.optSep{height:1px;background:var(--line);margin:8px 4px}
+.optBody{overflow:auto;padding-right:6px;min-height:0}.optSec{display:flex;flex-direction:column;gap:10px}.optSec[hidden]{display:none}.optSec .frm{grid-template-columns:190px minmax(0,1fr)}.optSec h4{margin:2px 0 2px;font-size:15px;font-weight:700;color:var(--txt)}
+.wwrap{display:flex;flex-direction:column;gap:2px}#tNow{display:block;width:100%;height:14px;cursor:pointer}
+.wave{display:block;width:100%;height:40px;background:var(--inset);border-radius:7px;cursor:pointer}
+.tag{font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:99px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.transport{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:14px;padding:8px 10px 0;flex:none}
+.tpBtns{display:flex;align-items:center;gap:10px}.tpSide{display:flex;align-items:center;min-width:0}
+.tp{width:38px;height:38px;border-radius:50%;border:1px solid #33373F;background:radial-gradient(circle at 50% 30%,#2F333B 0%,#1E2127 62%,#16181C 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.10),inset 0 -2px 4px rgba(0,0,0,.45),0 2px 5px rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;color:#D5D9E0;padding:0;flex:none;transition:transform .08s,box-shadow .15s,background .15s,color .15s}
+.tp:hover{color:#fff;border-color:#4A505B;background:radial-gradient(circle at 50% 30%,#3A3F48 0%,#23262D 62%,#191B20 100%)}
+.tp:active{transform:scale(.93);box-shadow:inset 0 2px 5px rgba(0,0,0,.6),0 1px 2px rgba(0,0,0,.4)}
+.tp:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.tp.on{color:#9CCBFF;border-color:#2D8CEB;background:radial-gradient(circle at 50% 30%,#1D3E66 0%,#13263F 65%,#0E1C2F 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 0 0 2px rgba(45,140,235,.22),0 0 12px rgba(45,140,235,.35)}
+.tp.play{width:50px;height:50px;color:#fff;border-color:#2FBF63;background:radial-gradient(circle at 50% 28%,#4FE08A 0%,#22A04B 55%,#17803A 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.35),inset 0 -3px 6px rgba(0,0,0,.25),0 3px 10px rgba(34,160,75,.45)}
+.tp.play:hover{background:radial-gradient(circle at 50% 28%,#62EA98 0%,#28B356 55%,#198A40 100%)}
+.tp.play svg{margin-left:3px}
+#bStop:hover{color:#FF9A9A}
+input[type=range].gray{-webkit-appearance:none;appearance:none;height:18px;background:transparent;--p:47%;--c:#8A8F9C}
+input[type=range].gray::-webkit-slider-runnable-track{height:4px;border-radius:2px;background:linear-gradient(90deg,var(--c) 0 var(--p),#2A2E37 var(--p) 100%)}
+input[type=range].gray::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;margin-top:-5px;border-radius:50%;background:#C9CCD3;border:0;box-shadow:0 0 0 1px rgba(0,0,0,.5)}
+input[type=range].gray::-moz-range-track{height:4px;border-radius:2px;background:#2A2E37}
+input[type=range].gray::-moz-range-progress{height:4px;border-radius:2px;background:var(--c)}
+input[type=range].gray::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:#C9CCD3;border:0}
+#micCard{grid-column:2;grid-row:1 / span 2;justify-content:stretch!important}
+#micCard .microw:nth-of-type(3){flex:1;min-height:0}
+.comprow{display:flex;align-items:center;gap:6px;height:22px}
+.cmpbtn{flex:none;height:22px;padding:0 8px;border-radius:11px;border:1px solid var(--line2);background:var(--panel2);color:var(--sub);font-size:9.5px;font-weight:800;letter-spacing:.8px}
+.cmpbtn.on{background:#2A2110;border-color:#B7791F;color:#F5C46B;box-shadow:0 0 8px rgba(245,165,36,.25)}
+.grm{flex:1;min-width:0;height:16px;display:block;cursor:pointer}
+.microw{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}
+.micbtn{justify-self:center;width:clamp(44px,5.6vh,56px);height:clamp(44px,5.6vh,56px);padding:0;border:0;background:none;display:flex;align-items:center;justify-content:center}
+.micbtn .mi{width:100%;height:100%;border-radius:50%;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 30%,#3A3F48,#23262D 62%,#1A1C21);border:1px solid #3A3F48;color:#C9CDD6;box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 3px 8px rgba(0,0,0,.45);transition:color .15s,border-color .15s}
+.micbtn:hover .mi{color:#fff;border-color:#4A505B}
+.micbtn:active .mi{transform:scale(.94)}
+.micbtn:focus-visible{outline:none}.micbtn:focus-visible .mi{outline:2px solid var(--acc);outline-offset:2px}
+@keyframes micLive{0%,100%{box-shadow:0 0 0 3px rgba(34,197,94,.45),0 0 20px rgba(34,197,94,.75);filter:brightness(1.12)}50%{box-shadow:0 0 0 2px rgba(34,197,94,.12),0 0 4px rgba(34,197,94,.2);filter:brightness(.8)}}
+.micbtn.on .mi{background:radial-gradient(circle at 50% 30%,#5EE89A,#22A04B 60%,#17803A);border-color:#7FE0B5;color:#fff;animation:micLive 1.1s ease-in-out infinite}
+.micTop{grid-template-columns:minmax(0,1fr) 40px minmax(0,1fr)!important;align-items:center}
+.linkbtn{width:38px;height:38px;border-radius:50%;padding:0;border:1px solid #33373F;background:radial-gradient(circle at 50% 30%,#2F333B,#1E2127 62%,#16181C);color:#8A909C;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 2px 5px rgba(0,0,0,.4);justify-self:center}
+.linkbtn:hover{color:#fff}
+.linkbtn.on{color:#9CCBFF;border-color:var(--acc);background:radial-gradient(circle at 50% 30%,#1D3E66,#13263F 65%,#0E1C2F);box-shadow:0 0 0 2px rgba(45,140,235,.22),0 0 12px rgba(45,140,235,.4)}
+.linebtn{display:flex;align-items:center;gap:5px;border-radius:7px;border:1px solid var(--line2);background:var(--panel2);padding:4px 8px;font-size:10.5px;font-weight:700;letter-spacing:.5px;color:var(--sub);white-space:nowrap}
+.linebtn.on{background:#2A1430;border-color:#8B5CF6;color:#E9A8FF}
+/* main zones */
+.main{flex:1;min-height:0;display:grid;grid-template-columns:clamp(240px,17%,310px) minmax(0,1fr) clamp(300px,21%,360px);gap:10px;padding:10px}
+.col{display:flex;flex-direction:column;min-height:0;min-width:0;gap:10px}
+.tabs{display:flex;align-items:flex-end;gap:2px;padding:6px 8px 0;border-bottom:1px solid var(--line);flex:none}
+.tabs>span{padding:6px 9px;color:var(--sub);font-weight:600;font-size:12px;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap}
+.tabs>span.on{color:var(--txt);border-bottom-color:var(--acc)}
+#leftTabs,#rightTabs{flex-wrap:wrap;row-gap:0}#rightTabs>span,#leftTabs>span{flex:1 1 auto;text-align:center;padding:6px 5px;font-size:11.5px}
+.cartg{container-type:size}@container (max-height:300px){.cell>span{display:block!important;white-space:nowrap!important;overflow:hidden;text-overflow:ellipsis}.cell{padding:3px 5px}}@container (max-height:210px){.cell small{display:none}.cell{justify-content:center}}
+@media (max-width:1500px){#leftTabs>span,#rightTabs>span{padding:6px 6px;font-size:11px}}
+.pane{display:none;flex:1;min-height:0;flex-direction:column}.pane.on{display:flex}
+.scroll{flex:1;min-height:0;overflow:auto}
+.row{display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:7px}
+.row:hover{background:#1B2433}
+.art{width:32px;height:32px;border-radius:6px;flex:none;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;color:#fff;background-size:cover;background-position:center}
+.ic{width:24px;height:24px;border-radius:6px;border:0;background:transparent;color:var(--sub);display:inline-flex;align-items:center;justify-content:center;padding:0;flex:none}
+.ic:hover{background:#262A33;color:var(--txt)}
+/* playlist */
+.plwrap{flex:1;min-height:0;overflow:auto;position:relative}
+.plh,.plr{display:grid;grid-template-columns:30px 30px 38px minmax(0,1fr) 92px 62px 104px;gap:10px;align-items:center;padding:0 12px}
+.plh{position:sticky;top:0;z-index:2;background:var(--panel);height:30px;color:var(--sub);font-size:10.5px;font-weight:600;letter-spacing:.6px;border-bottom:1px solid var(--line)}
+.plr{height:52px;border-bottom:1px solid var(--line);cursor:default;user-select:none}
+.plr .pn{font:13px var(--mono);color:var(--sub);text-align:right}
+.plr .pcv{width:36px;height:36px;border-radius:7px;background:var(--panel2) center/cover no-repeat;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--sub);flex:none}
+.plr .ptx{display:flex;flex-direction:column;justify-content:center;min-width:0;line-height:1.25}
+.plr .ttl{font-size:14.5px;font-weight:600;color:var(--txt)}.plr .part{font-size:12.5px;color:var(--sub);margin-top:2px}
+.plr .pln{font:13.5px var(--mono);text-align:right;color:var(--txt);opacity:.85}
+.plr.playing{background:var(--panel2)}.plr.playing .ttl{font-weight:700}.plr.playing .pln{opacity:1}
+.plr.played .ttl,.plr.played .part,.plr.played .pln,.plr.played .pn{opacity:.45}.plr.played .pcv{opacity:.5}
+.plr .st.pdone{color:var(--sub)!important;font-size:12px;opacity:.7}
+.plr .tag{justify-self:start}
+.plr:hover{background:#171B22}
+.plr.played .tag{opacity:.55}
+.plr.playing{color:var(--txt)}
+.plr.next{}
+.plr.sel{box-shadow:inset 0 0 0 1px #4A505B}
+.plr .tag{background:none!important;color:var(--sub)!important;border:1px solid var(--line2);font-weight:600}
+.plr .st{background:none!important;color:var(--sub)!important}.plr.playing .st{color:var(--txt)!important}
+.plr.drop{box-shadow:inset 0 2px 0 var(--acc)}
+.plr .acts{display:flex;gap:1px;opacity:0;justify-content:flex-end}.plr:hover .acts,.plr.sel .acts{opacity:1}.plr .acts .ic{width:22px}
+.plr[draggable=true]{cursor:grab}
+.plr.comment{color:#C9B48A;font-style:italic}
+.plr.vt .ttl{font-style:italic}
+.hm{height:22px;display:flex;align-items:center;gap:10px;padding:0 10px;color:#8CC2FF;font-size:10.5px;font-weight:700;letter-spacing:1px;background:#10161F;border-bottom:1px solid #1A1D23}
+.st{width:20px;height:20px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:11px;position:relative}
+.plr .st.stm{width:26px;height:20px;background:none!important;border:0;box-shadow:none;border-radius:0}.rowM{width:22px;height:16px;display:block}
+.qn{position:absolute;right:-6px;top:-5px;background:var(--amber);color:#111;font:700 9px var(--mono);border-radius:6px;padding:0 3px}
+.info{display:grid;grid-template-columns:58px minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) auto;gap:12px;padding:8px 12px;border-top:1px solid var(--line);background:#121419;flex:none;align-items:center}
+.kv{font-size:11.5px;line-height:1.65;min-width:0}.kv b{color:var(--sub);font-weight:500;display:inline-block;width:58px}
+/* cart */
+.cartg{display:grid;gap:5px;padding:8px;flex:1;min-height:0}
+.cell{border-radius:7px;padding:5px 6px;font-size:11px;font-weight:600;display:flex;flex-direction:column;justify-content:space-between;border:1px solid transparent;text-align:left;min-height:0;overflow:hidden;background:#1B1E24;color:#6B7080}
+.cell small{font-family:var(--mono);font-weight:500;font-size:10px;opacity:.85}
+.cell.playing{outline:2px solid var(--green);outline-offset:-2px}
+.cell.drop{outline:2px dashed var(--acc)}
+/* misc */
+.status{display:flex;gap:14px;align-items:center;height:24px;padding:0 12px;background:var(--bar);border-top:1px solid var(--line);font-size:11px;color:var(--sub);flex:none;white-space:nowrap;overflow:hidden}
+.it{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 4px;border-bottom:1px solid #20232A}.it:last-child{border-bottom:0}
+.spark{display:flex;align-items:flex-end;gap:2px;height:34px;flex:1}.spark span{flex:1;background:#1F6F3E;border-radius:2px 2px 0 0;min-height:2px}
+.tgl{display:inline-flex;align-items:center;gap:8px;font-size:12px;color:var(--sub);cursor:pointer;user-select:none}
+.tgl b{width:32px;height:18px;border-radius:99px;background:#2A2E37;position:relative;display:inline-block;transition:.15s;flex:none}
+.tgl b::after{content:"";position:absolute;left:2px;top:2px;width:14px;height:14px;border-radius:50%;background:#fff;transition:.15s}
+.tgl.on b{background:var(--acc)}.tgl.on b::after{left:16px}
+.modal{position:fixed;inset:0;background:rgba(5,6,8,.72);z-index:80;display:none;align-items:center;justify-content:center}
+.modal.on{display:flex}
+.modal>.card{width:min(560px,94vw);max-height:88vh;overflow:auto;padding:18px;display:flex;flex-direction:column;gap:10px}
+.modal h3{margin:0;font-size:15px}
+.tbl{width:100%;border-collapse:collapse;font-size:12px}.tbl th{text-align:left;color:var(--sub);font-weight:600;font-size:10.5px;letter-spacing:.06em;padding:5px 6px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--panel)}.tbl td{padding:5px 6px;border-bottom:1px solid #20232A}
+.days{display:flex;gap:3px;flex-wrap:wrap}.days span{padding:3px 7px;border-radius:6px;background:#1B1E24;border:1px solid var(--line2);font-size:11px;cursor:pointer;user-select:none}.days span.on{background:#13233A;border-color:#2D5C94;color:#8CC2FF}
+.ev{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;align-items:center;padding:7px 6px;border-bottom:1px solid #20232A}.ev.off{opacity:.45}
+.eqb{display:flex;flex-direction:column;align-items:center;gap:4px;min-height:0}.eqb input{writing-mode:vertical-lr;direction:rtl;flex:1;width:22px;min-height:0}
+#lFx>*{flex:none}#lFx input[type=range]{min-width:0}
+.aux{border:1px solid var(--line2);border-radius:10px;padding:8px;display:flex;flex-direction:column;gap:6px}
+.frm{display:grid;grid-template-columns:150px minmax(0,1fr);gap:8px 12px;align-items:center}
+.frm label{color:var(--sub);font-size:12px}
+.ctx{position:fixed;z-index:90;background:#1B1E24;border:1px solid var(--line2);border-radius:9px;padding:5px;min-width:220px;display:none;box-shadow:0 12px 30px rgba(0,0,0,.5)}
+.ctx div{padding:6px 10px;border-radius:6px;cursor:pointer;white-space:nowrap}.ctx div:hover{background:#262A33}.ctx hr{border:0;border-top:1px solid var(--line2);margin:4px 2px}
+.reqpop{position:fixed;top:84px;right:16px;z-index:70;width:300px;padding:12px 14px;background:#13233A;border:1px solid #2D8CEB;border-radius:12px;cursor:pointer;display:none;box-shadow:0 12px 30px rgba(0,0,0,.5)}
+.reqpop.on{display:block;animation:popIn .25s ease-out}
+#toast{position:fixed;bottom:36px;left:50%;transform:translateX(-50%);background:#1B1E24;border:1px solid var(--line2);padding:10px 16px;border-radius:10px;z-index:95;display:none}
+#start{position:fixed;inset:0;background:rgba(8,9,11,.94);z-index:99;display:flex;align-items:center;justify-content:center}
+#start .card{padding:28px;width:380px;text-align:center;display:flex;flex-direction:column;gap:12px}
+.pv{font-size:10px;font-weight:700;letter-spacing:.5px;padding:2px 6px;border-radius:99px;background:#2A1F0B;color:#F5C46B;white-space:nowrap}
+.pbtn{width:34px;height:34px;border-radius:50%;border:0;background:#1DB954;display:flex;align-items:center;justify-content:center;flex:none}
+.pbar{height:3px;background:#2A2E37;border-radius:2px;margin-top:4px;overflow:hidden}.pbar i{display:block;height:100%;width:0;background:#1DB954}
+.ytvid{width:100%;aspect-ratio:16/9;background:#000;border-radius:8px;overflow:hidden;flex:none}
+.ytvid iframe,#ytFrame{width:100%;height:100%;display:block;border:0}
+.ftrow{display:grid;grid-template-columns:18px minmax(0,1.3fr) minmax(0,1fr) 62px 62px 62px 62px 30px;gap:6px;align-items:center;padding:4px 0;border-bottom:1px solid #20232A;font-size:12px}
+.ftrow input{height:26px;font-size:12px}
+.crumbs{display:flex;flex-wrap:wrap;gap:4px;align-items:center;font-size:11.5px;padding:4px 8px}
+.crumbs span{cursor:pointer;color:#8CC2FF}
+#pfl{display:flex!important;align-items:center;gap:8px;min-width:0;width:min(560px,100%);padding:6px 10px;border:1px solid var(--line2);background:var(--panel2);border-radius:14px}
+#pfl.drop{border-color:#F5A524;box-shadow:0 0 0 2px rgba(245,165,36,.25)}
+.plr.pflOn .acts{opacity:1}.plr.pflOn [data-act="pfl"]{color:#1A1205;background:#F5A524;border-radius:50%;box-shadow:0 0 10px rgba(245,165,36,.6)}
+.pflIc{width:30px;height:30px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;background:#2A2110;color:#F5C46B;border:1px solid #6B4D12}
+#pfl.live .pflIc{background:#F5A524;color:#1A1205;box-shadow:0 0 10px rgba(245,165,36,.5)}
+.pflMid{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.pflTop{display:flex;align-items:center;gap:8px;min-width:0;font-size:12px;color:#E8D9B8}.pflTop .ell{flex:1;min-width:0}
+#pflSeek{width:100%;height:14px;margin:0}
+.tp.pflB{width:30px;height:30px}
+.pflVol{width:70px;flex:none}
+@media (max-width:1500px){.pflVol{display:none}}
+/*LIGHT*/
+html.light{--bg:#F3F4F7;--bar:#FFFFFF;--panel:#FFFFFF;--panel2:#F2F3F6;--inset:#F7F8FA;--line:#E2E5EA;--line2:#D5D9E0;--txt:#161A21;--sub:#5D6472;color-scheme:light}
+html.light .btn:hover{border-color:#F3F4F6;background:#F7F8F9}
+html.light .btn.pri{background:var(--acc);border-color:var(--acc);color:#fff}
+html.light .inp:focus{border-color:var(--acc)}
+html.light .dot{background:var(--green)}
+html.light /* menu */
+.menubar{background:#FAFBFB}
+html.light .menubar>.m>span{color:#2A2D35}
+html.light .menubar>.m:hover>span,html.light .menubar>.m.open>span{background:#F8F8F9}
+html.light .dd{background:#F8F8F9;box-shadow:0 12px 30px rgba(0,0,0,0.10)}
+html.light .dd div:hover{background:#F6F7F8}
+html.light .dd div.dd2{box-shadow:0 12px 30px rgba(0,0,0,0.10)}
+html.light .dd div.chk::before{color:var(--acc)}
+html.light .tb{color:#2A2D35}
+html.light .tb:hover{background:#F8F8F9}
+html.light .onair{color:#5B6170}
+html.light .onair.live{color:#22C55E}
+html.light #rec i{background:#FF5A5A}
+html.light #rec.on{background:#EDCBCD;border-color:#7A2A2E}
+html.light #golive.live{background:#B42318;border-color:#B42318}
+html.light .nextIn{border:1px solid #2D5C94;background:#CBD9EE;color:#003673}
+html.light .nextIn b{color:#121317}
+html.light .lisTop.live{border-color:#AEE3CE;background:#E0F2E9;color:#7FE0B5}
+html.light .lisTop.live b{color:#0D5931}
+html.light .audPop{box-shadow:0 14px 40px rgba(0,0,0,0.10)}
+html.light .aud{border-bottom:1px solid #F7F8F9}
+html.light .aud .av{color:#fff}
+html.light .clockWin{background:#FAFBFB;box-shadow:0 18px 50px rgba(0,0,0,0.10)}
+html.light .cwGrip{background:linear-gradient(135deg,transparent 50%,#F1F2F4 50%,#F1F2F4 58%,transparent 58%,transparent 70%,#F1F2F4 70%,#F1F2F4 78%,transparent 78%)}
+html.light .ledbar{background:#FAFBFB}
+html.light .micpop{box-shadow:0 14px 40px rgba(0,0,0,0.10)}
+html.light .reqX{color:#7A808C}
+html.light .reqX:hover{background:#F6F7F8;color:#2A2E35}
+html.light .emoTabs button.on{background:#F6F7F8}
+html.light .emoGrid button:hover,html.light .emoGrid button:focus-visible{background:#F6F7F8}
+html.light .hp{color:#fff}
+html.light .hpTrack{stroke:color-mix(in srgb,var(--hc) 28%,#F8F9FA)}
+html.light .hpIn{background:radial-gradient(circle at 35% 30%,color-mix(in srgb,var(--hc) 75%,#fff),var(--hc) 55%,color-mix(in srgb,var(--hc) 60%,#FCFCFC));box-shadow:inset 0 -2px 4px rgba(0,0,0,0.10),0 2px 6px rgba(0,0,0,0.10)}
+html.light .hp.empty .hpIn{background:#F8F9FA}
+html.light .hpTip{background:#FAFBFB;box-shadow:0 8px 20px rgba(0,0,0,0.10)}
+html.light .hpTip b{color:#fff}
+html.light .hp.on .hpIn{box-shadow:0 0 14px var(--hc),inset 0 -2px 4px rgba(0,0,0,0.10)}
+html.light .optNav.on{background:color-mix(in srgb,var(--acc) 16%,transparent)}
+html.light .optNav.on svg{color:var(--acc)}
+html.light .tp{border:1px solid #F5F5F7;background:radial-gradient(circle at 50% 30%,#F5F6F7 0%,#F8F8F9 62%,#F9F9FA 100%);box-shadow:inset 0 1px 0 rgba(20,24,32,.10),inset 0 -2px 4px rgba(0,0,0,0.10),0 2px 5px rgba(0,0,0,0.10);color:#202329}
+html.light .tp:hover{color:#fff;border-color:#F1F2F4;background:radial-gradient(circle at 50% 30%,#F4F4F6 0%,#F7F7F9 62%,#F8F9FA 100%)}
+html.light .tp:active{box-shadow:inset 0 2px 5px rgba(0,0,0,0.10),0 1px 2px rgba(0,0,0,0.10)}
+html.light .tp:focus-visible{outline:2px solid var(--acc)}
+html.light .tp.on{color:#003066;border-color:#2D8CEB;background:radial-gradient(circle at 50% 30%,#A3C1E5 0%,#C6D7EE 65%,#D5E1F2 100%);box-shadow:inset 0 1px 0 rgba(20,24,32,.12),0 0 0 2px rgba(45,140,235,.22),0 0 12px rgba(45,140,235,.35)}
+html.light .tp.play{color:#fff;border-color:#2FBF63;background:radial-gradient(circle at 50% 28%,#4FE08A 0%,#22A04B 55%,#8CEAAB 100%);box-shadow:inset 0 1px 0 rgba(20,24,32,.35),inset 0 -3px 6px rgba(0,0,0,0.10),0 3px 10px rgba(34,160,75,.45)}
+html.light .tp.play:hover{background:radial-gradient(circle at 50% 28%,#62EA98 0%,#28B356 55%,#198A40 100%)}
+html.light #bStop:hover{color:#660000}
+html.light input[type=range].gray::-webkit-slider-runnable-track{background:linear-gradient(90deg,var(--c) 0 var(--p),#F6F6F8 var(--p) 100%)}
+html.light input[type=range].gray::-webkit-slider-thumb{background:#2C2F36;box-shadow:0 0 0 1px rgba(0,0,0,0.10)}
+html.light input[type=range].gray::-moz-range-track{background:#F6F6F8}
+html.light input[type=range].gray::-moz-range-thumb{background:#2C2F36}
+html.light .cmpbtn.on{background:#F1E9D9;border-color:#B7791F;color:#F5C46B;box-shadow:0 0 8px rgba(245,165,36,.25)}
+html.light .micbtn .mi{background:radial-gradient(circle at 50% 30%,#F4F4F6,#F7F7F9 62%,#F8F9FA);border:1px solid #F4F4F6;color:#2A2D35;box-shadow:inset 0 1px 0 rgba(20,24,32,.08),0 3px 8px rgba(0,0,0,0.10)}
+html.light .micbtn:hover .mi{color:#fff;border-color:#F1F2F4}
+html.light .micbtn:focus-visible .mi{outline:2px solid var(--acc)}
+html.light .micbtn.on .mi{background:radial-gradient(circle at 50% 30%,#5EE89A,#22A04B 60%,#8CEAAB);border-color:#7FE0B5;color:#fff}
+html.light .linkbtn{border:1px solid #F5F5F7;background:radial-gradient(circle at 50% 30%,#F5F6F7,#F8F8F9 62%,#F9F9FA);color:#8A909C;box-shadow:inset 0 1px 0 rgba(20,24,32,.08),0 2px 5px rgba(0,0,0,0.10)}
+html.light .linkbtn:hover{color:#fff}
+html.light .linkbtn.on{color:#003066;border-color:var(--acc);background:radial-gradient(circle at 50% 30%,#A3C1E5,#C6D7EE 65%,#D5E1F2);box-shadow:0 0 0 2px rgba(45,140,235,.22),0 0 12px rgba(45,140,235,.4)}
+html.light .linebtn.on{background:#E8D4ED;border-color:#8B5CF6;color:#4C0066}
+html.light .row:hover{background:#D1D9E7}
+html.light .art{color:#fff}
+html.light .ic:hover{background:#F6F7F8}
+html.light .plr:hover{background:#F8F9FA}
+html.light .plr.sel{box-shadow:inset 0 0 0 1px #F1F2F4}
+html.light .plr.drop{box-shadow:inset 0 2px 0 var(--acc)}
+html.light .plr.comment{color:#C9B48A}
+html.light .hm{color:#003673;background:#E3E8F1;border-bottom:1px solid #F8F9FA}
+html.light .qn{background:var(--amber);color:#FAFAFA}
+html.light .info{background:#F9FAFA}
+html.light .cell{background:#F8F8F9;color:#6B7080}
+html.light .cell.playing{outline:2px solid var(--green)}
+html.light .cell.drop{outline:2px dashed var(--acc)}
+html.light .it{border-bottom:1px solid #F7F8F9}
+html.light .spark span{background:#9BE3B7}
+html.light .tgl b{background:#F6F6F8}
+html.light .tgl b::after{background:#fff}
+html.light .tgl.on b{background:var(--acc)}
+html.light .modal{background:rgba(5,6,8,.72)}
+html.light .tbl td{border-bottom:1px solid #F7F8F9}
+html.light .days span{background:#F8F8F9}
+html.light .days span.on{background:#CBD9EE;border-color:#2D5C94;color:#003673}
+html.light .ev{border-bottom:1px solid #F7F8F9}
+html.light .ctx{background:#F8F8F9;box-shadow:0 12px 30px rgba(0,0,0,0.10)}
+html.light .ctx div:hover{background:#F6F7F8}
+html.light .reqpop{background:#CBD9EE;border:1px solid #2D8CEB;box-shadow:0 12px 30px rgba(0,0,0,0.10)}
+html.light #toast{background:#F8F8F9}
+html.light #start{background:rgba(8,9,11,.94)}
+html.light .pv{background:#F5EBD9;color:#F5C46B}
+html.light .pbtn{background:#1DB954}
+html.light .pbar{background:#F6F6F8}
+html.light .pbar i{background:#1DB954}
+html.light .ytvid{background:#FCFCFC}
+html.light .ftrow{border-bottom:1px solid #F7F8F9}
+html.light .crumbs span{color:#003673}
+html.light #pfl.drop{border-color:#F5A524;box-shadow:0 0 0 2px rgba(245,165,36,.25)}
+html.light .plr.pflOn [data-act="pfl"]{color:#FAF3E8;background:#F5A524;box-shadow:0 0 10px rgba(245,165,36,.6)}
+html.light .pflIc{background:#F1E9D9;color:#F5C46B;border:1px solid #EFD49F}
+html.light #pfl.live .pflIc{background:#F5A524;color:#FAF3E8;box-shadow:0 0 10px rgba(245,165,36,.5)}
+html.light .pflTop{color:#4D3D19}
+html.light [style*="color:#8CC2FF"]{color:#003673!important}
+html.light body{background:var(--bg);color:var(--txt)}html.light .tgl b{background:#C3C8D1}html.light .tgl.on b{background:var(--acc)}html.light .dd{box-shadow:0 12px 30px rgba(20,24,32,.14)}
+/*ENDLIGHT*/
+</style>
+</head>
+<body>
+<div id="start"><div class="card">
+<img src="/oab-logo.png" alt="OAB – On Air Broadcast" style="width:128px;height:128px;margin:0 auto;display:block;filter:drop-shadow(0 8px 24px rgba(0,0,0,.5))">
+<div style="font-size:20px;font-weight:800;letter-spacing:.5px">OAB Studio</div><div class="sub" style="margin-top:-6px;letter-spacing:2px;font-size:11px">ON AIR BROADCAST</div>
+<div class="sub">Click to switch on the audio engine.</div>
+<button class="btn pri" id="startBtn" style="padding:12px;justify-content:center">Open studio</button>
+</div></div>
+
+<nav class="menubar" id="menubar">
+<div class="m"><span>File</span><div class="dd"><div data-a="newPl">New playlist <kbd>Ctrl+N</kbd></div><div data-a="openM3u">Open playlist… <kbd>Ctrl+O</kbd></div><div data-a="savePl">Save playlists <kbd>Ctrl+S</kbd></div><div data-a="exportM3u">Export as M3U…</div><hr><div class="grp">SETTINGS</div><div data-a="settingsBackup">Backup settings…</div><div data-a="restoreBackup">Restore settings…</div></div></div>
+<div class="m"><span>Edit</span><div class="dd"><div data-a="cut">Cut <kbd>Ctrl+X</kbd></div><div data-a="copy">Copy <kbd>Ctrl+C</kbd></div><div data-a="paste">Paste <kbd>Ctrl+V</kbd></div><div data-a="selAll">Select all <kbd>Ctrl+A</kbd></div><hr><div data-a="crop">Crop selected</div><div data-a="del">Delete <kbd>Del</kbd></div><div data-a="delAll">Delete all</div></div></div>
+<div class="m"><span>Playlist</span><div class="dd"><div class="grp">ADD</div><div data-a="addFiles">File…</div><div data-a="addFolder">Folder…</div><div data-a="addYt">YouTube link… <kbd>Ctrl+V</kbd></div><div data-a="addUrl">Stream / podcast URL…</div><div data-a="addLine">LINE IN item</div><hr><div class="grp">ADD SPECIAL</div><div data-a="voiceTrack">Voice track…</div><div data-a="addPause">Timed pause…</div><div data-a="addCmd">Command…</div><div data-a="addComment">Comment…</div><hr><div class="grp">TOOLS</div><div data-a="genPro">Playlist generator…</div><div data-a="trackEdit">Track editor (cue / intro / mix)…</div><div data-a="find">Find… <kbd>Ctrl+F</kbd></div><hr><div class="grp">PLAY</div><div class=" chk on"data-a="tAutoMix">Auto mix (next item by itself)</div><div data-a="shuffleList">Shuffle</div><div data-a="resetPlayed">Reset played state</div><div data-a="showDup">Show duplicates</div></div></div>
+<div class="m"><span>Broadcast</span><div class="dd"><div data-a="liveToggle">GO LIVE / stop <kbd>Ctrl+E</kbd></div><div data-a="msgListeners">Message to listeners…</div><div data-a="listenLinks">Listen link and WhatsApp…</div><div data-a="whoListens">Who is listening</div><div data-a="castTitle">Set cast title…</div><hr><div class="grp">INPUTS</div><div data-a="micA">MIC 1 on / off <kbd>Space</kbd></div><div data-a="micB">MIC 2 on / off <kbd>Shift+Space</kbd></div><div class=" chk"data-a="mLink">Link MIC 1 + MIC 2</div><div class=" chk"data-a="mLine">LINE IN on</div><hr><div data-a="recordings">Recordings (stream archive)</div><div data-a="remoteInfo">Remote control page</div><div data-a="public">Public link</div></div></div>
+<div class="m"><span>Tools</span><div class="dd"><div data-a="library">Music library</div><div data-a="rescan">Rescan music folders</div><hr><div class="grp">PLANNING</div><div data-a="tabScheduler">Scheduler</div><div data-a="adsSched">Ads scheduler…</div><div data-a="adBreakNow">Ad break now</div><div data-a="reports">Report generator…</div><hr><div class="grp">VOICE</div><div data-a="ttsTool">Text to speech…</div><div data-a="annTime">Announce the time</div><div data-a="annWeather">Announce the weather</div><hr><div data-a="requests">Song requests</div><div data-a="pbQueue">Playback queue</div></div></div>
+<div class="m"><span>View</span><div class="dd"><div class="grp">COLUMNS</div><div class=" chk"data-a="tLib">Library column</div><div class=" chk on"data-a="tReq">Requests column</div><div class=" chk on"data-a="tInfo">Track information</div><hr><div class="grp">LIBRARY</div><div data-a="tabExplorer">File explorer</div><div data-a="tabSearch">Search</div><div data-a="tabScheduler">Scheduler</div><div data-a="tabFx">FX</div><hr><div class="grp">PLAYLIST</div><div class=" chk on"data-a="tAutoscroll">Auto-scroll</div><div class=" chk"data-a="tFollow">Selection follows playback</div><hr><div class="chk" data-a="tLight">Light interface</div><div class="subm"><span>Waveform style</span><b>▸</b><div class="dd2"><div class=" chk"data-a="wf0">Mirror gradient</div><div class=" chk"data-a="wf1">Smooth envelope</div><div class=" chk"data-a="wf2">Frequency colours</div><div class=" chk"data-a="wf3">LED dots</div><div class=" chk"data-a="wf4">Neon line</div><div class=" chk"data-a="wf5">Rounded capsules</div></div></div><div class="subm"><span>Playlist meter style</span><b>▸</b><div class="dd2"><div class=" chk"data-a="rm0">Lime spectrum</div><div class=" chk"data-a="rm1">LED spectrum</div><div class=" chk"data-a="rm2">Peak caps</div><div class=" chk"data-a="rm3">Mirror spectrum</div><div class=" chk"data-a="rm4">Rainbow spectrum</div><div class=" chk"data-a="rm5">Stereo LED bars</div><div class=" chk"data-a="rm6">Horizontal stereo</div><div class=" chk"data-a="rm7">Scope line</div></div></div></div></div>
+<div class="m"><span>Settings</span><div class="dd"><div data-a="options">Options… <kbd>Ctrl+P</kbd></div><hr><div class="grp">GO STRAIGHT TO</div><div data-a="optOutputs">Sound outputs…</div><div data-a="optMics">Microphones and ducker…</div><div data-a="optLine">LINE IN…</div><div data-a="optHot">Hot buttons…</div><div data-a="optLight">Studio light (USB)…</div><div data-a="optFolders">Folders…</div><div data-a="optAnn">Announcements…</div><div data-a="optGeneral">Stream quality and password…</div><hr><div data-a="crossfades">Crossfades & file types…</div><div data-a="hotkeys">Hot keys…</div></div></div>
+<div class="m"><span>Help</span><div class="dd"><div data-a="help">Guide (README-HE.txt)</div><div data-a="about">About OAB Studio</div></div></div>
+<div style="margin-left:auto;display:flex;align-items:center;gap:8px;color:var(--sub);font-size:11.5px"><span id="srvState"><span class="dot"></span> Server</span></div>
+</nav>
+
+<div class="tool">
+<div style="display:flex;align-items:center;gap:8px;margin-right:4px" title="OAB – On Air Broadcast"><img src="/oab-logo.png" alt="OAB" style="width:38px;height:38px;display:block;margin:-4px 0;filter:drop-shadow(0 2px 6px rgba(0,0,0,.5))"><div style="display:flex;flex-direction:column;line-height:1.05"><b style="letter-spacing:1.5px;font-size:15px">OAB</b><span style="font-size:8.5px;letter-spacing:1.3px;color:var(--sub);font-weight:700">ON AIR BROADCAST</span></div></div>
+<div class="sep"></div>
+<button class="tb" data-a="newPl" title="New playlist"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 3H6v18h12V7z"/><path d="M14 3v4h4"/></svg></button>
+<button class="tb" data-a="openM3u" title="Open playlist"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7h6l2 2h10v10H3z"/></svg></button>
+<button class="tb" data-a="savePl" title="Save playlists"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 3h11l3 3v15H5z"/><path d="M8 3v6h8"/></svg></button>
+<div class="sep"></div>
+<button class="tb" data-a="addFiles" title="Add track"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg></button>
+<button class="tb" data-a="addFolder" title="Add folder"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7h6l2 2h10v10H3z"/><path d="M12 12v5M9.5 14.5h5"/></svg></button>
+<button class="tb" data-a="addUrl" title="Add URL / stream"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg></button>
+<button class="tb" data-a="addYt" title="Add a song from a YouTube link (or paste the link with Ctrl+V)" aria-label="Add YouTube link"><svg width="19" height="19" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="4" fill="#E8EAEF"/><path d="M10 9l5 3-5 3z" fill="#0D0E11"/></svg></button>
+<div class="sep"></div>
+<button class="tb" data-a="genPro" title="Playlist generator"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h10M4 12h16M4 18h7"/><path d="M17 4l3 2-3 2"/></svg></button>
+<button class="tb" data-a="library" title="Music library"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4v16M8 4v16M12 4l6 16"/></svg></button>
+<button class="tb" data-a="adsSched" title="Ads scheduler"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 11v2l11 5V6z"/><path d="M14 9a3 3 0 0 1 0 6"/></svg></button>
+<button class="tb" data-a="reports" title="Report generator"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 20V10M12 20V4M19 20v-7"/></svg></button>
+
+<div class="sep"></div>
+<div class="onair" id="onair" role="img" aria-label="Broadcast status" title="Broadcast: off"><svg width="30" height="30" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><g class="w1"><path d="M11.8 10.8a6 6 0 0 0 0 8.4"/><path d="M20.2 10.8a6 6 0 0 1 0 8.4"/></g><g class="w2"><path d="M8.3 7.3a11 11 0 0 0 0 15.4"/><path d="M23.7 7.3a11 11 0 0 1 0 15.4"/></g><circle cx="16" cy="15" r="2.2" fill="currentColor" stroke="none"/><path d="M16 17.5 12 29M16 17.5 20 29M13.2 25.5h5.6"/></svg></div>
+<div class="mono" style="font-size:22px;font-weight:500;margin-left:6px;cursor:pointer" id="clock" title="Click for the big clock" role="button" tabindex="0">00:00:00</div>
+
+<div style="margin-left:auto;display:flex;align-items:center;gap:8px">
+<span class="sub" style="font-size:11.5px;line-height:1.3;text-align:right">Stream <span id="srcName">idle</span><br><span class="mono" id="qualLbl">MP3 256k · 48 kHz</span></span>
+<span class="lisTop" id="lisTop" title="Click to see who is listening" role="button" tabindex="0" style="cursor:pointer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 14v-2a9 9 0 0 1 18 0v2"/><rect x="2" y="14" width="5" height="7" rx="1.5"/><rect x="17" y="14" width="5" height="7" rx="1.5"/></svg><b class="mono" id="lisTopN">0</b><span>listening</span></span>
+<button class="btn" id="rec"><i></i>REC <span class="mono" id="recTime">0:00:00</span></button>
+<button class="btn" id="linkBtn" title="Links for listeners" style="height:30px">🔗 Listen link</button>
+<button class="btn msgBtn" id="msgOpen" title="Send a message to listeners" aria-label="Send a message to listeners"><svg width="20" height="18" viewBox="0 0 26 22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1.5" y="2" width="17" height="12.5" rx="2"/><path d="m2.5 3.5 7.5 5.5 7.5-5.5"/><path d="M14 18.5h9.5"/><path d="m20 15 3.5 3.5-3.5 3.5"/></svg></button>
+<button class="btn pri" id="golive" title="Ctrl+E">GO LIVE</button>
+<button class="btn" data-a="options" title="Options">⚙</button></div>
+</div>
+
+<div class="player">
+<div class="card" id="pNow" style="padding:10px 12px;display:flex;gap:14px;align-items:center">
+<div class="vinyl" id="vNow" style="width:clamp(78px,11vh,116px);height:clamp(78px,11vh,116px)"><div class="lab" id="lNow" style="width:44%;height:44%;font-size:14px"></div></div>
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:5px">
+<div style="display:flex;align-items:center;gap:8px;min-width:0"><span class="lbl" id="nowLbl">STOPPED</span><span class="tag" id="nowType"></span><span class="sub" style="font-size:11px;white-space:nowrap;flex:none" id="nowTimes"></span><span class="nextIn" id="nextIn"></span></div>
+<div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px"><div style="min-width:0"><div class="ell" style="font-size:18px;font-weight:700" id="nowTitle">Nothing playing</div><div class="sub ell" id="nowArtist">Add tracks to the playlist and press Play</div></div><div class="mono" style="font-size:clamp(24px,3.4vh,34px);font-weight:500" id="nowRem">-00:00</div></div>
+<div class="wwrap"><canvas id="tNow" aria-label="Time line"></canvas><canvas class="wave" id="wNow"></canvas></div>
+</div></div>
+<div hidden><div class="vinyl" id="vNext"><div class="lab" id="lNext"></div></div><span class="tag" id="nextType"></span><span id="nextAt"></span><div id="nextTitle"></div><div id="nextArtist"></div><canvas id="wNext"></canvas></div>
+<div class="ledbar"><span class="lbl" style="font-size:9.5px;line-height:11px;text-align:center">L<br>R</span><canvas id="ledM"></canvas><span class="mono" id="ledDb" style="font-size:11px;min-width:58px;text-align:right">−∞ dB</span></div>
+<div class="card" id="micCard" style="padding:8px 10px;display:flex;flex-direction:column;gap:6px;justify-content:center;position:relative">
+<div class="microw micTop">
+<button class="micbtn" id="mic1" title="MIC 1 on / off (Space)" aria-label="MIC 1"><span class="mi"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2.5" width="6" height="11.5" rx="3" fill="currentColor" fill-opacity=".18"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0"/><path d="M12 17.5V21"/><path d="M8.5 21h7"/></svg></span><span class="ms" hidden>OFF</span></button>
+
+<button class="linkbtn" id="micLink" aria-pressed="false" title="LINK: both microphones switch together" aria-label="Link MIC 1 and MIC 2"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg></button>
+<button class="micbtn" id="mic2" title="MIC 2 on / off (Shift+Space)" aria-label="MIC 2"><span class="mi"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2.5" width="6" height="11.5" rx="3" fill="currentColor" fill-opacity=".18"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0"/><path d="M12 17.5V21"/><path d="M8.5 21h7"/></svg></span><span class="ms" hidden>OFF</span></button>
+</div>
+<div class="microw">
+<div class="comprow"><button class="cmpbtn" id="cmp1" title="MIC 1 compressor on / off (settings: Settings → Microphone compressor)">COMP</button><canvas class="grm" id="gr1" title="MIC 1 gain reduction – click for compressor settings"></canvas></div>
+<div class="comprow"><button class="cmpbtn" id="cmp2" title="MIC 2 compressor on / off (settings: Settings → Microphone compressor)">COMP</button><canvas class="grm" id="gr2" title="MIC 2 gain reduction – click for compressor settings"></canvas></div>
+</div>
+<div class="microw" style="align-items:stretch">
+<canvas class="vu" id="vu1" title="MIC 1 level (works while MIC 1 is on)"></canvas>
+
+<canvas class="vu" id="vu2" title="MIC 2 level (works while MIC 2 is on)"></canvas>
+</div>
+<div hidden><button class="linebtn" id="lineBtn"></button><button id="micSet"></button></div>
+<div class="micpop" id="micPop">
+<div style="display:flex;justify-content:space-between;align-items:center"><span class="lbl">MIC &amp; LINE IN SETTINGS</span><button class="ic" id="micPopX" aria-label="Close">✕</button></div>
+<div class="sub" style="font-size:11px" id="micS">Space = MIC 1 · Shift+Space = MIC 2</div>
+
+<div class="sub" style="font-size:10.5px;margin-top:-4px">How much the music goes down while a microphone is on.</div>
+
+<div style="display:flex;align-items:center;gap:8px"><label for="lineSrc2" class="lbl" style="white-space:nowrap;min-width:58px">SOURCE</label><select class="inp" id="lineSrc2" style="height:28px;flex:1;min-width:0"><option value="tab">A browser tab (e.g. YouTube) – the tab goes quiet and is heard only through OAB</option><option value="system">Computer sound (no mic)</option><option value="">Sound card input</option></select></div>
+<div class="sub" style="font-size:10.5px;margin-top:-4px">Microphone and LINE IN inputs are chosen in Settings → Options.</div>
+</div>
+</div>
+</div>
+
+<div class="transport">
+<div class="tpSide" style="justify-content:flex-end"><div id="pfl" title="Prelisten: hear a song in your headphones (PFL output) before it goes on air. Drop a song here, press 🎧 or Alt+click a song.">
+<span class="pflIc"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 14v-2a9 9 0 0 1 18 0v2"/><rect x="2" y="14" width="5" height="7" rx="1.5"/><rect x="17" y="14" width="5" height="7" rx="1.5"/></svg></span>
+<div class="pflMid"><div class="pflTop"><span class="lbl" style="color:#F5C46B;font-size:9.5px">PRELISTEN</span><span class="ell" id="pflName">Drop a song here or press 🎧</span><span class="mono" id="pflTime" style="font-size:11px;flex:none">--:-- / --:--</span></div>
+<input type="range" class="gray" id="pflSeek" min="0" max="1000" value="0" aria-label="Prelisten position" style="--c:#F5A524;--p:0%"></div>
+<button class="tp pflB" id="pflPlay" title="Play / pause prelisten" aria-label="Play / pause prelisten"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg></button>
+<button class="tp pflB" id="pflStop" title="Stop prelisten" aria-label="Stop prelisten"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg></button>
+<input type="range" class="gray pflVol" id="pflVol" min="0" max="100" value="90" aria-label="Prelisten volume" title="Prelisten volume" style="--c:#F5A524;--p:90%">
+</div></div>
+<div class="tpBtns">
+<button class="tp" id="bPrev" title="Previous"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h2v14H6zM20 5v14L9 12z"/></svg></button>
+<button class="tp play" id="bPlay" title="Play selected (Enter)"><svg width="21" height="21" viewBox="0 0 24 24" fill="#fff"><path d="M7 4.5v15l13-7.5z"/></svg></button>
+<button class="tp" id="bPause" title="Pause"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg></button>
+<button class="tp" id="bStop" title="Stop"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg></button>
+<button class="tp" id="bNext" title="Next (crossfade)"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M4 5v14l11-7zM16 5h2v14h-2z"/></svg></button>
+<div class="sep"></div>
+<button class="tp" id="bRepTrack" title="Repeat the current track"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 12V9a3 3 0 0 1 3-3h12l-3-3M20 12v3a3 3 0 0 1-3 3H5l3 3"/><text x="10" y="14.6" font-size="7" fill="currentColor" stroke="none" font-family="Inter">1</text></svg></button>
+<button class="tp" id="bStopAfter" title="Stop after the current track"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 12h9"/><rect x="15" y="7" width="5" height="10" rx="1"/></svg></button>
+<button class="tp" id="bShuffle" title="Shuffle playback order"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h3l10 10h3M4 17h3l3-3M14 10l3-3h3M18 5l2 2-2 2M18 15l2 2-2 2"/></svg></button>
+<button class="tp" id="bRepList" title="Repeat the playlist"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 12V9a3 3 0 0 1 3-3h12l-3-3M20 12v3a3 3 0 0 1-3 3H5l3 3"/></svg></button>
+</div>
+<div class="tpSide hpWrap" id="hpWrap"><button class="hp" data-i="0" style="--hc:#F04444" aria-label="Hot button 1"><svg class="hpRing" viewBox="0 0 56 56" aria-hidden="true"><circle cx="28" cy="28" r="25" class="hpTrack"/><circle cx="28" cy="28" r="25" class="hpProg"/></svg><span class="hpIn"><b>1</b><small></small></span></button><button class="hp" data-i="1" style="--hc:#F5A524" aria-label="Hot button 2"><svg class="hpRing" viewBox="0 0 56 56" aria-hidden="true"><circle cx="28" cy="28" r="25" class="hpTrack"/><circle cx="28" cy="28" r="25" class="hpProg"/></svg><span class="hpIn"><b>2</b><small></small></span></button><button class="hp" data-i="2" style="--hc:#22C55E" aria-label="Hot button 3"><svg class="hpRing" viewBox="0 0 56 56" aria-hidden="true"><circle cx="28" cy="28" r="25" class="hpTrack"/><circle cx="28" cy="28" r="25" class="hpProg"/></svg><span class="hpIn"><b>3</b><small></small></span></button><button class="hp" data-i="3" style="--hc:#2D8CEB" aria-label="Hot button 4"><svg class="hpRing" viewBox="0 0 56 56" aria-hidden="true"><circle cx="28" cy="28" r="25" class="hpTrack"/><circle cx="28" cy="28" r="25" class="hpProg"/></svg><span class="hpIn"><b>4</b><small></small></span></button><button class="hp" data-i="4" style="--hc:#A855F7" aria-label="Hot button 5"><svg class="hpRing" viewBox="0 0 56 56" aria-hidden="true"><circle cx="28" cy="28" r="25" class="hpTrack"/><circle cx="28" cy="28" r="25" class="hpProg"/></svg><span class="hpIn"><b>5</b><small></small></span></button><button class="hp" data-i="5" style="--hc:#EC4899" aria-label="Hot button 6"><svg class="hpRing" viewBox="0 0 56 56" aria-hidden="true"><circle cx="28" cy="28" r="25" class="hpTrack"/><circle cx="28" cy="28" r="25" class="hpProg"/></svg><span class="hpIn"><b>6</b><small></small></span></button><button class="hp" data-i="6" style="--hc:#06B6D4" aria-label="Hot button 7"><svg class="hpRing" viewBox="0 0 56 56" aria-hidden="true"><circle cx="28" cy="28" r="25" class="hpTrack"/><circle cx="28" cy="28" r="25" class="hpProg"/></svg><span class="hpIn"><b>7</b><small></small></span></button><button class="hp" data-i="7" style="--hc:#84CC16" aria-label="Hot button 8"><svg class="hpRing" viewBox="0 0 56 56" aria-hidden="true"><circle cx="28" cy="28" r="25" class="hpTrack"/><circle cx="28" cy="28" r="25" class="hpProg"/></svg><span class="hpIn"><b>8</b><small></small></span></button><div class="hpTip" id="hpTip" role="tooltip"></div></div>
+<div hidden><span class="tgl on" id="autoMix"></span><span id="xfInfo"></span><span id="schInfo"></span><span id="adjInfo"></span></div>
+</div>
+
+<div class="main">
+<section class="card col" id="libCol" style="gap:0">
+<div class="tabs" id="leftTabs" style="position:relative;padding-left:30px"><button class="reqX libX" id="libClose" title="Close this column (View → Library column)" aria-label="Close the library column">✕</button><span data-p="lExplorer">Explorer</span><span class="on" data-p="lSearch">Search</span><span data-p="lScheduler">Scheduler</span><span data-p="lFx">FX</span></div>
+<div class="pane on" id="lSearch">
+<div style="padding:8px;display:flex;flex-direction:column;gap:6px;flex:none">
+<label for="search" class="sr">Search</label><input class="inp" id="search" placeholder="Search title, artist… or paste a YouTube link">
+<div id="stabs" hidden><button data-t="lib"></button></div>
+<div class="sub" style="font-size:11px" id="libCount">Loading library…</div>
+</div>
+<div class="scroll" id="libList" style="padding:0 6px 6px"></div>
+</div>
+<div class="pane" id="lExplorer">
+<div style="display:flex;gap:4px;padding:8px 8px 0;flex:none"><button class="btn sm" data-root="music">Music</button><button class="btn sm" data-root="ads">Ads</button><button class="btn sm" data-root="carts">Jingles</button><button class="btn sm" id="exAddAll" style="margin-left:auto">Add all</button></div>
+<div class="crumbs" id="exCrumbs"></div>
+<div class="scroll" id="exList" style="padding:0 6px 6px"></div>
+</div>
+<div class="pane" id="lScheduler">
+<div style="display:flex;gap:6px;padding:8px;flex:none;align-items:center"><button class="btn sm" id="schAdd">+ Event</button><span class="tgl on" id="schOn"><b></b>Scheduler on</span></div>
+<div class="sub" style="font-size:11px;padding:0 10px 4px;flex:none" id="schNext"></div>
+<div class="scroll" id="schList" style="padding:0 6px 6px"></div>
+</div>
+<div class="pane" id="lFx" style="padding:12px;gap:10px;overflow:auto">
+<div class="lbl">PLAYLIST VOLUME</div>
+<div style="display:flex;align-items:center;gap:8px"><label for="plVol" class="sr">Playlist volume</label><input type="range" class="gray" id="plVol" min="0" max="100" step="1" value="100" style="flex:1;--c:#2D8CEB;--p:100%"><span class="mono" id="plVolV" style="font-size:11px;min-width:48px;text-align:right">100%</span></div>
+<div class="lbl">OUTPUT LEVEL</div>
+<canvas id="fxMeter" width="600" height="40" style="width:100%;height:20px"></canvas>
+<div style="display:flex;align-items:center;gap:8px"><span class="lbl">GAIN</span><input type="range" class="gray" id="fxGain" min="0" max="200" value="100" style="flex:1;--c:#2D8CEB;--p:50%"><span class="mono" id="fxGainV" style="font-size:11px;min-width:48px;text-align:right">0.0 dB</span></div>
+<span class="tgl on" id="fxLim"><b></b>Limiter on the final mix (−1 dB)</span>
+<span class="tgl on" id="fxAmp"><b></b>Apply file-type levels (Amp)</span>
+<span class="tgl" id="fxNorm"><b></b>AutoAmp (level all tracks to −16 dB)</span>
+<span class="tgl" id="fxGap"><b></b>Gap killer (skip silence at start / end)</span>
+<div style="display:flex;justify-content:space-between;align-items:center"><span class="lbl">EQUALIZER</span><span class="tgl" id="fxEqOn"><b></b>On</span></div>
+<div id="fxEq" style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;height:130px"></div>
+<div style="display:flex;justify-content:space-between;align-items:center"><span class="lbl">COMPRESSOR</span><span class="tgl" id="fxCompOn"><b></b>On</span></div>
+<div style="display:flex;align-items:center;gap:8px"><span class="sub" style="font-size:11px;min-width:64px">Threshold</span><input type="range" class="gray" id="fxThr" min="-40" max="0" value="-18" style="flex:1;--c:#2D8CEB"><span class="mono" id="fxThrV" style="font-size:11px;min-width:48px;text-align:right">−18 dB</span></div>
+<div style="display:flex;align-items:center;gap:8px"><span class="sub" style="font-size:11px;min-width:64px">Ratio</span><input type="range" class="gray" id="fxRat" min="1" max="12" step="0.5" value="3" style="flex:1;--c:#2D8CEB"><span class="mono" id="fxRatV" style="font-size:11px;min-width:48px;text-align:right">3:1</span></div>
+</div>
+</section>
+
+<section class="card col plCard" style="gap:0">
+<div class="tabs" id="plTabs"></div>
+<div class="plwrap" id="plWrap"><div class="plh"><span style="text-align:right">#</span><span></span><span></span><span>TITLE / ARTIST</span><span>TYPE</span><span style="text-align:right">LENGTH</span><span></span></div><div id="plBody"></div></div>
+<div class="info" id="info"></div>
+</section>
+
+<aside class="col" id="reqAside">
+<section class="card col reqCard" style="flex:1.3;gap:0">
+<div class="tabs" id="rightTabs" style="position:relative"><span class="on" data-p="rReq">Requests <b id="reqN" style="color:var(--acc)">0</b></span><button class="reqX" id="reqClose" title="Close Requests (View → Requests column)" aria-label="Close Requests column">✕</button></div>
+<div class="pane on" id="rReq"><div style="display:flex;justify-content:flex-end;padding:6px 8px 0"><button class="btn sm" id="reqClear">Clear</button></div><div class="scroll list" id="reqList" style="padding:0 10px 8px"></div></div>
+</section>
+<div hidden><span id="lisLive"></span><span id="lisBig"></span><div id="spark2"></div><span id="peak"></span><span id="uptime"></span><span id="lisLink"></span><button id="lisCopy"></button><button id="lisMore"></button></div>
+<div hidden><span class="tgl" id="adAuto"></span><span id="adWhen"></span><span id="adCount"></span><button id="adSchedBtn"></button><button id="adNow"></button><span id="adInfo"></span></div>
+</aside>
+</div>
+
+<div class="status"><span id="fSrv">Server –</span><span id="stPl"></span><span>Limiter −1 dB</span><span id="stXf"></span><span style="margin-left:auto">OAB Studio 1.2.2</span></div>
+
+<!-- modals -->
+<div class="modal" id="mMsg"><div class="card" style="width:min(560px,94vw)">
+<div style="display:flex;justify-content:space-between;align-items:center"><h3>Message to listeners</h3><button class="btn sm" data-close>Close</button></div>
+<div class="sub" style="font-size:12px;line-height:1.5">Everyone listening in the app sees this message in the middle of their screen.</div>
+<label for="msgTxt" class="sr">Message</label><textarea class="inp" id="msgTxt" dir="auto" maxlength="500" placeholder="Write your message…"></textarea>
+<div class="msgTools"><button class="btn sm" id="emoBtn" aria-expanded="false" aria-controls="emoPanel"><span style="font-size:15px">😊</span> Emoji</button>
+<label for="msgFont" class="sub" style="font-size:12px;margin-left:auto">Font</label><select class="inp" id="msgFont" style="width:190px;height:30px;padding:0 8px"></select></div>
+<div class="emoPanel" id="emoPanel" hidden><div class="emoTabs" id="emoTabs" role="tablist"></div><div class="emoGrid" id="emoGrid"></div></div>
+<div style="display:flex;align-items:center;gap:10px"><span class="sub mono" id="msgCnt" style="font-size:11px">0 / 500</span><span class="sub" id="msgSt" style="font-size:12px;flex:1"></span><button class="btn pri" id="msgSend">Send</button></div>
+</div></div>
+<div class="modal" id="mOptions"><div class="card optCard">
+<div class="optHead"><h3>Options</h3><div style="display:flex;gap:8px;align-items:center"><span class="sub" id="cMsg"></span><button class="btn pri sm" id="cSave">Save</button><button class="btn sm" data-close>Close</button></div></div>
+<div class="optGrid"><nav class="optSide" aria-label="Options categories"><button class="optNav" data-sec="general"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg><span>General</span></button><button class="optNav" data-sec="outputs"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 14v-3a9 9 0 0 1 18 0v3"/><path d="M21 15a2 2 0 0 1-2 2h-1v-6h3zM3 15a2 2 0 0 0 2 2h1v-6H3z"/></svg><span>Sound outputs</span></button><button class="optNav" data-sec="mics"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v4M8 21h8"/></svg><span>Microphones</span></button><button class="optNav" data-sec="line"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2v6M15 2v6M6 8h12v4a6 6 0 0 1-12 0zM12 18v4"/></svg><span>LINE IN</span></button><button class="optNav" data-sec="hot"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/></svg><span>Hot buttons</span></button><button class="optNav" data-sec="light"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2Z"/></svg><span>Studio light (USB)</span></button><button class="optNav" data-sec="folders"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h6l2 2h10v10H3z"/></svg><span>Folders</span></button><button class="optNav" data-sec="ann"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1ZM16 8a5 5 0 0 1 0 8"/></svg><span>Announcements</span></button><button class="optNav" data-sec="online"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg><span>Online</span></button><div class="optSep"></div><button class="optNav" data-open="crossfades"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h3l9 10h6M3 17h3l3-3M15 7h6"/></svg><span>Crossfades…</span></button><button class="optNav" data-open="hotkeys"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></svg><span>Hot keys…</span></button></nav><div class="optBody"><section class="optSec" data-sec="general" hidden><h4>General</h4><div class="frm"><label for="pw">Broadcast password</label><input class="inp" id="pw" type="password">
+<label for="cAutodjL">AutoDJ</label><span class="tgl" id="cAutodj"><b></b>Plays the music folder when nobody is live</span><label for="uiTheme">Interface</label><select class="inp" id="uiTheme" style="width:220px"><option value="dark">Dark</option><option value="light">Light</option></select></div><div class="lbl">STREAM QUALITY</div><div class="frm"><label for="sQual">MP3 bitrate</label><select class="inp" id="sQual"><option value="128">128 kbps · standard</option><option value="160">160 kbps · good</option><option value="192">192 kbps · high</option><option value="256">256 kbps · very high</option><option value="320">320 kbps · maximum (CD-like)</option></select></div>
+<div class="sub" style="font-size:11.5px;margin-top:-4px;line-height:1.5">Higher quality sounds better but uses more internet upload: each listener needs about the bitrate (320 kbps ≈ 2.4 MB per minute). If listeners on mobile data cut out, choose 192 kbps. A change applies at once, also while you are live.</div>
+</section><section class="optSec" data-sec="outputs" hidden><h4>Sound outputs</h4><div class="sub" style="font-size:11.5px;margin-top:-4px;line-height:1.5">Main output = what you hear from the studio (the broadcast itself always goes to the stream). Prelisten = a separate output, e.g. headphones, to hear a song before it goes on air (🎧 or Alt+click).</div>
+<div class="frm"><label for="monMode">Headphones / speakers hear</label><div><select class="inp" id="monMode" style="width:100%"><option value="music">Everything except my microphones – no delay (recommended)</option><option value="prog">Everything including microphones – my voice comes back slightly late</option></select><div class="sub" style="font-size:11.5px;line-height:1.5;margin-top:5px">Music, jingles, hot buttons and the ducker are heard as on air. Hear your own voice with no delay through the sound card: turn on its <b>Direct monitor</b> (a knob or switch on most USB sound cards and mixers). A computer always adds a little delay to a microphone, so voice through the computer sounds late.</div></div>
+<label for="devOut">Main output (speakers)</label><div style="display:flex;gap:6px"><select class="inp" id="devOut" style="flex:1;min-width:0"></select><button class="btn sm" id="tOut" title="Play a short test tone on this output">▶ Test</button></div>
+<label for="devPfl">Prelisten output (PFL)</label><div style="display:flex;gap:6px"><select class="inp" id="devPfl" style="flex:1;min-width:0"></select><button class="btn sm" id="tPfl" title="Play a short test tone on this output">▶ Test</button></div>
+<span></span><span class="sub" id="outNote" style="font-size:11px"></span></div>
+</section><section class="optSec" data-sec="mics" hidden><h4>Microphones</h4><div class="frm"><label for="dev1">MIC 1 input</label><select class="inp" id="dev1"></select>
+<label for="mch1">MIC 1 channels</label><select class="inp" id="mch1"><option value="auto">Both sides – automatic (recommended)</option><option value="l">Input 1 (left) → both sides</option><option value="r">Input 2 (right) → both sides</option><option value="mix">Mix input 1 + 2 → both sides</option><option value="st">Stereo as is</option></select>
+<label for="dev2">MIC 2 input</label><select class="inp" id="dev2"></select>
+<label for="mch2">MIC 2 channels</label><select class="inp" id="mch2"><option value="auto">Both sides – automatic (recommended)</option><option value="l">Input 1 (left) → both sides</option><option value="r">Input 2 (right) → both sides</option><option value="mix">Mix input 1 + 2 → both sides</option><option value="st">Stereo as is</option></select>
+<label>Ducker – music goes down by</label><div style="display:flex;align-items:center;gap:8px"><input type="range" class="gray" id="duckR" min="0" max="30" step="1" value="14" style="flex:1;min-width:0"><span class="mono" style="font-size:11px;min-width:42px;flex:none;text-align:right" id="duckV">−14 dB</span></div><span></span><button class="btn sm" id="devRefresh" style="justify-self:start">Refresh device list</button></div><div class="lbl" id="optComp">MICROPHONE COMPRESSOR</div><div class="sub" style="font-size:11.5px;margin-top:-4px;line-height:1.5">Evens out the voice: loud words are turned down (GR meter under each MIC shows by how much), then Make-up brings the whole voice up. Changes are heard at once.</div>
+<div id="mcBox"></div>
+</section><section class="optSec" data-sec="line" hidden><h4>LINE IN</h4><div class="frm"><label for="lineSrc">LINE IN source</label><select class="inp" id="lineSrc"><option value="tab">A browser tab (e.g. YouTube) – the tab goes quiet and is heard only through OAB</option><option value="system">Computer sound – only what plays on this PC (no microphone)</option><option value="">Sound card input (e.g. a mixer connected to the PC)</option></select>
+<label>LINE IN level</label><div style="display:flex;align-items:center;gap:8px"><input type="range" class="gray" id="lineR" min="0" max="150" step="1" value="100" style="flex:1;min-width:0"><span class="mono" style="font-size:11px;min-width:42px;flex:none;text-align:right" id="lineV">0.0 dB</span></div><label for="devLine">LINE IN input</label><select class="inp" id="devLine"></select>
+<span></span><span class="tgl" id="lineMon"><b></b>Hear LINE IN in my speakers</span>
+<span></span><span class="tgl" id="duckLine"><b></b>Ducker also lowers LINE IN while a microphone is on</span>
+</div></section><section class="optSec" data-sec="hot" hidden><h4>Hot buttons</h4><div class="frm"><label for="hpDuckR">Lower the music to</label><div style="display:flex;align-items:center;gap:8px"><input type="range" class="gray" id="hpDuckR" min="0" max="100" step="5" value="30" style="flex:1;--c:#2D8CEB;--p:30%"><span class="mono" id="hpDuckV" style="font-size:12px;min-width:92px;text-align:right">30%</span></div>
+<label for="hpFadeR">Fade down / up</label><div style="display:flex;align-items:center;gap:8px"><input type="range" class="gray" id="hpFadeR" min="0" max="2" step="0.1" value="0.4" style="flex:1;--c:#2D8CEB;--p:20%"><span class="mono" id="hpFadeV" style="font-size:12px;min-width:92px;text-align:right">0.4 s</span></div>
+<label for="hpVolR">Hot button volume</label><div style="display:flex;align-items:center;gap:8px"><input type="range" class="gray" id="hpVolR" min="0" max="150" step="5" value="100" style="flex:1;--c:#2D8CEB;--p:66%"><span class="mono" id="hpVolV" style="font-size:12px;min-width:92px;text-align:right">100%</span></div></div>
+<div class="sub" style="font-size:11.5px;margin-top:-4px;line-height:1.5">While a hot button plays, the song keeps playing at this level and comes back to its normal volume when the hot button ends. Right-click a pad to load an audio file.</div>
+</section><section class="optSec" data-sec="light" hidden><h4>Studio light (USB)</h4><div class="frm"><label for="lightType">USB device</label><select class="inp" id="lightType"><option value="">None</option><option value="relay">USB relay module (switches any lamp)</option><option value="blink1">blink(1) USB LED</option><option value="luxafor">Luxafor USB LED</option><option value="serial">Arduino / serial board (sends 1 / 0)</option></select>
+<label>Connection</label><div style="display:flex;align-items:center;gap:8px"><button class="btn sm" id="lightConnect">Connect…</button><button class="btn sm" id="lightTest">Test</button><span class="sub" id="lightSt" style="font-size:12px">Not connected</span></div>
+<label for="lightColor">LED colour</label><div style="display:flex;align-items:center;gap:8px"><input type="color" id="lightColor" value="#ff0000" style="width:44px;height:28px;border:0;background:none;padding:0"><span class="sub" style="font-size:11.5px">for blink(1) / Luxafor</span></div>
+<label for="lightRelay">Relay channel</label><select class="inp" id="lightRelay" style="width:160px"><option value="1">Channel 1</option><option value="2">Channel 2</option><option value="all">All channels</option></select></div>
+<div class="sub" style="font-size:11.5px;margin-top:-4px;line-height:1.5">The lamp turns on while MIC 1 or MIC 2 is on, and off when both microphones are off. Plug the device in, choose its type, press Connect… once and pick it in the list – after that it reconnects by itself.</div>
+</section><section class="optSec" data-sec="folders" hidden><h4>Folders</h4><div class="frm"><label for="cMusic">Music folder</label><input class="inp" id="cMusic" placeholder="C:\Users\Aviad\Music">
+<label for="cAds">Ads folder</label><input class="inp" id="cAds">
+<label for="cCarts">Jingles folder</label><input class="inp" id="cCarts"></div>
+</section><section class="optSec" data-sec="ann" hidden><h4>Announcements</h4><div class="frm"><label for="cVoice">Voice</label><select class="inp" id="cVoice"><option value="">Default voice</option></select>
+<label for="cCity">Weather city</label><input class="inp" id="cCity" placeholder="Tel Aviv">
+<label for="cTimeTpl">Time text</label><input class="inp" id="cTimeTpl">
+<label for="cWeatherTpl">Weather text</label><input class="inp" id="cWeatherTpl">
+<span></span><span class="sub" style="font-size:11px">{time} {hour} {min} · {city} {temp} {desc}. Hebrew voices need a Hebrew Windows speech pack.</span></div>
+</section><section class="optSec" data-sec="online" hidden><h4>Online</h4><div class="frm"><label for="cYt">YouTube API key</label><input class="inp" id="cYt">
+<label for="cGoogle" hidden>Google OAuth Client ID</label><input class="inp" id="cGoogle" hidden>
+<label for="cSpId" hidden>Spotify Client ID</label><input class="inp" id="cSpId" hidden>
+<label for="cSpSec" hidden>Spotify Client Secret</label><input class="inp" id="cSpSec" type="password" hidden>
+<span></span><span class="sub" style="font-size:11px">Optional: with a YouTube API key, "Find" on a song request opens the song page directly.</span></div>
+</section></div></div>
+</div></div>
+
+<div class="modal" id="mXf"><div class="card" style="width:min(860px,96vw)">
+<div style="display:flex;justify-content:space-between;align-items:center"><h3>Crossfades & file types</h3><button class="btn sm" data-close>Close</button></div>
+<div class="sub" style="font-size:12px;line-height:1.6">A track belongs to a file type when it is in the type's folder, or its title / artist / file name contains the identifier. Everything else is <b>Music</b>. Mix = seconds before the end when the next item starts. Trigger = start the next item when the level drops below this (Mix is then the minimum overlap). "Prev" overrides the previous track's mix (useful for jingles and ads).</div>
+<div class="ftrow lbl" style="font-size:10px"><span></span><span>NAME · IDENTIFIER</span><span>FOLDER</span><span>FADE IN</span><span>FADE OUT</span><span>MIX</span><span>AMP dB</span><span></span></div>
+<div id="ftList"></div>
+<div style="display:flex;gap:10px;align-items:center"><button class="btn" id="ftAdd">+ File type</button><span class="sub" style="font-size:11.5px">Music trigger <input class="inp" id="xfTrig" type="number" step="1" style="width:64px;height:26px;display:inline-block"> dB <label class="tgl on" id="xfTrigOn"><b></b>use level trigger</label></span><button class="btn pri" id="ftSave" style="margin-left:auto">Save</button></div>
+</div></div>
+
+<div class="modal" id="mEdit"><div class="card">
+<div style="display:flex;justify-content:space-between;align-items:center"><h3 id="edH">Item</h3><button class="btn sm" data-close>Close</button></div>
+<div class="frm" id="edFrm"></div>
+<div style="display:flex;gap:10px"><button class="btn pri" id="edOk">OK</button><span class="sub" id="edNote" style="font-size:11.5px;align-self:center"></span></div>
+</div></div>
+
+<div class="modal" id="mInfo"><div class="card">
+<div style="display:flex;justify-content:space-between;align-items:center"><h3 id="miH"></h3><button class="btn sm" data-close>Close</button></div>
+<div id="miBody" style="line-height:1.7"></div>
+</div></div>
+
+<div class="modal" id="mBig"><div class="card" style="width:min(980px,96vw);max-height:92vh">
+<div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><h3 id="bgH"></h3><div style="display:flex;gap:6px;align-items:center" id="bgAct"></div><button class="btn sm" data-close style="margin-left:auto">Close</button></div>
+<div id="bgBody" style="display:flex;flex-direction:column;gap:10px;min-height:0"></div>
+</div></div>
+<div class="audPop" id="audPop"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><span class="lbl">LISTENING NOW</span><span class="sub" id="audSum" style="font-size:11px"></span></div><div id="audList"></div></div>
+<div hidden id="removedPanes"><div id="rCart"><div id="cartGrid"></div></div><div id="rStats" style="padding:10px;gap:10px;overflow:auto">
+<div><div class="lbl">LISTENERS</div><div style="display:flex;align-items:flex-end;gap:10px"><span class="mono" style="font-size:34px;font-weight:600" id="lisBig2">0</span><div class="spark" id="spark3"></div></div><div class="sub" style="font-size:11px" id="statLine"></div></div>
+<div><div class="lbl" style="margin-bottom:4px">LISTEN FROM ANYWHERE <span id="pubState" style="float:right;font-weight:500">Off</span></div>
+<div class="sub" style="font-size:11.5px;line-height:1.5;margin-bottom:6px">Free public https link (Cloudflare), up to ~200 listeners. Changes each time.</div>
+<div id="pubBox" style="display:none;margin-bottom:6px"><div class="mono" style="font-size:11.5px;word-break:break-all;padding:7px;background:var(--inset);border-radius:7px" id="pubUrl"></div><div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap"><button class="btn sm" id="pubCopy">Copy player link</button><button class="btn sm" id="pubCopyM">Copy phone studio link</button></div></div>
+<button class="btn" id="pubBtn" style="width:100%;justify-content:center">Create public link</button></div>
+<div><div class="lbl" style="margin-bottom:4px">RECORDINGS</div><div class="list" id="recList"></div></div>
+</div>
+<div id="rAux"></div></div>
+<div class="clockWin" id="clockWin" hidden>
+<div class="cwBar" id="cwBar"><span class="lbl" style="font-size:10px">CLOCK</span><select class="inp" id="cwStyle" aria-label="Clock style" style="height:24px;font-size:11.5px;padding:0 6px;width:auto;margin-left:auto"></select><button class="ic" id="cwClose" aria-label="Close clock" title="Close">✕</button></div>
+<canvas id="cwCanvas"></canvas>
+<div class="cwGrip" id="cwGrip" title="Drag to resize"></div>
+</div>
+<div class="ctx" id="ctx"></div>
+<div class="reqpop" id="reqPop"><div class="lbl" style="color:#8CC2FF;margin-bottom:4px">NEW SONG REQUEST</div><div style="font-weight:700;font-size:15px" class="ell" id="reqPopSong"></div><div class="sub" style="font-size:11px;margin-top:2px" id="reqPopMore">Click to see details</div></div>
+<div class="modal" id="reqModal"><div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><span class="lbl">SONG REQUESTS</span><button class="btn sm" id="reqModalClose">Close</button></div><div class="list" id="reqModalList"></div></div></div>
+<input type="file" id="fFiles" accept="audio/*,.mp3,.m4a,.wav,.flac,.ogg" multiple hidden>
+<input type="file" id="fFolder" webkitdirectory multiple hidden>
+<input type="file" id="fM3u" accept=".m3u,.m3u8,.pls,.txt" hidden>
+<input type="file" id="fCart" accept="audio/*" hidden>
+<input type="file" id="fRestore" accept=".json" hidden>
+<div id="toast"></div>
+
+<script>
+/*@@CORE@@*/
+</script>
+</body>
+</html>

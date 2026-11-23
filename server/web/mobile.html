@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#0D0E11">
+<title>OAB Live</title>
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon.png?v=3"><link rel="icon" type="image/x-icon" href="/oab.ico?v=3">
+<link rel="manifest" href="/mobile.webmanifest?v=3"><link rel="apple-touch-icon" href="/apple-touch-icon.png?v=3">
+<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png?v=3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<script src="/lib/lame.min.js"></script>
+<style>
+:root{--bg:#0D0E11;--panel:#15171C;--panel2:#1B1E24;--inset:#0F1115;--line:#23262E;--line2:#2A2E37;--txt:#E8EAEF;--sub:#9097A6;--acc:#2D8CEB;--red:#F04444}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--txt);font:14px Inter,system-ui,sans-serif}
+button{font-family:inherit;color:var(--txt);cursor:pointer}
+.wrap{max-width:480px;margin:0 auto;padding:16px 16px calc(20px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:12px;min-height:100vh}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:12px}
+.sub{color:var(--sub)}.mono{font-family:'JetBrains Mono',monospace}
+.lbl{font-size:11px;font-weight:600;letter-spacing:1.2px;color:var(--sub)}
+@keyframes spin{to{transform:rotate(360deg)}}@keyframes blink{50%{opacity:.35}}
+.air{display:flex;align-items:center;gap:5px;padding:4px 9px;border-radius:99px;font-size:11px;font-weight:700;letter-spacing:1px;background:var(--panel2);border:1px solid var(--line2);color:var(--sub)}
+.air i{width:7px;height:7px;border-radius:50%;background:#5B6170}
+.air.on{background:#3A1416;border-color:#7A2A2E;color:#FFD7D7}.air.on i{background:#FF5A5A;animation:blink 1.4s infinite}
+.vinyl{width:96px;height:96px;border-radius:50%;flex:none;background:repeating-radial-gradient(circle at center,#0A0B0D 0 2px,#14161A 2px 3px);box-shadow:0 0 0 1px var(--line2);display:flex;align-items:center;justify-content:center;animation:spin 1.8s linear infinite;animation-play-state:paused}
+.vinyl.run{animation-play-state:running}
+.lab{width:42px;height:42px;border-radius:50%;background:#2A2E37 center/cover;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;position:relative}
+.lab::before{content:"";position:absolute;top:3px;left:20px;width:2px;height:7px;background:#fff;border-radius:1px}
+.ell{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+canvas.m{width:100%;height:12px;display:block}
+.it{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #20232A}.it:last-child{border-bottom:0}
+.art{width:36px;height:36px;border-radius:8px;flex:none;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;color:#fff;background:#2A2E37 center/cover}
+.sm{border:1px solid var(--line2);background:var(--panel2);border-radius:8px;padding:6px 10px;font-size:12px;font-weight:600}
+.carts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.cart{min-height:52px;border-radius:10px;border:1px solid var(--line2);background:var(--panel2);font-size:12px;font-weight:600;padding:4px}
+.cart.has{background:#13233A;border-color:#24466E}.cart.play{background:#22A04B;border-color:#22A04B}
+.row3{display:flex;align-items:center;justify-content:center;gap:22px}
+.rnd{width:54px;height:54px;border-radius:50%;border:1px solid var(--line2);background:var(--panel);display:flex;align-items:center;justify-content:center}
+#mic{width:108px;height:108px;border-radius:50%;border:2px solid var(--line2);background:var(--panel);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--sub)}
+#mic.on{background:#4A1518;border-color:var(--red);color:#FF8A8A}
+#rec i{width:16px;height:16px;border-radius:50%;background:#FF5A5A}#rec.on{border-color:var(--red)}#rec.on i{animation:blink 1s infinite}
+#go{height:56px;border-radius:14px;border:0;background:var(--acc);color:#fff;font-size:16px;font-weight:700}
+#go.live{background:#B42318}
+.sheet{position:fixed;inset:0;background:rgba(5,6,8,.75);display:none;z-index:30;align-items:flex-end;justify-content:center}
+.sheet.open{display:flex}
+.sheet .in{width:100%;max-width:480px;max-height:85vh;background:#15171C;border-radius:20px 20px 0 0;padding:14px;display:flex;flex-direction:column;gap:10px}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--inset);border-radius:10px;padding:3px}
+.tabs button{border:0;border-radius:8px;padding:9px 0;font-weight:600;background:transparent;color:var(--sub)}.tabs button.on{background:#262A33;color:var(--txt)}
+.inp{height:42px;border-radius:10px;border:1px solid var(--line2);background:var(--inset);color:var(--txt);padding:0 12px;font-size:15px;outline:none;width:100%;font-family:inherit}
+#start{position:fixed;inset:0;background:var(--bg);z-index:40;display:flex;align-items:center;justify-content:center;padding:20px}
+#toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1B1E24;border:1px solid var(--line2);padding:10px 16px;border-radius:10px;display:none;z-index:50;max-width:90%}
+</style>
+</head>
+<body>
+<div id="start"><div class="card" style="width:100%;max-width:380px;display:flex;flex-direction:column;gap:12px;padding:22px;text-align:center">
+<img src="/oab-logo.png" alt="OAB" style="width:110px;height:110px;margin:0 auto;display:block"><div style="font-size:20px;font-weight:700">OAB · Live</div>
+<div class="sub" style="font-size:13px">Broadcast from your phone: songs and microphone.</div>
+<div id="secure" class="sub" style="display:none;font-size:12px;color:#F5C46B;line-height:1.5">The microphone needs the secure https link. Open the public link from the studio (Listen from anywhere → Copy phone studio link).</div>
+<label class="lbl" for="pw" style="text-align:left">BROADCAST PASSWORD</label>
+<input class="inp" id="pw" type="password">
+<button id="startBtn" style="height:48px;border-radius:12px;border:0;background:var(--acc);color:#fff;font-weight:700;font-size:15px">Open</button>
+</div></div>
+
+<div class="wrap">
+<div style="display:flex;align-items:center;justify-content:space-between">
+<img src="/oab-logo.png" alt="" style="width:30px;height:30px"><span style="font-weight:700;letter-spacing:1px;font-size:16px">OAB</span>
+<div style="display:flex;gap:8px;align-items:center"><span class="sub" style="font-size:12px"><span class="mono" style="color:#22C55E" id="lis">0</span> listening</span><span class="air" id="air"><i></i><span id="airT">OFF AIR</span></span></div>
+</div>
+
+<div class="card" style="display:flex;align-items:center;gap:14px">
+<div class="vinyl" id="vinyl"><div class="lab" id="lab"></div></div>
+<div style="flex:1;min-width:0"><div class="sub" style="font-size:11px">Now playing</div><div class="ell" style="font-weight:700;font-size:16px" id="np">Nothing yet</div><div class="ell sub" id="npA">Add songs with +</div><div class="mono" style="font-size:22px;margin-top:4px" id="rem">-00:00</div></div>
+<button class="rnd" id="playBtn" aria-label="Play or pause" style="width:48px;height:48px"></button>
+</div>
+
+<div class="card" style="display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;align-items:center;gap:8px"><span class="lbl" style="width:46px">MIC</span><canvas class="m" id="mMic" width="600" height="24"></canvas></div>
+<div style="display:flex;align-items:center;gap:8px"><span class="lbl" style="width:46px">MUSIC</span><canvas class="m" id="mMus" width="600" height="24"></canvas></div>
+</div>
+
+<div class="card">
+<div style="display:flex;justify-content:space-between;align-items:center"><span class="lbl">UP NEXT</span><span class="sub" style="font-size:12px" id="qn"></span></div>
+<div id="queue"></div>
+</div>
+
+<div class="carts" id="carts"></div>
+
+<div class="row3" style="flex:1;min-height:130px">
+<button class="rnd" id="add" aria-label="Add songs"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+<button id="mic" aria-label="Microphone"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg><span style="font-size:11px;font-weight:700;letter-spacing:1px" id="micT">MIC</span></button>
+<button class="rnd" id="rec" aria-label="Record"><i></i></button>
+</div>
+
+<button id="go">Go live</button>
+</div>
+
+<div class="sheet" id="sheet"><div class="in">
+<div style="display:flex;justify-content:space-between;align-items:center"><span style="font-weight:700">Add songs</span><button class="sm" id="close">Done</button></div>
+<div class="tabs"><button class="on" data-t="phone">From phone</button><button data-t="lib">OAB library</button></div>
+<div id="tPhone"><button class="sm" id="pick" style="width:100%;height:48px;font-size:14px">Choose songs on this phone</button><input type="file" id="fPick" accept="audio/*" multiple hidden></div>
+<div id="tLib" style="display:none;flex-direction:column;gap:8px;min-height:0;flex:1">
+<label for="lq" style="position:absolute;width:1px;height:1px;overflow:hidden">Search</label>
+<input class="inp" id="lq" placeholder="Search the radio library">
+<div id="lib" style="overflow:auto;max-height:50vh"></div>
+</div>
+</div></div>
+<div id="toast"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const store = {get(k,d){try{const v=localStorage.getItem(k);return v===null?d:v}catch(e){return d}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+const fmt = s => { s = Math.max(0, Math.floor(s||0)); return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0'); };
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const COLORS = ['#7C3AED','#0E7490','#9D174D','#B45309','#15803D','#1D4ED8','#BE185D','#4338CA'];
+const colorFor = s => { let h=0; for (const c of String(s)) h=(h*31+c.charCodeAt(0))|0; return COLORS[Math.abs(h)%COLORS.length]; };
+const initials = s => String(s||'?').split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase() || '?';
+function toast(t){ const e=$('#toast'); e.textContent=t; e.style.display='block'; clearTimeout(toast.t); toast.t=setTimeout(()=>e.style.display='none',3000); }
+const PLAY = '<svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M7 4.5v15l13-7.5z"/></svg>';
+const PAUSE = '<svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>';
+$('#pw').value = store.get('radioKey', 'radio1234');
+let key = $('#pw').value;
+const KEY = () => key;
+if (!window.isSecureContext) $('#secure').style.display = 'block';
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+
+let ctx, musicBus, masterIn, masterOut, micG = null, micOn = false, live = false, enc = null, out = [], sending = false, wake = null;
+const meters = [];
+function meter(node, canvas){ const g = ctx.createGain(); g.channelCount = 2; g.channelCountMode = 'explicit'; node.connect(g); const a = ctx.createAnalyser(); a.fftSize = 1024; g.connect(a); meters.push({ a, canvas, buf: new Float32Array(1024), lv: 0 }); }
+function draw(){
+  for (const m of meters) {
+    m.a.getFloatTimeDomainData(m.buf); let p = 0; for (const v of m.buf) { const x = Math.abs(v); if (x > p) p = x; }
+    const lvl = Math.max(0, Math.min(1, ((p > 0 ? 20*Math.log10(p) : -90) + 48) / 48)); m.lv = lvl > m.lv ? lvl : m.lv*0.9 + lvl*0.1;
+    const g = m.canvas.getContext('2d'), W = m.canvas.width, H = m.canvas.height, N = 30, gap = 4, sw = (W - gap*(N-1))/N, lit = Math.round(m.lv*N);
+    g.clearRect(0,0,W,H);
+    for (let i=0;i<N;i++){ const on = i < lit; g.fillStyle = i < 20 ? (on?'#22C55E':'#14261B') : i < 26 ? (on?'#F5A524':'#2A2110') : (on?'#F04444':'#2A1214'); g.fillRect(i*(sw+gap), 0, sw, H); }
+  }
+  requestAnimationFrame(draw);
+}
+const decks = [0,1].map(() => ({ audio: new Audio(), cur: null, playing: false, token: 0 }));
+function initAudio(){
+  ctx = new (window.AudioContext||window.webkitAudioContext)({ sampleRate: 44100 });
+  masterIn = ctx.createGain(); musicBus = ctx.createGain(); musicBus.connect(masterIn);
+  const lim = ctx.createDynamicsCompressor(); lim.threshold.value = -1; lim.knee.value = 0; lim.ratio.value = 20; lim.attack.value = 0.002; lim.release.value = 0.12;
+  masterOut = ctx.createGain(); masterOut.channelCount = 2; masterOut.channelCountMode = 'explicit';
+  masterIn.connect(lim); lim.connect(masterOut);
+  musicBus.connect(ctx.destination);
+  decks.forEach(d => { d.src = ctx.createMediaElementSource(d.audio); d.fade = ctx.createGain(); d.src.connect(d.fade); d.fade.connect(musicBus); d.audio.addEventListener('ended', () => onEnded(d)); });
+  meter(musicBus, $('#mMus'));
+  const sp = ctx.createScriptProcessor(4096, 2, 2); masterOut.connect(sp); const z = ctx.createGain(); z.gain.value = 0; sp.connect(z); z.connect(ctx.destination);
+  sp.onaudioprocess = e => { if (!live || !enc) return; const L = e.inputBuffer.getChannelData(0), R = e.inputBuffer.getChannelData(1), n = L.length, l = new Int16Array(n), r = new Int16Array(n);
+    for (let i=0;i<n;i++){ l[i] = Math.max(-1, Math.min(1, L[i]))*32767; r[i] = Math.max(-1, Math.min(1, R[i]))*32767; } const mp3 = enc.encodeBuffer(l, r); if (mp3.length) out.push(new Uint8Array(mp3)); };
+  requestAnimationFrame(draw);
+}
+
+// ---------- queue / playback ----------
+const queue = []; let lib = [];
+const active = () => decks.find(d => d.playing);
+function load(d, entry){ if (d.url && d.url.startsWith('blob:')) URL.revokeObjectURL(d.url); d.cur = entry; d.url = entry.file ? URL.createObjectURL(entry.file) : entry.url; d.audio.src = d.url; d.audio.load(); }
+async function playNext(){
+  const e = queue.shift(); if (!e) { render(); return; }
+  const o = active(), d = decks.find(x => x !== o) || decks[0];
+  load(d, e); d.fade.gain.cancelScheduledValues(ctx.currentTime); d.fade.gain.setValueAtTime(1, ctx.currentTime);
+  try { await d.audio.play(); } catch(err){ toast('Cannot play ' + e.title); render(); return; }
+  d.playing = true; d.token++; d.mixed = false;
+  if (o) { const t = ctx.currentTime, tok = o.token; o.fade.gain.setValueAtTime(1, t); o.fade.gain.linearRampToValueAtTime(0, t + 4); setTimeout(() => { if (o.token === tok) { o.audio.pause(); o.playing = false; render(); } }, 4100); }
+  meta(e); render();
+}
+function onEnded(d){ d.playing = false; if (!active()) playNext(); render(); }
+$('#playBtn').onclick = () => { const d = active(); if (d) { d.audio.pause(); d.playing = false; d.paused = true; render(); } else { const p = decks.find(x => x.paused && x.cur); if (p) { p.audio.play(); p.playing = true; p.paused = false; render(); } else playNext(); } };
+setInterval(() => {
+  const d = active();
+  if (d && d.audio.duration) { const rem = d.audio.duration - d.audio.currentTime; $('#rem').textContent = '-' + fmt(rem); $('#rem').style.color = rem < 20 ? '#F04444' : '';
+    if (rem < 4.2 && !d.mixed && queue.length) { d.mixed = true; playNext(); } }
+}, 250);
+function render(){
+  const d = active(), e = d && d.cur;
+  $('#np').textContent = e ? e.title : 'Nothing playing'; $('#npA').textContent = e ? (e.artist || '') : (queue.length ? 'Press play' : 'Add songs with +');
+  const lab = $('#lab'); if (e && e.cover) { lab.style.backgroundImage = `url('${e.cover}')`; lab.textContent = ''; } else { lab.style.backgroundImage = ''; lab.style.background = e ? colorFor(e.artist||e.title) : '#2A2E37'; lab.textContent = e ? initials(e.artist||e.title) : ''; }
+  $('#vinyl').classList.toggle('run', !!d); $('#playBtn').innerHTML = d ? PAUSE : PLAY;
+  $('#qn').textContent = queue.length ? queue.length + (queue.length === 1 ? ' song' : ' songs') : '';
+  $('#queue').innerHTML = queue.length ? queue.slice(0, 5).map((q, i) => `<div class="it"><div class="art" style="${q.cover ? `background-image:url('${q.cover}')` : 'background:' + colorFor(q.artist||q.title)}">${q.cover ? '' : esc(initials(q.artist||q.title))}</div><div style="flex:1;min-width:0"><div class="ell" style="font-weight:600">${esc(q.title)}</div><div class="sub ell" style="font-size:12px">${esc(q.artist||'')}</div></div><button class="sm" data-rm="${i}" aria-label="Remove">✕</button></div>`).join('') : '<div class="sub" style="padding:8px 0">Queue is empty.</div>';
+}
+$('#queue').onclick = e => { const b = e.target.closest('[data-rm]'); if (b) { queue.splice(+b.dataset.rm, 1); render(); } };
+
+// ---------- add songs sheet ----------
+$('#add').onclick = () => { $('#sheet').classList.add('open'); };
+$('#close').onclick = () => $('#sheet').classList.remove('open');
+document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => { document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('on', x === b));
+  $('#tPhone').style.display = b.dataset.t === 'phone' ? 'block' : 'none'; $('#tLib').style.display = b.dataset.t === 'lib' ? 'flex' : 'none'; if (b.dataset.t === 'lib') loadLib(); });
+$('#pick').onclick = () => $('#fPick').click();
+$('#fPick').onchange = e => { [...e.target.files].forEach(f => { const base = f.name.replace(/\.[^.]+$/, ''), p = base.split(' - '); queue.push({ file: f, title: p.length > 1 ? p.slice(1).join(' - ') : base, artist: p.length > 1 ? p[0] : '', cover: '' }); }); e.target.value = ''; toast('Added to queue'); render(); };
+async function loadLib(){ try { lib = (await (await fetch('/api/library?kind=music')).json()).items; renderLib(); } catch(e){ $('#lib').innerHTML = '<div class="sub">Library not available.</div>'; } }
+function renderLib(){ const q = $('#lq').value.trim().toLowerCase(); const list = lib.filter(i => !q || (i.title + ' ' + i.artist).toLowerCase().includes(q)).slice(0, 150);
+  $('#lib').innerHTML = list.length ? list.map(i => `<div class="it"><div class="art" style="${i.cover ? `background-image:url('${i.cover}')` : 'background:' + colorFor(i.artist||i.title)}">${i.cover ? '' : esc(initials(i.artist||i.title))}</div><div style="flex:1;min-width:0"><div class="ell" style="font-weight:600">${esc(i.title)}</div><div class="sub ell" style="font-size:12px">${esc(i.artist)}</div></div><button class="sm" data-id="${i.id}">+ Add</button></div>`).join('') : '<div class="sub">No songs. Set the music folder in the studio.</div>'; }
+$('#lq').oninput = renderLib;
+$('#lib').onclick = e => { const b = e.target.closest('[data-id]'); if (!b) return; const i = lib.find(x => x.id === b.dataset.id); queue.push({ url: i.url, title: i.title, artist: i.artist, cover: i.cover }); b.textContent = '✓'; render(); };
+
+// ---------- carts ----------
+const carts = [];
+async function loadCarts(){ try { const d = await (await fetch('/api/library?kind=carts')).json();
+  for (const x of d.items.slice(0, 4)) { try { carts.push({ name: x.title, buf: await ctx.decodeAudioData(await (await fetch(x.url)).arrayBuffer()), src: null }); } catch(e){} } } catch(e){}
+  while (carts.length < 4) carts.push({ name: '', buf: null, src: null }); renderCarts(); }
+function renderCarts(){ $('#carts').innerHTML = carts.map((c, i) => `<button class="cart ${c.buf ? 'has' : ''} ${c.src ? 'play' : ''}" data-i="${i}">${c.buf ? esc(c.name) : '—'}</button>`).join(''); }
+$('#carts').onclick = e => { const b = e.target.closest('.cart'); if (!b) return; const c = carts[+b.dataset.i]; if (!c.buf) { toast('Add jingles to the jingles folder in the studio'); return; }
+  if (c.src) { c.src.stop(); return; } const s = ctx.createBufferSource(); s.buffer = c.buf; s.connect(musicBus); s.onended = () => { c.src = null; renderCarts(); }; c.src = s; s.start(); renderCarts(); };
+
+// ---------- mic ----------
+$('#mic').onclick = async () => {
+  if (!micG) {
+    try { const st = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: false } });
+      const src = ctx.createMediaStreamSource(st), hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 90;
+      const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -24; comp.ratio.value = 4; const mk = ctx.createGain(); mk.gain.value = 1.6;
+      micG = ctx.createGain(); micG.gain.value = 0; src.connect(hp); hp.connect(comp); comp.connect(mk); mk.connect(micG); micG.connect(masterIn); meter(micG, $('#mMic'));
+    } catch(e){ toast(window.isSecureContext ? 'Microphone blocked. Allow it in the browser.' : 'Microphone needs the https link.'); return; }
+  }
+  micOn = !micOn; const t = ctx.currentTime;
+  micG.gain.setTargetAtTime(micOn ? 1 : 0, t, 0.02); musicBus.gain.setTargetAtTime(micOn ? 0.2 : 1, t, micOn ? 0.08 : 0.25);
+  $('#mic').classList.toggle('on', micOn); $('#micT').textContent = micOn ? 'LIVE' : 'MIC';
+};
+
+// ---------- broadcast ----------
+setInterval(async () => {
+  if (!live || sending || !out.length) return;
+  const parts = out; out = []; const len = parts.reduce((a, b) => a + b.length, 0), body = new Uint8Array(len); let o = 0; parts.forEach(p => { body.set(p, o); o += p.length; });
+  sending = true;
+  try { const r = await fetch('/api/push', { method: 'POST', headers: { 'X-Radio-Key': KEY(), 'X-Radio-Source': 'Phone' }, body }); if (r.status === 401) { toast('Wrong password'); setLive(false); } } catch(e){ toast('Connection lost… retrying'); }
+  sending = false;
+}, 400);
+async function setLive(on){
+  if (on) {
+    try { const r = await fetch('/api/check', { method: 'POST', headers: { 'X-Radio-Key': KEY() } }); if (r.status === 401) { toast('Wrong password'); return; } } catch(e){ toast('Server not reachable'); return; }
+    enc = new lamejs.Mp3Encoder(2, ctx.sampleRate, 128); live = true;
+    try { wake = await navigator.wakeLock.request('screen'); } catch(e){}
+    const d = active(); if (d) meta(d.cur);
+  } else { live = false; enc = null; out = []; if (wake) { wake.release().catch(() => {}); wake = null; } }
+  $('#go').classList.toggle('live', live); $('#go').textContent = live ? 'Stop broadcast' : 'Go live';
+  $('#air').classList.toggle('on', live); $('#airT').textContent = live ? 'ON AIR' : 'OFF AIR';
+}
+document.addEventListener('visibilitychange', async () => { if (live && document.visibilityState === 'visible' && !wake) { try { wake = await navigator.wakeLock.request('screen'); } catch(e){} } });
+$('#go').onclick = () => setLive(!live);
+function meta(e){ if (!e || !live) return; fetch('/api/meta', { method: 'POST', headers: { 'X-Radio-Key': KEY(), 'Content-Type': 'application/json' }, body: JSON.stringify({ title: e.title, artist: e.artist }) }).catch(() => {}); }
+let recOn = false;
+$('#rec').onclick = async () => { try { const r = await fetch('/api/rec', { method: 'POST', headers: { 'X-Radio-Key': KEY(), 'Content-Type': 'application/json' }, body: JSON.stringify({ on: !recOn }) }); if (r.ok) { recOn = !recOn; $('#rec').classList.toggle('on', recOn); toast(recOn ? 'Recording on the server' : 'Recording saved'); } } catch(e){} };
+async function poll(){ try { const s = await (await fetch('/api/status', { cache: 'no-store' })).json(); $('#lis').textContent = s.listeners; recOn = s.recording; $('#rec').classList.toggle('on', recOn); } catch(e){} }
+setInterval(poll, 3000);
+
+$('#startBtn').onclick = async () => {
+  key = $('#pw').value; store.set('radioKey', key);
+  try { const r = await fetch('/api/check', { method: 'POST', headers: { 'X-Radio-Key': KEY() } }); if (r.status === 401) { toast('Wrong password'); return; } } catch(e){ toast('Server not reachable'); return; }
+  initAudio(); await ctx.resume(); $('#start').remove(); loadCarts(); poll(); render();
+};
+$('#playBtn').innerHTML = PLAY; render();
+</script>
+</body>
+</html>
