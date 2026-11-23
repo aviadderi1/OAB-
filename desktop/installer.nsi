@@ -36,7 +36,7 @@ VIAddVersionKey "LegalCopyright" "${COMPANY}"
 !define MUI_HEADERIMAGE_RIGHT
 !define MUI_ABORTWARNING
 !define MUI_FINISHPAGE_RUN "$INSTDIR\${EXE}"
-!define MUI_FINISHPAGE_RUN_TEXT "הפעל את OAB Studio"
+!define MUI_FINISHPAGE_RUN_TEXT "Run OAB Studio"
 
 !insertmacro MUI_PAGE_WELCOME
 !insertmacro MUI_PAGE_DIRECTORY
@@ -44,7 +44,7 @@ VIAddVersionKey "LegalCopyright" "${COMPANY}"
 !insertmacro MUI_PAGE_FINISH
 !insertmacro MUI_UNPAGE_CONFIRM
 !insertmacro MUI_UNPAGE_INSTFILES
-!insertmacro MUI_LANGUAGE "Hebrew"
+!insertmacro MUI_LANGUAGE "English"
 
 Function .onInit
   ; close a running OAB Studio (also during automatic updates)

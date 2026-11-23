@@ -1592,7 +1592,7 @@ Object.assign(ACT, {
   liveToggle: () => $('#golive').click(), msgListeners: () => $('#msgOpen').click(), listenLinks: () => openLinks(),
   whoListens: () => setTimeout(() => $('#lisTop').click(), 0), micA: () => toggleMicN(0), micB: () => toggleMicN(1),
   tLight: () => setTheme(document.documentElement.classList.contains('light') ? 'dark' : 'light'),
-  rTrack: () => $('#bRepTrack').click(), rStopAfter: () => $('#bStopAfter').click(), rShuffle: () => $('#bShuffle').click(), rList: () => $('#bRepList').click(), recToggle: () => $('#rec').onclick(),
+  rTrack: () => $('#bRepTrack').click(), rStopAfter: () => $('#bStopAfter').click(), rStopEach: () => $('#bStopEach').click(), rShuffle: () => $('#bShuffle').click(), rList: () => $('#bRepList').click(), recToggle: () => $('#rec').onclick(),
   tGlass: () => setTheme(document.documentElement.classList.contains('glass') ? 'dark' : 'glass')
 });
 // ---------------- light / dark interface ----------------

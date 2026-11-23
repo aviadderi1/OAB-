@@ -353,7 +353,7 @@ function onDeckEnded(d){
   if (d !== curDeck || d.retiring) { d.item = null; d.retiring = false; return; }
   const it = d.item;
   if (PL.repeatTrack && it) { d.audio.currentTime = 0; d.audio.play(); it.startedAt = Date.now(); mixFired = false; renderAll(); return; }
-  if (PL.stopAfter) { PL.stopAfter = false; setT('bStopAfter', false); markPlayed(it); PL.cur = null; curDeck = null; d.item = null; renderAll(); return; }
+  if (PL.stopAfter || PL.stopEach) { const nx = peekNext(); PL.stopAfter = false; setT('bStopAfter', false); markPlayed(it); PL.cur = null; curDeck = null; d.item = null; waitNext(nx); renderAll(); return; }
   if (!mixFired) { d.item = null; curDeck = null; advance('end'); }
   else { d.item = null; }
 }
@@ -365,7 +365,7 @@ function stopAll(fade){
 function engineTick(){
   if (!ctx) return;
   const it = curItem();
-  if (curDeck && it && !curDeck.audio.paused && !mixFired && $('#autoMix').classList.contains('on') && !PL.stopAfter && !PL.repeatTrack) {
+  if (curDeck && it && !curDeck.audio.paused && !mixFired && $('#autoMix').classList.contains('on') && !PL.stopAfter && !PL.stopEach && !PL.repeatTrack) {
     const pos = curDeck.audio.currentTime, nx = peekNext(); const ms = mixStart(it, nx); const co = tmOf(it).cueOut;
     if ((it.kind === 'stream' && it.dur && pos >= it.dur) || (co && pos >= co)) { mixFired = true; if (nx) advance('auto'); else { stopAll(0.5); } }
     else if (nx && isFinite(ms) && pos >= ms) {
@@ -373,7 +373,7 @@ function engineTick(){
       else { mixFired = true; advance('auto'); }
     }
   }
-  if (curDeck && it && !curDeck.audio.paused && !mixFired && tmOf(it).cueOut && curDeck.audio.currentTime >= tmOf(it).cueOut) { mixFired = true; if (PL.stopAfter || !peekNext()) { PL.stopAfter = false; setT('bStopAfter', false); markPlayed(it); PL.cur = null; stopAll(0.4); } else advance('auto'); }
+  if (curDeck && it && !curDeck.audio.paused && !mixFired && tmOf(it).cueOut && curDeck.audio.currentTime >= tmOf(it).cueOut) { mixFired = true; if (PL.stopAfter || PL.stopEach || !peekNext()) { const nx = peekNext(); PL.stopAfter = false; setT('bStopAfter', false); markPlayed(it); PL.cur = null; stopAll(0.4); waitNext(nx); } else advance('auto'); }
   // preload analysis of next
   const nx = peekNext(); if (nx) analyze(nx);
   updatePlayerUI();
@@ -391,6 +391,11 @@ $('#bPrev').onclick = () => { const f = PL.cur && findItem(PL.cur); if (!f) retu
 function setT(id, on){ $('#' + id).classList.toggle('on', on); }
 $('#bRepTrack').onclick = () => { PL.repeatTrack = !PL.repeatTrack; setT('bRepTrack', PL.repeatTrack); };
 $('#bStopAfter').onclick = () => { PL.stopAfter = !PL.stopAfter; setT('bStopAfter', PL.stopAfter); };
+// stop after every song: the playlist stops when a song ends and the next song waits (selected) for Play
+PL.stopEach = store.get('stopEach', '0') === '1';
+function waitNext(nx){ try { if (nx) { PL.sel = new Set([nx.uid]); PL.anchor = nx.uid; renderPlaylist(); } } catch(e){} }
+$('#bStopEach').onclick = () => { PL.stopEach = !PL.stopEach; store.set('stopEach', PL.stopEach ? '1' : '0'); setT('bStopEach', PL.stopEach); toast(PL.stopEach ? 'Stop after song ON – after each song the playlist stops and the next song waits for Play' : 'Stop after song OFF – the playlist plays on'); };
+setT('bStopEach', PL.stopEach);
 $('#bShuffle').onclick = () => { PL.shuffle = !PL.shuffle; PL.shufflePick = null; setT('bShuffle', PL.shuffle); updateNext(); };
 $('#bRepList').onclick = () => { PL.repeatList = !PL.repeatList; setT('bRepList', PL.repeatList); updateNext(); };
 $('#autoMix').classList.toggle('on', store.get('autoMix', '1') === '1');
@@ -841,7 +846,7 @@ const ACT = {
   options: () => openOptions(), lightSettings: async () => { await openOptions(); const q = $('#optLight'); if (q) q.scrollIntoView({ block: 'start' }); }, hotSettings: async () => { await openOptions(); const q = $('#optHot'); if (q) q.scrollIntoView({ block: 'start' }); }, streamQual: async () => { await openOptions(); const q = $('#sQual'); if (q) { q.scrollIntoView({ block: 'center' }); q.focus(); } }, crossfades: () => { renderFt(); openModal('mXf'); },
   hotkeys: () => { $('#miH').textContent = 'Hot keys'; $('#miBody').innerHTML = [['Space / Shift+Space', 'MIC 1 / MIC 2 (both when linked)'], ['Enter', 'Play selected'], ['Ctrl+E', 'Start / stop broadcasting'], ['1 … 0', 'Cart wall cells 1–10'], ['−', 'Stop all jingles'], ['Insert', 'Insert last library song after the playing track'], ['Num −', 'Add last library song to the end'], ['Delete', 'Remove selected'], ['Ctrl+↑ / Ctrl+↓', 'Move selected'], ['Ctrl+A / C / X / V', 'Select all / copy / cut / paste'], ['Ctrl+, / Ctrl+.', 'Seek −10 s / +10 s'], ['Ctrl+N / O / S / F / P', 'New / open / save / find / options'], ['Alt+click', 'Prelisten']].map(r => `<div style="display:flex;gap:12px"><span class="mono" style="min-width:170px;color:#8CC2FF">${r[0]}</span><span>${r[1]}</span></div>`).join(''); openModal('mInfo'); },
   help: () => { $('#miH').textContent = 'Guide'; $('#miBody').innerHTML = 'The full Hebrew guide is in <b>README-HE.txt</b> in the Radio folder.'; openModal('mInfo'); },
-  about: () => { $('#miH').textContent = 'OAB Studio 1.3.7'; $('#miBody').innerHTML = '<img src="/oab-logo.png" alt="" style="width:96px;height:96px;display:block;margin:0 auto 8px">OAB – On Air Broadcast · radio automation studio · version 1.3.7<br>Playlist engine, scheduler, generator, ads scheduler, voice tracking, announcements, reports, DSP, AUX players.<br>AD SOUND &amp; SERVICE'; openModal('mInfo'); },
+  about: () => { $('#miH').textContent = 'OAB Studio 1.0.0'; $('#miBody').innerHTML = '<img src="/oab-logo.png" alt="" style="width:96px;height:96px;display:block;margin:0 auto 8px">OAB – On Air Broadcast · radio automation studio · version 1.0.0<br>Playlist engine, scheduler, generator, ads scheduler, voice tracking, announcements, reports, DSP, AUX players.<br>AD SOUND &amp; SERVICE'; openModal('mInfo'); },
 };
 function doAct(a){ $$('.menubar .m').forEach(m => m.classList.remove('open')); if (ACT[a]) ACT[a](); }
 document.addEventListener('click', e => { const a = e.target.closest('[data-a]'); if (a && (a.closest('.dd') || a.closest('.tool') || a.closest('.transport'))) doAct(a.dataset.a); });
