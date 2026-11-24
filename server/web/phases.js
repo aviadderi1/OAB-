@@ -2016,3 +2016,26 @@ function setPlWin(on){ document.body.classList.toggle('plOff', !on); store.set('
 $('#plTop').onclick = () => setPlWin(document.body.classList.contains('plOff'));
 $('#plClose').onclick = () => setPlWin(false);
 setPlWin(store.get('plOff', '0') !== '1');
+
+// ---------------- full-width glowing progress line with a moving dot (bottom bar) ----------------
+(() => {
+  const c = $('#progLine'); if (!c) return;
+  const posNow = () => { const it = curItem(); if (!curDeck || !it || curDeck.item !== it) return null; const dur = itemDur(it) || curDeck.audio.duration; if (!dur || !isFinite(dur)) return null; return { t: curDeck.audio.currentTime || 0, dur }; };
+  c.addEventListener('click', e => { const p = posNow(); if (!p) return; const r = c.getBoundingClientRect(), pad = 6; curDeck.audio.currentTime = Math.max(0, Math.min(1, (e.clientX - r.left - pad) / (r.width - pad * 2))) * p.dur; });
+  function draw(){
+    requestAnimationFrame(draw);
+    if (!document.documentElement.classList.contains('glass') || !c.offsetWidth) return;
+    const [W, H, d] = fitCanvas(c), g = c.getContext('2d'), p = posNow(), y = 9 * d, x0 = 6 * d, x1 = W - 6 * d;
+    g.clearRect(0, 0, W, H); g.lineCap = 'round'; g.lineWidth = 3 * d;
+    g.strokeStyle = 'rgba(63,208,255,.18)'; g.beginPath(); g.moveTo(x0, y); g.lineTo(x1, y); g.stroke();
+    const f = p ? Math.max(0, Math.min(1, p.t / p.dur)) : 0, x = x0 + (x1 - x0) * f;
+    if (p) {
+      const gr = g.createLinearGradient(x0, 0, x1, 0); gr.addColorStop(0, '#2EE88A'); gr.addColorStop(1, '#3FD0FF');
+      g.strokeStyle = gr; g.shadowColor = '#3FD0FF'; g.shadowBlur = 10 * d; g.beginPath(); g.moveTo(x0, y); g.lineTo(Math.max(x0 + 0.5, x), y); g.stroke();
+      g.fillStyle = '#fff'; g.shadowColor = '#BFF3FF'; g.shadowBlur = 14 * d; g.beginPath(); g.arc(x, y, 5 * d, 0, Math.PI * 2); g.fill(); g.shadowBlur = 0;
+    }
+    g.font = `500 ${10.5 * d}px JetBrains Mono, monospace`; g.fillStyle = '#9FB4CC'; g.textBaseline = 'top';
+    g.textAlign = 'left'; g.fillText(p ? fmt(p.t) : '--:--', x0, y + 9 * d); g.textAlign = 'right'; g.fillText(p ? fmt(p.dur) : '--:--', x1, y + 9 * d); g.textAlign = 'left';
+  }
+  requestAnimationFrame(draw);
+})();
