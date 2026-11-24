@@ -413,11 +413,11 @@ html.glass .plr:hover>.acts{display:flex}
 html.glass .tabs{border-bottom-color:rgba(255,255,255,.08)}
 /* now playing */
 html.glass .player{display:contents}
-html.glass #pNow{grid-area:dock;justify-self:start;align-self:end;position:relative;z-index:2;width:calc(50% - 300px);max-width:620px;box-sizing:border-box;margin:0 0 12px 30px;border-radius:0;background:none;backdrop-filter:none;-webkit-backdrop-filter:none;border:0;box-shadow:none;padding:0!important;gap:0!important}
-html.glass #pNow>div{gap:3px!important}
+html.glass #pNow{grid-area:dock;justify-self:start;align-self:end;position:relative;z-index:2;width:calc(50% - 300px);max-width:620px;box-sizing:border-box;margin:0 0 8px 30px;border-radius:0;background:none;backdrop-filter:none;-webkit-backdrop-filter:none;border:0;box-shadow:none;padding:0!important;gap:0!important}
+html.glass #pNow>div{gap:2px!important}
 html.glass #nextIn{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 html.glass #nowArtist{font-size:11.5px}
-html.glass #pNow .wwrap{gap:1px}html.glass #tNow{height:12px}html.glass #wNow{height:24px;background:rgba(255,255,255,.05)}
+html.glass #pNow .wwrap{gap:1px}html.glass #tNow{height:11px}html.glass #wNow{height:20px;background:rgba(255,255,255,.05)}
 html.glass #pNow .vinyl,html.glass #nowType,html.glass #nowTimes{display:none!important}
 html.glass #nowLbl{color:#2EE88A}
 html.glass #nowTitle{font-size:19px!important}
@@ -443,7 +443,7 @@ html.glass body:has(.main:not(.noLib)) .micbtn .mi svg,html.glass body:has(.main
 html.glass body:has(.main:not(.noLib)) .micbtn.on .mi svg,html.glass body:has(.main:not(.noReq)) .micbtn.on .mi svg{color:#6FF0A8;opacity:1}
 html.glass body:has(.main:not(.noLib)) #micCard .micTop,html.glass body:has(.main:not(.noReq)) #micCard .micTop{gap:22px;justify-content:flex-start;padding:4px 4px 44px 22px}
 /* bottom dock: LED meter | stop prev play next volume | 8 hot buttons */
-html.glass .transport{grid-area:dock;position:relative;margin:4px 0 0;height:168px;box-sizing:border-box;padding:76px 24px 0 18px;align-items:center;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 120' preserveAspectRatio='none'%3E%3Cdefs%3E%3ClinearGradient id='f' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%230D1424' stop-opacity='.80'/%3E%3Cstop offset='1' stop-color='%2305070D' stop-opacity='.94'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M0 120 L0 46 C 320 4, 1120 4, 1440 46 L1440 120 Z' fill='url%28%23f%29'/%3E%3C/svg%3E") 0 0/100% 100% no-repeat;border:0}
+html.glass .transport{grid-area:dock;position:relative;margin:4px 0 0;height:178px;box-sizing:border-box;padding:84px 24px 0 18px;align-items:center;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 120' preserveAspectRatio='none'%3E%3Cdefs%3E%3ClinearGradient id='f' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%230D1424' stop-opacity='.80'/%3E%3Cstop offset='1' stop-color='%2305070D' stop-opacity='.94'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M0 120 L0 46 C 320 4, 1120 4, 1440 46 L1440 120 Z' fill='url%28%23f%29'/%3E%3C/svg%3E") 0 0/100% 100% no-repeat;border:0}
 html.glass .transport>.tpBtns{align-self:center;position:relative;z-index:1}
 html.glass .transport>.hpWrap,html.glass .transport>div:last-child{align-self:center;position:relative;z-index:1}
 html.glass .transport>.tpSide:not(.hpWrap){align-self:center}
@@ -556,6 +556,7 @@ html.glass .tool .reqTop:hover{background:rgba(255,255,255,.12);color:#fff}
 html.glass .tool .reqTop b{min-width:22px;height:20px;padding:0 6px;box-sizing:border-box;border-radius:10px;background:rgba(255,255,255,.12);color:#DCE3EC;font:700 12px 'JetBrains Mono',monospace;display:flex;align-items:center;justify-content:center}
 html.glass .tool .reqTop.has b{background:#2D8CEB;color:#fff;box-shadow:0 0 10px rgba(45,140,235,.6)}
 html.glass .tool .reqTop.open{border-color:#2D8CEB}
+html.glass .micbtn::after,html.glass .micbtn.on::after{content:none!important;display:none!important}
 /*ENDGLASS*/
 </style>
 </head>
@@ -730,7 +731,7 @@ html.glass .tool .reqTop.open{border-color:#2D8CEB}
 </aside>
 </div>
 
-<div class="status"><span id="fSrv">Server –</span><span id="stPl"></span><span>Limiter −1 dB</span><span id="stXf"></span><span style="margin-left:auto">OAB Studio 1.0.8</span><span style="letter-spacing:1.5px">AD SOUND &amp; SERVICE</span></div>
+<div class="status"><span id="fSrv">Server –</span><span id="stPl"></span><span>Limiter −1 dB</span><span id="stXf"></span><span style="margin-left:auto">OAB Studio 1.0.9</span><span style="letter-spacing:1.5px">AD SOUND &amp; SERVICE</span></div>
 
 <div class="cs" id="chStrip" hidden role="dialog" aria-label="Microphone channel strip">
 <header class="csHead"><span class="csIcon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="2.5" width="6" height="11.5" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg></span>
