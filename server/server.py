@@ -33,7 +33,7 @@ STATION = os.environ.get("RADIO_NAME", "OAB")
 MAX_LISTENERS = int(os.environ.get("RADIO_MAX_LISTENERS", "0"))  # 0 = no limit
 # ---------------------------------------------------------
 
-VERSION = "1.0.9"
+VERSION = "1.0.10"
 APP_DIR = os.path.dirname(os.path.abspath(__file__))            # program files (code + web)
 BASE = os.environ.get("OAB_DATA") or APP_DIR                       # settings, playlists, recordings, downloaded tools
 os.makedirs(BASE, exist_ok=True)
@@ -43,6 +43,7 @@ CONFIG_FILE = os.path.join(BASE, "config.json")
 PLAYLISTS_FILE = os.path.join(BASE, "playlists.json")
 DATA_DIR = os.path.join(BASE, "data")
 VT_DIR = os.path.join(DATA_DIR, "voicetracks")
+LOGO_FILE = os.path.join(DATA_DIR, "station-logo")   # the station logo chosen in the studio (else the OAB logo)
 PLAYLOG_FILE = os.path.join(DATA_DIR, "playlog.csv")
 os.makedirs(REC_DIR, exist_ok=True)
 IS_WIN = sys.platform.startswith("win")
@@ -701,7 +702,7 @@ def status():
         m = station_msg if station_msg["text"] and time.time() - station_msg["t"] < MSG_TTL else None
         return {
             "msg": {"id": m["id"], "text": m["text"], "font": m.get("font", "Heebo"), "time": time.strftime("%H:%M", time.localtime(m["t"]))} if m else None,
-            "station": STATION, "version": VERSION,
+            "station": STATION, "version": VERSION, "logoV": cfg.get("logoV", 0) if os.path.isfile(LOGO_FILE) else 0,
             "onAir": on_air(),
             "listeners": len(listeners),
             "peak": st["peak"],
@@ -1312,6 +1313,17 @@ class Handler(BaseHTTPRequestHandler):
         p = urllib.parse.urlparse(self.path).path
         if p in ("/live", "/live.mp3", "/stream", "/stream.mp3"):
             return self.stream()
+        if p == "/oab-logo.png" and os.path.isfile(LOGO_FILE):   # the station's own logo
+            with open(LOGO_FILE, "rb") as f:
+                data = f.read()
+            self.send_response(200)
+            self.send_header("Content-Type", cfg.get("logoMime") or "image/png")
+            self.send_header("Content-Length", str(len(data)))
+            self.send_header("Cache-Control", "no-cache")
+            self.cors()
+            self.end_headers()
+            self.wfile.write(data)
+            return
         if p == "/api/status":
             d = status()
             if self.authed():
@@ -1458,6 +1470,27 @@ class Handler(BaseHTTPRequestHandler):
                 station_msg["text"] = text
                 station_msg["t"] = time.time()
             return self.send_json({"ok": True, "listeners": len(listeners)})
+        if p == "/api/logo":                     # studio → new station logo for the studio and every listener
+            data = self.read_body(6_000_000)
+            if not data:                         # empty = back to the OAB logo
+                try:
+                    os.remove(LOGO_FILE)
+                except OSError:
+                    pass
+                cfg["logoV"] = int(time.time()); save_config()
+                return self.send_json({"ok": True, "logoV": 0})
+            kinds = [(b"\x89PNG", "image/png"), (b"\xff\xd8", "image/jpeg"), (b"GIF8", "image/gif"), (b"RIFF", "image/webp")]
+            mime = next((m for sig, m in kinds if data.startswith(sig)), None)
+            if data.lstrip()[:5] in (b"<svg ", b"<?xml") or b"<svg" in data[:200]:
+                mime = "image/svg+xml"
+            if not mime:
+                return self.send_json({"error": "Use a PNG, JPG, WEBP, GIF or SVG image"}, 400)
+            os.makedirs(DATA_DIR, exist_ok=True)
+            with open(LOGO_FILE + ".part", "wb") as f:
+                f.write(data)
+            os.replace(LOGO_FILE + ".part", LOGO_FILE)
+            cfg["logoMime"] = mime; cfg["logoV"] = int(time.time()); save_config()
+            return self.send_json({"ok": True, "logoV": cfg["logoV"]})
         if p == "/api/meta":
             d = self.read_json()
             set_meta(d.get("title"), d.get("artist"), d.get("kind") or "MUSIC")

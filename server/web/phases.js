@@ -1950,3 +1950,31 @@ $('#reqTop').onclick = () => setReqCol(!VIEW.req);
   }
   requestAnimationFrame(draw);
 })();
+
+// ---------------- gear button: all the menus in one place ----------------
+(() => {
+  const mb = $('#menubar'), gear = $('#gearBtn'); if (!mb || !gear) return;
+  const panel = document.createElement('div'); panel.className = 'gearPanel'; panel.setAttribute('role', 'menu');
+  $$('#menubar > .m').forEach(m => panel.appendChild(m)); gear.after(panel);
+  const close = () => { mb.classList.remove('gearOpen'); gear.setAttribute('aria-expanded', 'false'); $$('.menubar .m').forEach(m => m.classList.remove('open')); };
+  gear.onclick = e => { e.stopPropagation(); const o = !mb.classList.contains('gearOpen'); close(); if (o) { mb.classList.add('gearOpen'); gear.setAttribute('aria-expanded', 'true'); } };
+  panel.querySelectorAll(':scope > .m').forEach(m => m.addEventListener('mouseenter', () => { $$('.menubar .m').forEach(x => x.classList.toggle('open', x === m)); }));
+  document.addEventListener('click', e => { if (!mb.classList.contains('gearOpen')) return; if (!e.target.closest('.gearPanel') || e.target.closest('.dd [data-a]')) close(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+})();
+// Library button in the top bar
+$('#libTop').onclick = () => setLibCol(!VIEW.lib);
+const syncLibTop = () => { const b = $('#libTop'); if (b) b.classList.toggle('open', !!VIEW.lib); };
+const _setLibColT = setLibCol; setLibCol = function(on){ _setLibColT(on); syncLibTop(); }; syncLibTop();
+// station logo (Options → General): changes in the studio and for every listener
+function refreshLogo(v){ const u = '/oab-logo.png?v=' + (v || Date.now()); $$('img[src^="/oab-logo.png"]').forEach(i => i.src = u); }
+$('#logoPick').onclick = () => $('#logoFile').click();
+$('#logoFile').onchange = async () => {
+  const f = $('#logoFile').files[0]; $('#logoFile').value = ''; if (!f) return;
+  if (f.size > 6e6) return toast('The image is too big (6 MB max)');
+  try { const r = await fetch('/api/logo', { method: 'POST', headers: { 'X-Radio-Key': KEY(), 'Content-Type': f.type || 'application/octet-stream' }, body: f }); const j = await r.json();
+    if (!r.ok) return toast(j.error || 'Could not save the logo'); refreshLogo(j.logoV); toast('Station logo changed – listeners see it now'); } catch(e){ toast('Server not running'); }
+};
+$('#logoReset').onclick = async () => {
+  try { const r = await fetch('/api/logo', { method: 'POST', headers: { 'X-Radio-Key': KEY() } }); if (r.ok) { refreshLogo(); toast('Back to the OAB logo'); } } catch(e){ toast('Server not running'); }
+};
