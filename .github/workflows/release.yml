@@ -91,7 +91,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          set +e
           for t in $(gh release list -R "$GITHUB_REPOSITORY" --limit 100 --json tagName -q '.[].tagName'); do
-            gh release view "$t" -R "$GITHUB_REPOSITORY" --json assets -q '.assets[].name' | grep -E '\.dmg$' | while read a; do
+            gh release view "$t" -R "$GITHUB_REPOSITORY" --json assets -q '.assets[].name' | { grep -E '\.dmg$' || true; } | while read a; do
               gh release delete-asset "$t" "$a" -R "$GITHUB_REPOSITORY" -y && echo "removed $t/$a"; done
           done
