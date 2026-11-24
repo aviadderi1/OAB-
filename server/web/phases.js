@@ -1329,7 +1329,7 @@ renderAux();
 })();
 
 // ---------------- Requests column: close with ✕, bring back from View → Requests column ----------------
-function setReqCol(on){ VIEW.req = !!on; store.set('vReq', on ? '1' : '0'); $('.main').classList.toggle('noReq', !on); syncChecks(); if (typeof drawWaves === 'function') setTimeout(drawWaves, 0); }
+function setReqCol(on){ VIEW.req = !!on; store.set('vReq', on ? '1' : '0'); $('.main').classList.toggle('noReq', !on); { const b = $('#reqTop'); if (b) b.classList.toggle('open', !!on); } syncChecks(); if (typeof drawWaves === 'function') setTimeout(drawWaves, 0); }
 $('#reqClose').onclick = () => { setReqCol(false); toast('Requests column hidden – View → Requests column to show it again'); };
 function setLibCol(on){ VIEW.lib = !!on; $('.main').classList.toggle('noLib', !on); syncChecks(); if (typeof drawWaves === 'function') setTimeout(drawWaves, 0); }
 $('#libClose').onclick = e => { e.stopPropagation(); setLibCol(false); toast('Column hidden – View → Library column to show it again'); };
@@ -1914,3 +1914,7 @@ if (/[?&]resume=1/.test(location.search)) {
       toast('OAB recovered after a problem and is back on air'); } catch(e){ console.error(e); }
   }, 800);
 }
+
+// Requests button in the top bar: opens / closes the requests column
+$('#reqTop').onclick = () => setReqCol(!VIEW.req);
+{ const b = $('#reqTop'); if (b) b.classList.toggle('open', !!VIEW.req); }

@@ -1,6 +1,6 @@
 // OAB Studio – desktop app (Windows)
 // Starts the OAB server (bundled Python) and shows the studio in its own window.
-const { app, BrowserWindow, session, shell, dialog, desktopCapturer, Menu, ipcMain } = require('electron');
+const { app, BrowserWindow, session, shell, dialog, desktopCapturer, Menu, ipcMain, screen } = require('electron');
 const { spawn, execFile, execFileSync } = require('child_process');
 const path = require('path');
 const fs = require('fs');
@@ -117,8 +117,10 @@ ipcMain.handle('yt-is-open', () => !!(ytWin && !ytWin.isDestroyed()));
 ipcMain.handle('yt-close', () => { if (ytWin && !ytWin.isDestroyed()) ytWin.close(); return true; });
 
 function createWindow(){
+  // opens at about 80% of the screen width and 89% of its height, centred (not maximised)
+  const wa = screen.getPrimaryDisplay().workArea, W = Math.round(wa.width * 0.8), H = Math.round(wa.height * 0.89);
   win = new BrowserWindow({
-    width: 1600, height: 900, minWidth: 1100, minHeight: 650, show: false, title: 'OAB Studio', backgroundColor: '#0D0E11',
+    width: W, height: H, x: wa.x + Math.round((wa.width - W) / 2), y: wa.y + Math.round((wa.height - H) / 2), minWidth: 900, minHeight: 560, show: false, title: 'OAB Studio', backgroundColor: '#0D0E11',
     icon: path.join(__dirname, 'build', 'icon.ico'), autoHideMenuBar: true,
     webPreferences: { contextIsolation: true, nodeIntegration: false, backgroundThrottling: false, autoplayPolicy: 'no-user-gesture-required', preload: path.join(__dirname, 'preload.js') }
   });
@@ -156,7 +158,8 @@ function checkUpdates(){
 
 // ---------- opening screen: the studio photo, the ON AIR sign lights up with the loading (at least 7 s) ----------
 function showSplash(){
-  splash = new BrowserWindow({ width: 1100, height: 614, frame: false, resizable: false, movable: true, center: true, show: false,
+  const wa = screen.getPrimaryDisplay().workArea, sw = Math.round(Math.min(1100, wa.width * 0.62)), sh = Math.round(sw * 768 / 1376);
+  splash = new BrowserWindow({ width: sw, height: sh, frame: false, resizable: false, movable: true, center: true, show: false,
     backgroundColor: '#000000', icon: path.join(__dirname, 'build', 'icon.ico'), skipTaskbar: false, title: 'OAB Studio',
     webPreferences: { contextIsolation: true, nodeIntegration: false } });
   splash.loadFile(path.join(__dirname, 'splash', 'splash.html'));
@@ -199,7 +202,7 @@ app.whenReady().then(async () => {
   createWindow();
   await sp;
   if (!ok) { dialog.showErrorBox('OAB Studio', 'The OAB server did not start.\nIf the old OAB (start-oab.bat) is open, close it and try again.\nLog: ' + path.join(DATA, 'server.log')); }
-  if (win) { win.maximize(); win.show(); win.focus(); }
+  if (win) { win.show(); win.focus(); }
   if (splash && !splash.isDestroyed()) splash.close();
   if (app.isPackaged) setTimeout(checkUpdates, 8000);
 });
