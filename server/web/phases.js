@@ -2039,3 +2039,28 @@ setPlWin(store.get('plOff', '0') !== '1');
   }
   requestAnimationFrame(draw);
 })();
+
+// ---------------- "+" in the library: add music files from this computer ----------------
+$('#libAdd').onclick = () => $('#libFiles').click();
+$('#libFiles').onchange = async () => {
+  const files = [...$('#libFiles').files]; $('#libFiles').value = ''; if (!files.length) return;
+  let ok = 0;
+  for (let i = 0; i < files.length; i++) {
+    const f = files[i]; toast(`Adding to the library ${i + 1}/${files.length}: ${f.name}`);
+    try { const r = await fetch('/api/libadd?name=' + encodeURIComponent(f.name), { method: 'POST', headers: { 'X-Radio-Key': KEY(), 'Content-Type': 'application/octet-stream' }, body: f });
+      const j = await r.json(); if (!r.ok) { toast(j.error || 'Could not add ' + f.name); continue; }
+      library.push(libItem(j.item, 'music')); ok++; } catch(e){ toast('Server not running'); break; }
+  }
+  renderLib(); if (ok) toast(ok + (ok > 1 ? ' songs' : ' song') + ' added to the library');
+};
+// ---------------- font of the song names (Options → General) ----------------
+(() => {
+  const sel = $('#songFont'); if (!sel) return;
+  sel.innerHTML = '<option value="">Default</option>' + MSG_FONTS.map(f => `<option value="${f}">${f}</option>`).join('');
+  const apply = f => { if (f) loadFont(); document.documentElement.style.setProperty('--songFont', f ? `'${f}', Inter, sans-serif` : 'inherit'); $('#songFontPrev').style.fontFamily = f ? `'${f}', Inter, sans-serif` : ''; };
+  const cur = store.get('songFont', ''); sel.value = MSG_FONTS.includes(cur) ? cur : ''; apply(sel.value);
+  sel.onchange = () => { store.set('songFont', sel.value); apply(sel.value); renderPlaylist(); };
+})();
+
+// Help → User manual: download the PDF
+ACT.manual = () => { const a = document.createElement('a'); a.href = '/manual.pdf'; a.download = 'OAB-Studio-User-Manual.pdf'; document.body.appendChild(a); a.click(); a.remove(); toast('Downloading the user manual…'); };

@@ -131,6 +131,12 @@ function createWindow(){
   win.webContents.on('before-input-event', (e, i) => { if (i.type === 'keyDown' && i.key === 'F12' && i.control && i.shift) win.webContents.openDevTools({ mode: 'detach' }); });
   win.on('page-title-updated', e => e.preventDefault());
   win.loadURL(STUDIO);
+  // downloads (user manual, exports): save to the Downloads folder and open the file
+  win.webContents.session.on('will-download', (e, item) => {
+    const dest = path.join(app.getPath('downloads'), item.getFilename());
+    item.setSavePath(dest);
+    item.once('done', (ev, state) => { if (state === 'completed') shell.openPath(dest); else log('download ' + state + ': ' + item.getFilename()); });
+  });
   // the studio page crashed (black window): log why and bring it back on air at once
   win.webContents.on('render-process-gone', (e, d) => {
     log('studio page gone: ' + d.reason + ' (exit ' + d.exitCode + ')');

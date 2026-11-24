@@ -112,6 +112,10 @@ showVol();
 $('#plVol').oninput = () => { showVol(); store.set('plVol', $('#plVol').value); if (ctx) plVolG.gain.setTargetAtTime(+$('#plVol').value / 100, ctx.currentTime, 0.03); };
 
 // ---------------- library / search / explorer ----------------
+// song names on screen: only title and artist – no [video ids], (Official Video), _underscores_ etc.
+const JUNK_RX = /\s*\((?:[^)]*?(?:official|video|audio|lyric|lyrics|clip|visuali[sz]er|\bhd\b|\b4k\b|\bhq\b|remaster|full song|music video|קליפ|רשמי|מילים|אודיו)[^)]*)\)/gi;
+function cleanT(t){ const o = String(t || ''); const s = o.replace(/_/g, ' ').replace(/\s*\[[^\]]*\]/g, '').replace(/\s*【[^】]*】/g, '').replace(JUNK_RX, '').replace(/\s*\(\s*\)/g, '').replace(/\s{2,}/g, ' ').replace(/^[\s\-–|]+|[\s\-–|]+$/g, '').trim(); return s || o; }
+function cleanA(a){ return cleanT(String(a || '').replace(/\s*-\s*Topic$/i, '').replace(/VEVO$/i, '')); }
 let TAGOV = {}; try { TAGOV = JSON.parse(store.get('tagEdits', '{}')) || {}; } catch(e){}
 const library = []; const libById = new Map(); let lastLibId = null;
 function libItem(x, kind){ const ov = TAGOV[x.id]; if (ov) x = Object.assign({}, x, ov); const it = { id: x.id, url: x.url, title: x.title, artist: x.artist, cover: x.cover, dur: x.dur || 0, path: x.path || '', libKind: kind || 'music' }; libById.set(x.id, it); return it; }
@@ -123,7 +127,7 @@ async function loadServerLib(){
 }
 function artStyle(it){ const img = it.cover || it.image; return img ? `background-image:url('${esc(img)}')` : `background:${colorFor(it.artist || it.title)}`; }
 function artText(it){ return (it.cover || it.image) ? '' : esc(initials(it.artist || it.title)); }
-const libRow = it => `<div class="row" draggable="true" data-lib="${esc(it.id)}" title="Double-click: add · Alt+click: prelisten"><div class="art" style="${artStyle(it)}">${artText(it)}</div><div style="flex:1;min-width:0"><div class="ell" style="font-weight:600">${esc(it.title)}</div><div class="ell sub" style="font-size:11px">${esc(it.artist || 'Unknown artist')} · ${fmtL(it.dur)}</div></div><button class="ic" data-la="pfl" title="Prelisten" aria-label="Prelisten">🎧</button><button class="ic" data-la="after" title="Insert after playing (Insert)" aria-label="Insert after playing">⤵</button><button class="ic" data-la="end" title="Add to end (Num −)" aria-label="Add to end">＋</button></div>`;
+const libRow = it => `<div class="row" draggable="true" data-lib="${esc(it.id)}" title="Double-click: add · Alt+click: prelisten"><div class="art" style="${artStyle(it)}">${artText(it)}</div><div style="flex:1;min-width:0"><div class="ell sTitle" style="font-weight:600">${esc(cleanT(it.title))}</div><div class="ell sub sArtist" style="font-size:11px">${esc(it.artist ? cleanA(it.artist) : 'Unknown artist')} · ${fmtL(it.dur)}</div></div><button class="ic" data-la="pfl" title="Prelisten" aria-label="Prelisten">🎧</button><button class="ic" data-la="after" title="Insert after playing (Insert)" aria-label="Insert after playing">⤵</button><button class="ic" data-la="end" title="Add to end (Num −)" aria-label="Add to end">＋</button></div>`;
 let srcTab = 'lib', onlineRes = [], onlineNote = '', searchT;
 function renderLib(){
   if (srcTab !== 'lib') { renderOnline(); return; }
@@ -453,7 +457,7 @@ function renderPlaylist(scrollToCur){
     const lenTxt = it.kind === 'comment' || it.kind === 'cmd' ? '' : (isCur && curDeck && curDeck.item === it ? '-' + fmtL(Math.max(0, itemDur(it) - curDeck.audio.currentTime)) : fmtL(itemDur(it)));
     html += `<div class="${cls}" draggable="true" data-uid="${it.uid}"><span class="pn">${n}</span>${stateIcon(it, isCur, isNext).replace('</div>', qi > -1 ? `<span class="qn">${qi + 1}</span></div>` : '</div>')}`
       + (cov ? `<span class="pcv" style="background-image:url('${esc(cov)}')"></span>` : `<span class="pcv">${kindIcon(it, ft)}</span>`)
-      + `<div class="ptx"><span class="ell ttl" title="${esc(title)}"${it.dlErr ? ' style="color:#FF9A9A"' : ''}>${esc(title)}${it.file ? ' <span class="sub" style="font-size:10px">(local)</span>' : ''}</span>${artist ? `<span class="ell part">${esc(artist)}</span>` : ''}</div>`
+      + `<div class="ptx"><span class="ell ttl" title="${esc(title)}"${it.dlErr ? ' style="color:#FF9A9A"' : ''}>${esc(it.kind === 'dl' ? title : cleanT(title))}</span>${artist ? `<span class="ell part">${esc(it.kind === 'dl' || it.kind === 'stream' ? artist : cleanA(artist))}</span>` : ''}</div>`
       + `${it.kind === 'comment' ? '<span></span>' : tagHtml(ft)}<span class="pln">${lenTxt}</span><span class="acts"><button class="ic" data-act="up" title="Move up (Ctrl+↑)" aria-label="Move up">▲</button><button class="ic" data-act="down" title="Move down (Ctrl+↓)" aria-label="Move down">▼</button><button class="ic" data-act="pfl" title="Prelisten" aria-label="Prelisten"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 14v-2a9 9 0 0 1 18 0v2"/><rect x="2" y="14" width="5" height="7" rx="1.5"/><rect x="17" y="14" width="5" height="7" rx="1.5"/></svg></button><button class="ic" data-act="del" title="Remove" aria-label="Remove">✕</button></span></div>`;
   });
   if (!tab.items.length) html = `<div class="sub" style="padding:18px;line-height:1.7">This playlist is empty.<br>Double-click songs in Search / Explorer, drag them here, or use <b>+ Add</b>.</div>`;
@@ -465,7 +469,7 @@ function renderPlaylist(scrollToCur){
 }
 function updateNext(){
   const nx = peekNext(); const ft = nx && ftOf(nx);
-  $('#nextTitle').textContent = nx ? (nx.kind === 'cmd' ? 'Command: ' + nx.cmd : nx.kind === 'pause' ? 'Timed pause ' + fmtL(nx.dur) : nx.title) : '—';
+  $('#nextTitle').textContent = nx ? (nx.kind === 'cmd' ? 'Command: ' + nx.cmd : nx.kind === 'pause' ? 'Timed pause ' + fmtL(nx.dur) : cleanT(nx.title)) : '—';
   $('#nextArtist').textContent = nx ? (nx.artist || (nx.kind === 'stream' ? nx.url : nx.kind === 'line' ? 'Line input' : '')) : (PL.repeatList ? '' : 'End of playlist');
   $('#nextType').outerHTML = nx ? tagHtml(ft).replace('class="tag"', 'class="tag" id="nextType"') : '<span class="tag" id="nextType"></span>';
   setLabel($('#lNext'), nx); drawWaves(); renderNextIn();
@@ -509,8 +513,8 @@ function updatePlayerUI(full){
   const dur = itemDur(it); const paused = curDeck && curDeck.audio.paused;
   $('#pNow').classList.toggle('glow', !!(it && curDeck && curDeck.item === it && !paused));
   if (full) {
-    $('#nowTitle').textContent = it ? (it.kind === 'pause' ? 'Timed pause' : it.kind === 'cmd' ? 'Command' : it.title) : 'Nothing playing';
-    $('#nowArtist').textContent = it ? (it.artist || (it.kind === 'stream' ? it.url : it.kind === 'line' ? 'Line input is on air' : '')) : 'Add tracks to the playlist and press Play';
+    $('#nowTitle').textContent = it ? (it.kind === 'pause' ? 'Timed pause' : it.kind === 'cmd' ? 'Command' : cleanT(it.title)) : 'Nothing playing';
+    $('#nowArtist').textContent = it ? ((it.artist && cleanA(it.artist)) || (it.kind === 'stream' ? it.url : it.kind === 'line' ? 'Line input is on air' : '')) : 'Add tracks to the playlist and press Play';
     const ft = it ? ftOf(it) : null;
     $('#nowType').outerHTML = it ? tagHtml(ft).replace('class="tag"', 'class="tag" id="nowType"') : '<span class="tag" id="nowType"></span>';
     $('#nowLbl').textContent = !it ? 'STOPPED' : paused ? 'PAUSED' : 'ON AIR'; $('#nowLbl').style.color = !it ? '' : paused ? '#F5C46B' : '#7FE0B5';
@@ -847,7 +851,7 @@ const ACT = {
   options: () => openOptions(), lightSettings: async () => { await openOptions(); const q = $('#optLight'); if (q) q.scrollIntoView({ block: 'start' }); }, hotSettings: async () => { await openOptions(); const q = $('#optHot'); if (q) q.scrollIntoView({ block: 'start' }); }, streamQual: async () => { await openOptions(); const q = $('#sQual'); if (q) { q.scrollIntoView({ block: 'center' }); q.focus(); } }, crossfades: () => { renderFt(); openModal('mXf'); },
   hotkeys: () => { $('#miH').textContent = 'Hot keys'; $('#miBody').innerHTML = [['Space / Shift+Space', 'MIC 1 / MIC 2 (both when linked)'], ['Enter', 'Play selected'], ['Ctrl+E', 'Start / stop broadcasting'], ['1 … 0', 'Cart wall cells 1–10'], ['−', 'Stop all jingles'], ['Insert', 'Insert last library song after the playing track'], ['Num −', 'Add last library song to the end'], ['Delete', 'Remove selected'], ['Ctrl+↑ / Ctrl+↓', 'Move selected'], ['Ctrl+A / C / X / V', 'Select all / copy / cut / paste'], ['Ctrl+, / Ctrl+.', 'Seek −10 s / +10 s'], ['Ctrl+N / O / S / F / P', 'New / open / save / find / options'], ['Alt+click', 'Prelisten']].map(r => `<div style="display:flex;gap:12px"><span class="mono" style="min-width:170px;color:#8CC2FF">${r[0]}</span><span>${r[1]}</span></div>`).join(''); openModal('mInfo'); },
   help: () => { $('#miH').textContent = 'Guide'; $('#miBody').innerHTML = 'The full Hebrew guide is in <b>README-HE.txt</b> in the Radio folder.'; openModal('mInfo'); },
-  about: () => { $('#miH').textContent = 'OAB Studio 1.0.18'; $('#miBody').innerHTML = '<img src="/oab-logo.png" alt="" style="width:96px;height:96px;display:block;margin:0 auto 8px">OAB – On Air Broadcast · radio automation studio · version 1.0.18<br>Playlist engine, scheduler, generator, ads scheduler, voice tracking, announcements, reports, DSP, AUX players.<br>AD SOUND &amp; SERVICE'; openModal('mInfo'); },
+  about: () => { $('#miH').textContent = 'OAB Studio 1.0.0'; $('#miBody').innerHTML = '<img src="/oab-logo.png" alt="" style="width:96px;height:96px;display:block;margin:0 auto 8px">OAB – On Air Broadcast · radio automation studio · version 1.0.0<br>Playlist engine, scheduler, generator, ads scheduler, voice tracking, announcements, reports, DSP, AUX players.<br>AD SOUND &amp; SERVICE'; openModal('mInfo'); },
 };
 function doAct(a){ $$('.menubar .m').forEach(m => m.classList.remove('open')); if (ACT[a]) ACT[a](); }
 document.addEventListener('click', e => { const a = e.target.closest('[data-a]'); if (a && (a.closest('.dd') || a.closest('.tool') || a.closest('.transport'))) doAct(a.dataset.a); });

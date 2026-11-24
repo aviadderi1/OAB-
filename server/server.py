@@ -33,7 +33,7 @@ STATION = os.environ.get("RADIO_NAME", "OAB")
 MAX_LISTENERS = int(os.environ.get("RADIO_MAX_LISTENERS", "0"))  # 0 = no limit
 # ---------------------------------------------------------
 
-VERSION = "1.0.18"
+VERSION = "1.0.0"
 APP_DIR = os.path.dirname(os.path.abspath(__file__))            # program files (code + web)
 BASE = os.environ.get("OAB_DATA") or APP_DIR                       # settings, playlists, recordings, downloaded tools
 os.makedirs(BASE, exist_ok=True)
@@ -47,7 +47,8 @@ LOGO_FILE = os.path.join(DATA_DIR, "station-logo")   # the station logo chosen i
 PLAYLOG_FILE = os.path.join(DATA_DIR, "playlog.csv")
 os.makedirs(REC_DIR, exist_ok=True)
 IS_WIN = sys.platform.startswith("win")
-AUDIO_EXT = {".mp3", ".m4a", ".aac", ".wav", ".flac", ".ogg", ".opus", ".webm"}
+AUDIO_EXT = {".mp3", ".m4a", ".aac", ".wav", ".flac", ".ogg", ".opus", ".webm", ".mpeg", ".mpg", ".mp2", ".mpga", ".m2a", ".mpa"}
+CONVERT_EXT = {".mpeg", ".mpg", ".mp2", ".mpga", ".m2a", ".mpa"}   # MPEG files: turned into AAC (.m4a) once, then played like any song
 
 lock = threading.Lock()
 listeners = {}                       # id -> Queue of mp3 chunks
@@ -760,7 +761,7 @@ MIME = {".html": "text/html; charset=utf-8", ".js": "application/javascript; cha
         ".svg": "image/svg+xml", ".json": "application/json", ".mp3": "audio/mpeg",
         ".m4a": "audio/mp4", ".aac": "audio/aac", ".wav": "audio/wav", ".flac": "audio/flac",
         ".ogg": "audio/ogg", ".opus": "audio/ogg",
-        ".webmanifest": "application/manifest+json", ".ico": "image/x-icon", ".woff2": "font/woff2", ".woff": "font/woff", ".webm": "audio/webm", ".csv": "text/csv; charset=utf-8"}
+        ".webmanifest": "application/manifest+json", ".ico": "image/x-icon", ".woff2": "font/woff2", ".woff": "font/woff", ".webm": "audio/webm", ".csv": "text/csv; charset=utf-8", ".pdf": "application/pdf"}
 
 
 
@@ -849,6 +850,55 @@ def ffmpeg_exe():
     import shutil
     local = os.path.join(BASE, "ffmpeg.exe" if IS_WIN else "ffmpeg")
     return local if os.path.isfile(local) else shutil.which("ffmpeg")
+
+
+ff_lock = threading.Lock()
+
+
+def ensure_ffmpeg():
+    """ffmpeg is needed for MPEG files; download it once (Windows) if it is missing."""
+    with ff_lock:
+        exe = ffmpeg_exe()
+        if exe or not IS_WIN:
+            return exe
+        import shutil, zipfile
+        url = "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-lgpl.zip"
+        tmp = os.path.join(BASE, "ffmpeg.zip.part")
+        print("downloading ffmpeg for MPEG files…", flush=True)
+        urllib.request.urlretrieve(url, tmp)
+        with zipfile.ZipFile(tmp) as z:
+            name = next(n for n in z.namelist() if n.endswith("/bin/ffmpeg.exe"))
+            with z.open(name) as src, open(os.path.join(BASE, "ffmpeg.exe.part"), "wb") as dst:
+                shutil.copyfileobj(src, dst)
+        os.replace(os.path.join(BASE, "ffmpeg.exe.part"), os.path.join(BASE, "ffmpeg.exe"))
+        os.remove(tmp)
+        return ffmpeg_exe()
+
+
+conv_lock = threading.Lock()
+
+
+def playable_path(it):
+    """The file to send to the studio; MPEG files are converted to AAC once and kept in data/cache."""
+    full = it["full"]
+    if os.path.splitext(full)[1].lower() not in CONVERT_EXT:
+        return full
+    out = os.path.join(DATA_DIR, "cache", it["id"] + ".m4a")
+    if os.path.isfile(out) and os.path.getmtime(out) >= os.path.getmtime(full):
+        return out
+    with conv_lock:
+        if os.path.isfile(out) and os.path.getmtime(out) >= os.path.getmtime(full):
+            return out
+        ff = ensure_ffmpeg()
+        if not ff:
+            raise RuntimeError("ffmpeg is needed to play MPEG files")
+        os.makedirs(os.path.dirname(out), exist_ok=True)
+        kw = {"creationflags": 0x08000000} if IS_WIN else {}
+        r = subprocess.run([ff, "-y", "-v", "error", "-i", full, "-vn", "-c:a", "aac", "-b:a", "224k", out + ".part.m4a"], capture_output=True, timeout=900, **kw)
+        if r.returncode != 0:
+            raise RuntimeError("could not convert: " + r.stderr.decode("utf-8", "replace")[-200:])
+        os.replace(out + ".part.m4a", out)
+        return out
 
 
 JUNK = re.compile(r"\s*[\(\[][^\)\]]*(official|video|audio|lyric|clip|visuali[sz]er|hd|4k|hq|קליפ|רשמי)[^\)\]]*[\)\]]", re.I)
@@ -1336,11 +1386,20 @@ class Handler(BaseHTTPRequestHandler):
             with lock:
                 items = [public_item(it) for it in library.get(kind, [])]
             return self.send_json({"items": items, "scanning": scan_state["scanning"], "dir": cfg.get(kind + "Dir", "")})
+        if p == "/manual.pdf":                   # Help → User manual: download the PDF
+            full = os.path.join(WEB, "manual", "OAB-Studio-User-Manual.pdf")
+            if os.path.isfile(full):
+                return self.send_path(full, attachment=True)
+            return self.send_json({"error": "not found"}, 404)
         if p.startswith("/media/"):
             it = by_id.get(p[len("/media/"):])
             if not it or not os.path.isfile(it["full"]):
                 return self.send_json({"error": "not found"}, 404)
-            return self.send_path(it["full"])
+            try:
+                return self.send_path(playable_path(it))
+            except Exception as e:
+                print("media: " + str(e), flush=True)
+                return self.send_json({"error": str(e)[:200]}, 500)
         if p.startswith("/api/cover/"):
             it = by_id.get(p[len("/api/cover/"):])
             pic = read_tags(it["full"], want_pic=True).get("picture") if it else None
@@ -1562,6 +1621,31 @@ class Handler(BaseHTTPRequestHandler):
                     remote_q.append(cmd)
                     del remote_q[:-20]
             return self.send_json({"ok": True})
+        if p == "/api/libadd":                   # "+" in the library: a file from the computer goes into the music folder
+            nm = os.path.basename((self.qs().get("name") or [""])[0]).strip()
+            nm = re.sub(r'[\\/:*?"<>|]', "_", nm)[:150]
+            if os.path.splitext(nm)[1].lower() not in AUDIO_EXT:
+                return self.send_json({"error": "Not a music file: " + nm}, 400)
+            data = self.read_body(600_000_000)
+            if not data:
+                return self.send_json({"error": "empty"}, 400)
+            root = cfg.get("musicDir") or ""
+            if not root or not os.path.isdir(root):
+                root = os.path.join(DATA_DIR, "music")
+                os.makedirs(root, exist_ok=True)
+                cfg["musicDir"] = root
+                save_config()
+            dest_dir = os.path.join(root, "OAB uploads")
+            os.makedirs(dest_dir, exist_ok=True)
+            base, ext = os.path.splitext(nm)
+            dest, n = os.path.join(dest_dir, nm), 1
+            while os.path.exists(dest):
+                n += 1
+                dest = os.path.join(dest_dir, "%s (%d)%s" % (base, n, ext))
+            with open(dest, "wb") as f:
+                f.write(data)
+            it = add_file("music", dest)
+            return self.send_json({"ok": True, "item": public_item(it)})
         if p == "/api/upload":
             nm = re.sub(r"[^\w\- .]", "_", (self.qs().get("name") or ["voicetrack.webm"])[0])[:80]
             data = self.read_body(80_000_000)
