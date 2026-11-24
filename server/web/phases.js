@@ -1918,3 +1918,35 @@ if (/[?&]resume=1/.test(location.search)) {
 // Requests button in the top bar: opens / closes the requests column
 $('#reqTop').onclick = () => setReqCol(!VIEW.req);
 { const b = $('#reqTop'); if (b) b.classList.toggle('open', !!VIEW.req); }
+
+// ---------------- the glowing neon arc of the bottom bar is the program meter: L lights from the middle to the left, R to the right ----------------
+(() => {
+  const P = [[0, 46], [320, 4], [1120, 4], [1440, 46]], N = 240, pts = [];
+  for (let i = 0; i <= N; i++) { const t = i / N, u = 1 - t; pts.push([0, 1, 2, 3].reduce((a, k) => { const b = [u * u * u, 3 * u * u * t, 3 * u * t * t, t * t * t][k]; return [a[0] + b * P[k][0], a[1] + b * P[k][1]]; }, [0, 0])); }
+  const pos = db => (Math.min(LED_MAX, Math.max(LED_MIN, db)) - LED_MIN) / (LED_MAX - LED_MIN);
+  const colAt = f => f >= pos(-3) ? '#F04444' : f >= pos(-12) ? '#F5C542' : '#3FD0FF';
+  function draw(){
+    requestAnimationFrame(draw);
+    const c = $('#arcM'); if (!c || !document.documentElement.classList.contains('glass') || !c.offsetWidth) return;
+    const [W, H, d] = fitCanvas(c), g = c.getContext('2d'), sx = W / 1440, oy = 8 * d, XY = p => [p[0] * sx, oy + p[1] * d];
+    g.clearRect(0, 0, W, H); g.lineCap = 'round'; g.lineJoin = 'round'; g.lineWidth = 2.4 * d;
+    // the dim line along the whole arc
+    const gr = g.createLinearGradient(0, 0, W, 0); gr.addColorStop(0, 'rgba(63,208,255,.08)'); gr.addColorStop(0.5, 'rgba(63,208,255,.28)'); gr.addColorStop(1, 'rgba(63,208,255,.08)');
+    g.strokeStyle = gr; g.shadowBlur = 0; g.beginPath(); pts.forEach((p, i) => { const [x, y] = XY(p); i ? g.lineTo(x, y) : g.moveTo(x, y); }); g.stroke();
+    // the lit part = level, coloured by level, with a neon glow
+    const mid = N / 2;
+    [0, 1].forEach(ch => {
+      const f = pos(MTR.lv[ch]), k = Math.round(f * mid), dir = ch ? 1 : -1; if (k < 1) return;
+      for (let s0 = 0; s0 < k; s0 += 6) {
+        const s1 = Math.min(k, s0 + 6), col = colAt(s1 / mid);
+        g.strokeStyle = col; g.shadowColor = col; g.shadowBlur = 12 * d; g.beginPath();
+        for (let s = s0; s <= s1; s++) { const [x, y] = XY(pts[mid + dir * s]); s === s0 ? g.moveTo(x, y) : g.lineTo(x, y); }
+        g.stroke();
+      }
+      // peak hold
+      const pk = Math.round(pos(MTR.pk[ch]) * mid); if (pk > 1 && MTR.pk[ch] > LED_MIN + 1) { const [x, y] = XY(pts[Math.min(N, Math.max(0, mid + dir * pk))]); g.fillStyle = colAt(pk / mid); g.shadowColor = g.fillStyle; g.shadowBlur = 10 * d; g.beginPath(); g.arc(x, y, 2.6 * d, 0, Math.PI * 2); g.fill(); }
+    });
+    g.shadowBlur = 0;
+  }
+  requestAnimationFrame(draw);
+})();
