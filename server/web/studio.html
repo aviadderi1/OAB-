@@ -368,9 +368,9 @@ html.light body{background:var(--bg);color:var(--txt)}html.light .tgl b{backgrou
 html.glass{--vw:calc(1vw / var(--uiz,1));--vh:calc(1vh / var(--uiz,1));background:#06080C;--gw:max(calc(100 * var(--vw)),calc(calc(100 * var(--vh)) * 1.791667));--gs:calc(var(--gw) / 1376)}
 html.glass body{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto minmax(0,1fr) auto auto auto;grid-template-areas:"tool tool" "stage main" "np np" "dock dock" "st st";background:transparent}
 #glassBg,#glassNeon,#glassSign{display:none}
-html.glass #glassBg{display:block;position:fixed;left:0;top:0;width:calc(100 * var(--vw));height:calc(100 * var(--vh));z-index:-1;pointer-events:none;background:linear-gradient(180deg,rgba(6,8,12,.5) 0%,rgba(6,8,12,0) 12%,rgba(6,8,12,0) 52%,rgba(6,8,12,.55) 74%,rgba(6,8,12,.92) 100%),url(/studio-bg.jpg?v=2) 50% 50%/var(--gw) auto no-repeat}
+html.glass #glassBg{display:block;position:fixed;left:0;top:0;width:calc(100 * var(--vw));height:calc(100 * var(--vh));z-index:-1;pointer-events:none;background:linear-gradient(180deg,rgba(6,8,12,.5) 0%,rgba(6,8,12,0) 12%,rgba(6,8,12,0) 52%,rgba(6,8,12,.55) 74%,rgba(6,8,12,.92) 100%),url(/studio-bg.jpg?v=3) 50% 50%/var(--gw) auto no-repeat}
 /* OAB neon sign: a brightened copy of the sign that flickers every few seconds */
-html.glass #glassNeon{display:block;position:fixed;z-index:-1;pointer-events:none;left:calc(calc(50 * var(--vw)) - 455 * var(--gs));top:calc(calc(50 * var(--vh)) - 281 * var(--gs));width:calc(204 * var(--gs));height:calc(204 * var(--gs));background:url(/studio-bg.jpg?v=2) calc(-233 * var(--gs)) calc(-103 * var(--gs))/var(--gw) auto no-repeat;filter:brightness(1.55) saturate(1.35);-webkit-mask:radial-gradient(circle,#000 47%,transparent 63%);mask:radial-gradient(circle,#000 47%,transparent 63%);animation:neonFlicker 7s linear infinite}
+html.glass #glassNeon{display:block;position:fixed;z-index:-1;pointer-events:none;left:calc(calc(50 * var(--vw)) - 455 * var(--gs));top:calc(calc(50 * var(--vh)) - 281 * var(--gs));width:calc(204 * var(--gs));height:calc(204 * var(--gs));background:url(/studio-bg.jpg?v=3) calc(-233 * var(--gs)) calc(-103 * var(--gs))/var(--gw) auto no-repeat;filter:brightness(1.55) saturate(1.35);-webkit-mask:radial-gradient(circle,#000 47%,transparent 63%);mask:radial-gradient(circle,#000 47%,transparent 63%);animation:neonFlicker 7s linear infinite}
 @keyframes neonFlicker{0%,84%{opacity:.7}85%{opacity:.05}86%{opacity:.6}87%{opacity:0}88.5%{opacity:.65}90%{opacity:.15}91.5%{opacity:.7}100%{opacity:.7}}
 html.glass #glassNeon::after{content:"";position:absolute;inset:0;background:radial-gradient(circle,rgba(0,0,0,.55),transparent 70%);opacity:0;animation:neonShade 7s linear infinite}
 @keyframes neonShade{0%,84%{opacity:0}85%{opacity:1}86%{opacity:.1}87%{opacity:1}88.5%{opacity:0}90%{opacity:.8}91.5%,100%{opacity:0}}
@@ -432,12 +432,12 @@ html.glass .micbtn:hover .mi{border-color:rgba(255,255,255,.8);background:rgba(2
 html.glass .micbtn.on .mi{background:rgba(46,232,138,.05);border:2px solid transparent;animation:none;box-shadow:0 0 14px rgba(46,232,138,.35)}
 html.glass .micbtn::after{content:attr(aria-label);position:absolute;left:50%;top:calc(100% + 10px);transform:translateX(-50%);height:30px;min-width:96px;padding:0 14px;box-sizing:border-box;border-radius:15px;display:flex;align-items:center;justify-content:center;white-space:nowrap;background:rgba(10,13,19,.7);border:1px solid rgba(255,255,255,.25);color:#C8CFDA;font:700 12px Inter,sans-serif;letter-spacing:1px}
 html.glass .micbtn.on::after{content:"● " attr(aria-label) " · LIVE";background:#12301F;border-color:#2EE88A;color:#6FF0A8;box-shadow:0 0 14px rgba(46,232,138,.4)}
-html.glass body:has(.main:not(.noLib)) .micbtn,html.glass body:has(.main:not(.noReq)) .micbtn{position:relative;width:52px;height:52px}
+html.glass body:has(.main:not(.noLib)) .micbtn,html.glass body:has(.main:not(.noReq)) .micbtn{position:relative;width:88px;height:88px}
 html.glass body:has(.main:not(.noLib)) #micCard .micbtn,html.glass body:has(.main:not(.noReq)) #micCard .micbtn{left:auto!important;top:auto!important}
-html.glass body:has(.main:not(.noLib)) .micbtn .mi svg,html.glass body:has(.main:not(.noReq)) .micbtn .mi svg{opacity:1}
-html.glass body:has(.main:not(.noLib)) .micbtn .mi,html.glass body:has(.main:not(.noReq)) .micbtn .mi{color:#C9CDD6;border-style:solid}
-html.glass body:has(.main:not(.noLib)) .micbtn::after,html.glass body:has(.main:not(.noReq)) .micbtn::after{display:none}
-html.glass body:has(.main:not(.noLib)) #micCard .micTop,html.glass body:has(.main:not(.noReq)) #micCard .micTop{gap:16px;justify-content:flex-start}
+html.glass body:has(.main:not(.noLib)) .micbtn .mi,html.glass body:has(.main:not(.noReq)) .micbtn .mi{background:rgba(10,13,19,.55)}
+html.glass body:has(.main:not(.noLib)) .micbtn .mi svg,html.glass body:has(.main:not(.noReq)) .micbtn .mi svg{opacity:.7;color:#C9CDD6}
+html.glass body:has(.main:not(.noLib)) .micbtn.on .mi svg,html.glass body:has(.main:not(.noReq)) .micbtn.on .mi svg{color:#6FF0A8;opacity:1}
+html.glass body:has(.main:not(.noLib)) #micCard .micTop,html.glass body:has(.main:not(.noReq)) #micCard .micTop{gap:22px;justify-content:flex-start;padding:4px 4px 44px 22px}
 /* bottom dock: LED meter | stop prev play next volume | 8 hot buttons */
 html.glass .transport{grid-area:dock;margin:12px 14px 0;height:84px;box-sizing:border-box;padding:0 18px;border-radius:18px;background:rgba(10,13,19,.42);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.08)}
 html.glass .transport>.tpSide:first-child{visibility:hidden}
@@ -478,7 +478,6 @@ svg.lvRing{display:none}
 html.glass .micbtn.on svg.lvRing{display:block;position:absolute;inset:-2px;width:calc(100% + 4px);height:calc(100% + 4px);opacity:1!important;transform:rotate(-90deg);overflow:visible;pointer-events:none}
 svg.lvRing circle{fill:none;stroke-width:3.4;vector-effect:non-scaling-stroke}
 svg.lvRing .tr{stroke:rgba(46,232,138,.28)}svg.lvRing .lv{stroke:#2EE88A;stroke-linecap:butt;transition:stroke .15s}
-html.glass body:has(.main:not(.noLib)) svg.lvRing,html.glass body:has(.main:not(.noReq)) svg.lvRing{display:none!important}
 .toolHide,.toolShow{display:none}
 html.glass .toolHide{order:8;display:flex;align-items:center;justify-content:center;width:26px;height:26px;margin-left:-2px;padding:0;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:#9FB4CC;cursor:pointer}
 html.glass .toolHide:hover,html.glass .toolShow:hover{color:#fff;background:rgba(255,255,255,.12)}
@@ -715,7 +714,7 @@ html.glass.toolHidden .main{padding-top:24px}
 </aside>
 </div>
 
-<div class="status"><span id="fSrv">Server –</span><span id="stPl"></span><span>Limiter −1 dB</span><span id="stXf"></span><span style="margin-left:auto">OAB Studio 1.0.2</span><span style="letter-spacing:1.5px">AD SOUND &amp; SERVICE</span></div>
+<div class="status"><span id="fSrv">Server –</span><span id="stPl"></span><span>Limiter −1 dB</span><span id="stXf"></span><span style="margin-left:auto">OAB Studio 1.0.3</span><span style="letter-spacing:1.5px">AD SOUND &amp; SERVICE</span></div>
 
 <div class="cs" id="chStrip" hidden role="dialog" aria-label="Microphone channel strip">
 <header class="csHead"><span class="csIcon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="2.5" width="6" height="11.5" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg></span>
@@ -1672,6 +1671,7 @@ function setupEncoder(){
     const l = new Int16Array(n), r = new Int16Array(n);
     for (let i=0;i<n;i++){ l[i] = Math.max(-1, Math.min(1, L[i])) * 32767; r[i] = Math.max(-1, Math.min(1, R[i])) * 32767; }
     const mp3 = enc.encodeBuffer(l, r); if (mp3.length) outBuf.push(new Uint8Array(mp3));
+    if (outBuf.length > 400) outBuf.splice(0, outBuf.length - 400);   // never let unsent audio pile up (about 30 s max)
   };
 }
 async function flush(){
@@ -1680,7 +1680,8 @@ async function flush(){
   const len = parts.reduce((a, b) => a + b.length, 0), body = new Uint8Array(len); let o = 0; parts.forEach(p => { body.set(p, o); o += p.length; });
   sending = true;
   try {
-    const r = await fetch('/api/push', { method: 'POST', headers: { 'X-Radio-Key': KEY(), 'Content-Type': 'audio/mpeg' }, body });
+    const ac = new AbortController(), to = setTimeout(() => ac.abort(), 6000);   // a stuck request must not block the stream
+    const r = await fetch('/api/push', { method: 'POST', headers: { 'X-Radio-Key': KEY(), 'Content-Type': 'audio/mpeg' }, body, signal: ac.signal }).finally(() => clearTimeout(to));
     if (r.status === 401) { toast('Wrong broadcast password'); goLive(false); }
     else { lastOk = Date.now(); }
   } catch(e){ setSrv(false); }
@@ -1695,6 +1696,7 @@ async function goLive(on){
     if (!window.lamejs) { toast('MP3 encoder missing (web/lib/lame.min.js)'); return; }
     enc = new lamejs.Mp3Encoder(2, ctx.sampleRate, KBPS()); live = true; const it = curItem(); if (it) sendMeta(it);
   } else { live = false; enc = null; outBuf = []; }
+  store.set('wasLive', live ? '1' : '0');
   $('#golive').classList.toggle('live', live); $('#golive').textContent = live ? 'STOP BROADCAST' : 'GO LIVE';
   $('#onair').classList.toggle('live', live); $('#onair').title = live ? 'On air – broadcasting' : 'Broadcast: off'; $('#onair').setAttribute('aria-label', live ? 'On air' : 'Not broadcasting');
 }
@@ -1850,7 +1852,7 @@ const ACT = {
   options: () => openOptions(), lightSettings: async () => { await openOptions(); const q = $('#optLight'); if (q) q.scrollIntoView({ block: 'start' }); }, hotSettings: async () => { await openOptions(); const q = $('#optHot'); if (q) q.scrollIntoView({ block: 'start' }); }, streamQual: async () => { await openOptions(); const q = $('#sQual'); if (q) { q.scrollIntoView({ block: 'center' }); q.focus(); } }, crossfades: () => { renderFt(); openModal('mXf'); },
   hotkeys: () => { $('#miH').textContent = 'Hot keys'; $('#miBody').innerHTML = [['Space / Shift+Space', 'MIC 1 / MIC 2 (both when linked)'], ['Enter', 'Play selected'], ['Ctrl+E', 'Start / stop broadcasting'], ['1 … 0', 'Cart wall cells 1–10'], ['−', 'Stop all jingles'], ['Insert', 'Insert last library song after the playing track'], ['Num −', 'Add last library song to the end'], ['Delete', 'Remove selected'], ['Ctrl+↑ / Ctrl+↓', 'Move selected'], ['Ctrl+A / C / X / V', 'Select all / copy / cut / paste'], ['Ctrl+, / Ctrl+.', 'Seek −10 s / +10 s'], ['Ctrl+N / O / S / F / P', 'New / open / save / find / options'], ['Alt+click', 'Prelisten']].map(r => `<div style="display:flex;gap:12px"><span class="mono" style="min-width:170px;color:#8CC2FF">${r[0]}</span><span>${r[1]}</span></div>`).join(''); openModal('mInfo'); },
   help: () => { $('#miH').textContent = 'Guide'; $('#miBody').innerHTML = 'The full Hebrew guide is in <b>README-HE.txt</b> in the Radio folder.'; openModal('mInfo'); },
-  about: () => { $('#miH').textContent = 'OAB Studio 1.0.2'; $('#miBody').innerHTML = '<img src="/oab-logo.png" alt="" style="width:96px;height:96px;display:block;margin:0 auto 8px">OAB – On Air Broadcast · radio automation studio · version 1.0.2<br>Playlist engine, scheduler, generator, ads scheduler, voice tracking, announcements, reports, DSP, AUX players.<br>AD SOUND &amp; SERVICE'; openModal('mInfo'); },
+  about: () => { $('#miH').textContent = 'OAB Studio 1.0.3'; $('#miBody').innerHTML = '<img src="/oab-logo.png" alt="" style="width:96px;height:96px;display:block;margin:0 auto 8px">OAB – On Air Broadcast · radio automation studio · version 1.0.3<br>Playlist engine, scheduler, generator, ads scheduler, voice tracking, announcements, reports, DSP, AUX players.<br>AD SOUND &amp; SERVICE'; openModal('mInfo'); },
 };
 function doAct(a){ $$('.menubar .m').forEach(m => m.classList.remove('open')); if (ACT[a]) ACT[a](); }
 document.addEventListener('click', e => { const a = e.target.closest('[data-a]'); if (a && (a.closest('.dd') || a.closest('.tool') || a.closest('.transport'))) doAct(a.dataset.a); });
@@ -3782,6 +3784,17 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#chStr
 document.addEventListener('pointerdown', e => { const el = $('#chStrip'); if (el.hidden || el.contains(e.target) || e.target.closest('.micbtn') || e.target.closest('.modal')) return; closeCS(); });
 [0, 1].forEach(i => $(inputs[i].btn).addEventListener('contextmenu', e => { e.preventDefault(); e.stopPropagation(); openCS(i); }));
 ACT.micStrip1 = () => openCS(0); ACT.micStrip2 = () => openCS(1);
+
+// ---------------- after the desktop app recovered from a crash: open the studio and go back on air by itself ----------------
+if (/[?&]resume=1/.test(location.search)) {
+  history.replaceState(null, '', location.pathname);
+  setTimeout(async () => {
+    try { if ($('#start')) $('#startBtn').click(); await new Promise(r => setTimeout(r, 1500));
+      if (store.get('wasLive', '0') === '1' && !live) await goLive(true);
+      if (!curDeck) { const nx = peekNext(); if (nx) playItem(nx, { fadeOut: 0 }); }
+      toast('OAB recovered after a problem and is back on air'); } catch(e){ console.error(e); }
+  }, 800);
+}
 
 // ---------------- start ----------------
 $('#startBtn').onclick = async () => { initAudio(); await ctx.resume(); $('#start').remove(); loadServerCarts(); renderAll(true); };

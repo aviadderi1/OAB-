@@ -1,7 +1,6 @@
-// OAB Studio – desktop app (Windows + macOS)
+// OAB Studio – desktop app (Windows)
 // Starts the OAB server (bundled Python) and shows the studio in its own window.
-const { app, BrowserWindow, session, shell, dialog, desktopCapturer, Menu, ipcMain, systemPreferences, net } = require('electron');
-const IS_MAC = process.platform === 'darwin';
+const { app, BrowserWindow, session, shell, dialog, desktopCapturer, Menu, ipcMain } = require('electron');
 const { spawn, execFile, execFileSync } = require('child_process');
 const path = require('path');
 const fs = require('fs');
@@ -15,6 +14,9 @@ const SERVER_DIR = app.isPackaged ? path.join(process.resourcesPath, 'server') :
 let win = null, server = null, quitting = false, ytWin = null, splash = null;
 
 if (!app.requestSingleInstanceLock()) { app.quit(); }
+// if the graphics card crashed twice last time, run without GPU acceleration (the studio keeps working, only slower to draw)
+const GPU_FLAG = () => path.join(app.getPath('appData'), 'OAB', 'no-gpu.flag');
+try { if (fs.existsSync(GPU_FLAG())) app.disableHardwareAcceleration(); } catch(e){}
 app.on('second-instance', () => { if (win) { if (win.isMinimized()) win.restore(); win.focus(); } });
 
 function log(msg){ try { fs.appendFileSync(path.join(DATA, 'app.log'), new Date().toISOString() + ' ' + msg + '\n'); } catch(e){} }
@@ -60,7 +62,7 @@ function permissions(){
   // LINE IN: the OAB YouTube window (muted on the PC, heard only through OAB) – else the whole computer sound
   s.setDisplayMediaRequestHandler((req, cb) => {
     if (ytWin && !ytWin.isDestroyed()) { const f = ytWin.webContents.mainFrame; return cb({ video: f, audio: f }); }
-    desktopCapturer.getSources({ types: ['screen'] }).then(src => cb(src[0] ? (IS_MAC ? { video: src[0] } : { video: src[0], audio: 'loopback' }) : {})).catch(() => cb({}));   // macOS has no system-audio loopback
+    desktopCapturer.getSources({ types: ['screen'] }).then(src => cb(src[0] ? { video: src[0], audio: 'loopback' } : {})).catch(() => cb({}));
   }, { useSystemPicker: false });
   s.on('select-hid-device', (e, d, cb) => { e.preventDefault(); cb(d.deviceList && d.deviceList[0] ? d.deviceList[0].deviceId : ''); });
   s.on('select-serial-port', (e, list, wc, cb) => { e.preventDefault(); cb(list && list[0] ? list[0].portId : ''); });
@@ -120,32 +122,25 @@ function createWindow(){
     icon: path.join(__dirname, 'build', 'icon.ico'), autoHideMenuBar: true,
     webPreferences: { contextIsolation: true, nodeIntegration: false, backgroundThrottling: false, autoplayPolicy: 'no-user-gesture-required', preload: path.join(__dirname, 'preload.js') }
   });
-  if (!IS_MAC) win.removeMenu();
+  win.removeMenu();
   win.once('ready-to-show', () => { win._ready = true; });
   win.webContents.setWindowOpenHandler(({ url }) => { shell.openExternal(url); return { action: 'deny' }; });
   win.webContents.on('will-navigate', (e, url) => { if (!url.startsWith(`http://127.0.0.1:${PORT}`) && !url.startsWith(`http://localhost:${PORT}`)) { e.preventDefault(); shell.openExternal(url); } });
   win.webContents.on('before-input-event', (e, i) => { if (i.type === 'keyDown' && i.key === 'F12' && i.control && i.shift) win.webContents.openDevTools({ mode: 'detach' }); });
   win.on('page-title-updated', e => e.preventDefault());
   win.loadURL(STUDIO);
+  // the studio page crashed (black window): log why and bring it back on air at once
+  win.webContents.on('render-process-gone', (e, d) => {
+    log('studio page gone: ' + d.reason + ' (exit ' + d.exitCode + ')');
+    if (quitting || !win || d.reason === 'clean-exit') return;
+    setTimeout(() => { if (win && !win.isDestroyed()) win.loadURL(STUDIO + '?resume=1'); }, 800);
+  });
+  win.webContents.on('unresponsive', () => log('studio page not responding'));
+  win.webContents.on('responsive', () => log('studio page responding again'));
   win.on('closed', () => { win = null; if (ytWin && !ytWin.isDestroyed()) ytWin.destroy(); });
 }
 
-function checkUpdatesMac(){
-  // macOS copies are not signed by Apple, so they cannot replace themselves – tell the user and open the download page
-  const req = net.request({ url: 'https://api.github.com/repos/aviadderi1/OAB-/releases/latest', headers: { 'User-Agent': 'OAB-Studio' } });
-  let body = '';
-  req.on('response', r => { r.on('data', c => body += c); r.on('end', () => { try {
-    const j = JSON.parse(body), v = String(j.tag_name || '').replace(/^v/, ''), cur = app.getVersion();
-    const newer = v && v.split('.').map(Number).some((n, i, a) => { const c = cur.split('.').map(Number); for (let k = 0; k < 3; k++) { if ((a[k] || 0) !== (c[k] || 0)) return (a[k] || 0) > (c[k] || 0); } return false; });
-    if (!newer) return;
-    const dmg = (j.assets || []).find(a => a.name.endsWith((process.arch === 'arm64' ? 'arm64' : 'x64') + '.dmg'));
-    dialog.showMessageBox(win, { type: 'info', buttons: ['Download', 'Later'], defaultId: 0, title: 'OAB Studio update', message: `OAB Studio ${v} is available.`, detail: 'Download it, open the file and drag OAB Studio to Applications (replace the old one).' })
-      .then(x => { if (x.response === 0) shell.openExternal(dmg ? dmg.browser_download_url : j.html_url); });
-  } catch(e){ log('update (mac): ' + e.message); } }); });
-  req.on('error', e => log('update (mac): ' + e.message)); req.end();
-}
 function checkUpdates(){
-  if (IS_MAC) return checkUpdatesMac();
   try {
     const { autoUpdater } = require('electron-updater');
     autoUpdater.autoDownload = true;
@@ -180,17 +175,20 @@ function runSplash(serverReady){
   });
 }
 
-function macMenu(){
-  Menu.setApplicationMenu(Menu.buildFromTemplate([
-    { role: 'appMenu' },
-    { label: 'Edit', submenu: [{ role: 'undo' }, { role: 'redo' }, { type: 'separator' }, { role: 'cut' }, { role: 'copy' }, { role: 'paste' }, { role: 'selectAll' }] },
-    { label: 'View', submenu: [{ role: 'reload' }, { role: 'togglefullscreen' }, { role: 'zoomIn' }, { role: 'zoomOut' }, { role: 'resetZoom' }] },
-    { role: 'windowMenu' }
-  ]));
-}
+let gpuCrashes = 0;
+app.on('child-process-gone', (e, d) => {
+  log('process gone: ' + d.type + ' ' + d.reason + ' (exit ' + d.exitCode + ')');
+  if (d.type === 'GPU' && d.reason !== 'clean-exit' && ++gpuCrashes >= 2) {
+    try { fs.writeFileSync(GPU_FLAG(), new Date().toISOString()); } catch(e){}
+    log('graphics crashed twice – the next start runs without GPU acceleration');
+    if (win && !win.isDestroyed()) win.loadURL(STUDIO + '?resume=1');
+  }
+});
+// every 10 minutes: memory of each part of the app, for diagnosing
+setInterval(() => { try { log('memory: ' + app.getAppMetrics().map(m => m.type + ' ' + Math.round(m.memory.workingSetSize / 1024) + 'MB').join(', ')); } catch(e){} }, 600000);
 app.whenReady().then(async () => {
   fs.mkdirSync(DATA, { recursive: true });
-  if (IS_MAC) { macMenu(); try { await systemPreferences.askForMediaAccess('microphone'); } catch(e){ log('mic access: ' + e.message); } }
+  log('start ' + app.getVersion() + (fs.existsSync(GPU_FLAG()) ? ' (no GPU acceleration)' : ''));
   restoreDefaultSync();                      // after a crash: give Windows its own speakers back
   showSplash();
   importOldSettings();

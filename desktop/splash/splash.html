@@ -4,32 +4,22 @@
 html,body{margin:0;height:100%;background:#000;overflow:hidden;user-select:none;-webkit-app-region:drag;font-family:Segoe UI,system-ui,sans-serif}
 .st{position:relative;width:100%;height:100%}
 .st img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
-#on{opacity:0}
-#refl{position:absolute;left:67.878%;top:37.24%;width:6.395%;height:7.292%;-webkit-mask-image:linear-gradient(270deg,#000 0%,transparent 0%);mask-image:linear-gradient(270deg,#000 0%,transparent 0%)}
-#let{position:absolute;left:16.86%;top:29.167%;width:17.442%;height:12.24%;filter:brightness(1.12);-webkit-mask-image:linear-gradient(90deg,#000 0%,transparent 0%);mask-image:linear-gradient(90deg,#000 0%,transparent 0%)}
-#glow{position:absolute;left:24.71%;top:27.6%;width:42%;height:72%;transform:translate(-50%,-50%);background:radial-gradient(ellipse at center,rgba(90,160,255,.30),rgba(255,140,60,.12) 45%,rgba(0,0,0,0) 68%);opacity:0;mix-blend-mode:screen;pointer-events:none}
-.st.done #on{opacity:1;animation:flick .55s steps(1) 1}
-.st.done #glow{animation:pulse 1.6s ease-in-out infinite}
-@keyframes flick{0%{opacity:1}12%{opacity:.25}24%{opacity:1}36%{opacity:.4}48%,100%{opacity:1}}
-@keyframes pulse{0%,100%{opacity:.85}50%{opacity:1}}
+/* the sign (and its reflection in the window) is lit from the start and flickers like a neon sign until the studio opens */
+#on{opacity:1;animation:neon 3.2s linear infinite}
+#glow{position:absolute;left:24.71%;top:27.6%;width:42%;height:72%;transform:translate(-50%,-50%);background:radial-gradient(ellipse at center,rgba(90,160,255,.30),rgba(255,140,60,.12) 45%,rgba(0,0,0,0) 70%);mix-blend-mode:screen;pointer-events:none;opacity:.45;animation:neonGlow 3.2s linear infinite}
+@keyframes neon{0%,62%{opacity:1}64%{opacity:.15}66%{opacity:1}69%{opacity:.3}71%{opacity:1}86%{opacity:1}87.5%{opacity:.45}89%,100%{opacity:1}}
+@keyframes neonGlow{0%,62%{opacity:.45}64%{opacity:.05}66%{opacity:.45}69%{opacity:.1}71%,86%{opacity:.45}87.5%{opacity:.2}89%,100%{opacity:.45}}
 .bar{position:absolute;left:0;right:0;bottom:0;height:34px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;background:linear-gradient(transparent,rgba(0,0,0,.65));color:rgba(255,255,255,.72);font-size:12px;letter-spacing:.06em}
 .bar b{font-weight:600;color:#fff}
 </style></head>
 <body><div class="st" id="st">
-<img src="splash-off.jpg" alt=""><img id="on" src="splash-on.jpg" alt="OAB – On Air Broadcast"><img id="let" src="splash-letters.png" alt=""><img id="refl" src="splash-refl.png" alt=""><div id="glow"></div>
+<img src="splash-off.jpg" alt=""><img id="on" src="splash-on.jpg" alt="OAB – On Air Broadcast"><div id="glow"></div>
 <div class="bar"><span><b>OAB Studio</b> <span id="ver"></span> · AD SOUND &amp; SERVICE</span><span id="pct">Loading 0%</span></div>
 </div>
 <script>
-// the letters O-A-B on the wall sign light up from left to right with the loading progress; at 100% the whole sign switches on
 window.setP = p => {
   p = Math.max(0, Math.min(1, p));
-  const a = (p * 100).toFixed(1) + '%', m = p >= 1 ? 'none' : `linear-gradient(90deg,#000 ${a},rgba(0,0,0,.35) ${a},transparent calc(${a} + 3%))`;
-  const l = document.getElementById('let'); l.style.webkitMaskImage = m; l.style.maskImage = m;
-  // the reflection in the window is a mirror image, so it lights from right to left
-  const mr = p >= 1 ? 'none' : `linear-gradient(270deg,#000 ${a},rgba(0,0,0,.35) ${a},transparent calc(${a} + 3%))`, r = document.getElementById('refl'); r.style.webkitMaskImage = mr; r.style.maskImage = mr;
-  document.getElementById('glow').style.opacity = (p * 0.45).toFixed(2);
   document.getElementById('pct').textContent = p >= 1 ? 'ON AIR' : 'Loading ' + Math.round(p * 100) + '%';
-  if (p >= 1) document.getElementById('st').classList.add('done');
 };
 window.setVer = v => { document.getElementById('ver').textContent = v; };
 </script>

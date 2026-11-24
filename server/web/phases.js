@@ -1903,3 +1903,14 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#chStr
 document.addEventListener('pointerdown', e => { const el = $('#chStrip'); if (el.hidden || el.contains(e.target) || e.target.closest('.micbtn') || e.target.closest('.modal')) return; closeCS(); });
 [0, 1].forEach(i => $(inputs[i].btn).addEventListener('contextmenu', e => { e.preventDefault(); e.stopPropagation(); openCS(i); }));
 ACT.micStrip1 = () => openCS(0); ACT.micStrip2 = () => openCS(1);
+
+// ---------------- after the desktop app recovered from a crash: open the studio and go back on air by itself ----------------
+if (/[?&]resume=1/.test(location.search)) {
+  history.replaceState(null, '', location.pathname);
+  setTimeout(async () => {
+    try { if ($('#start')) $('#startBtn').click(); await new Promise(r => setTimeout(r, 1500));
+      if (store.get('wasLive', '0') === '1' && !live) await goLive(true);
+      if (!curDeck) { const nx = peekNext(); if (nx) playItem(nx, { fadeOut: 0 }); }
+      toast('OAB recovered after a problem and is back on air'); } catch(e){ console.error(e); }
+  }, 800);
+}
