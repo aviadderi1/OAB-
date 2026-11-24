@@ -476,13 +476,13 @@ html.glass #fSrv,html.glass #stPl,html.glass #stXf,html.glass .status>span:nth-c
 /* intro after the opening screen */
 html.glassIn .tool{animation:gInDown .7s cubic-bezier(.2,.8,.2,1) both}
 html.glassIn .main{animation:gInRight 1s cubic-bezier(.2,.8,.2,1) .2s both}
-html.glassIn #pNow{animation:gInLeft .95s cubic-bezier(.2,.8,.2,1) .35s both}
-html.glassIn .transport,html.glassIn .ledbar{animation:gInUp .8s cubic-bezier(.2,.8,.2,1) .5s both}
+html.glassIn #pNow{animation:gInUp .9s cubic-bezier(.2,.8,.2,1) .45s both}
+html.glassIn .transport,html.glassIn .ledbar{animation:gInUp .9s cubic-bezier(.2,.8,.2,1) .45s both}
 html.glassIn .micbtn{animation:gInPop .7s cubic-bezier(.2,.8,.2,1) .8s both}
 @keyframes gInDown{from{opacity:0;transform:translateY(-30px)}}
 @keyframes gInRight{from{opacity:0;transform:translateX(70%)}to{opacity:1;transform:none}}
 @keyframes gInLeft{from{opacity:0;transform:translateX(-60%)}}
-@keyframes gInUp{from{opacity:0;transform:translateY(60px)}}
+@keyframes gInUp{from{opacity:0;transform:translateY(190px)}}
 @keyframes gInPop{from{opacity:0;transform:scale(.6)}}
 svg.lvRing{display:none}
 html.glass .micbtn.on svg.lvRing{display:block;position:absolute;inset:-2px;width:calc(100% + 4px);height:calc(100% + 4px);opacity:1!important;transform:rotate(-90deg);overflow:visible;pointer-events:none}
@@ -600,6 +600,11 @@ html.glass .plr.pflOn{height:auto;min-height:46px;padding-top:6px;padding-bottom
 html.glass .tool .reqTop{border:0!important;background:none!important;padding:0 6px!important}
 html.glass .tool .reqTop:hover{color:#fff;background:none!important}
 html.glass .tool .reqTop.open{color:#3FD0FF}
+.plX{display:none}
+html.glass .plX{display:flex;position:absolute;right:8px;top:8px;z-index:4;width:22px;height:22px;padding:0;align-items:center;justify-content:center;border:0;border-radius:6px;background:none;color:#7C8696;font-size:12px;cursor:pointer}
+html.glass .plX:hover{color:#fff;background:rgba(255,255,255,.08)}
+html.glass #plTabs{padding-right:30px}
+html.glass body.plOff .main{display:none}
 /*ENDGLASS*/
 </style>
 </head>
@@ -621,7 +626,7 @@ html.glass .tool .reqTop.open{color:#3FD0FF}
 <div class="m"><span>View</span><div class="dd"><div class="grp">COLUMNS</div><div class=" chk"data-a="tLib">Library column</div><div class=" chk on"data-a="tReq">Requests column</div><div class=" chk on"data-a="tInfo">Track information</div><hr><div class="grp">LIBRARY</div><div data-a="tabExplorer">File explorer</div><div data-a="tabSearch">Search</div><div data-a="tabScheduler">Scheduler</div><div data-a="tabFx">FX</div><hr><div class="grp">PLAYLIST</div><div class=" chk on"data-a="tAutoscroll">Auto-scroll</div><div class=" chk"data-a="tFollow">Selection follows playback</div><hr><div class="subm"><span>Waveform style</span><b>▸</b><div class="dd2"><div class=" chk"data-a="wf0">Mirror gradient</div><div class=" chk"data-a="wf1">Smooth envelope</div><div class=" chk"data-a="wf2">Frequency colours</div><div class=" chk"data-a="wf3">LED dots</div><div class=" chk"data-a="wf4">Neon line</div><div class=" chk"data-a="wf5">Rounded capsules</div></div></div><div class="subm"><span>Playlist meter style</span><b>▸</b><div class="dd2"><div class=" chk"data-a="rm0">Lime spectrum</div><div class=" chk"data-a="rm1">LED spectrum</div><div class=" chk"data-a="rm2">Peak caps</div><div class=" chk"data-a="rm3">Mirror spectrum</div><div class=" chk"data-a="rm4">Rainbow spectrum</div><div class=" chk"data-a="rm5">Stereo LED bars</div><div class=" chk"data-a="rm6">Horizontal stereo</div><div class=" chk"data-a="rm7">Scope line</div></div></div></div></div>
 <div class="m"><span>Settings</span><div class="dd"><div data-a="options">Options… <kbd>Ctrl+P</kbd></div><hr><div class="grp">GO STRAIGHT TO</div><div data-a="optOutputs">Sound outputs…</div><div data-a="optMics">Microphones and ducker…</div><div data-a="optLine">LINE IN…</div><div data-a="optHot">Hot buttons…</div><div data-a="optLight">Studio light (USB)…</div><div data-a="optFolders">Folders…</div><div data-a="optAnn">Announcements…</div><div data-a="optGeneral">Stream quality and password…</div><hr><div data-a="crossfades">Crossfades & file types…</div><div data-a="hotkeys">Hot keys…</div></div></div>
 <div class="m"><span>Help</span><div class="dd"><div data-a="help">Guide (README-HE.txt)</div><div data-a="about">About OAB Studio</div></div></div>
-<button class="reqTop" id="reqTop" title="Listener requests – click to open" aria-label="Listener requests"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Requests<b id="reqTopN">0</b></button><button class="reqTop" id="libTop" title="Library – click to open" aria-label="Library"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Library</button><div style="margin-left:auto;display:flex;align-items:center;gap:8px;color:var(--sub);font-size:11.5px"><span id="srvState"><span class="dot"></span> Server</span></div>
+<button class="reqTop" id="reqTop" title="Listener requests – click to open" aria-label="Listener requests"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Requests<b id="reqTopN">0</b></button><button class="reqTop" id="libTop" title="Library – click to open" aria-label="Library"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Library</button><button class="reqTop" id="plTop" title="Playlist – click to open / close" aria-label="Playlist"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h12M3 12h12M3 18h8"/><path d="M17 18V8l5-1.5"/><circle cx="15" cy="18" r="2"/></svg>Playlist</button><div style="margin-left:auto;display:flex;align-items:center;gap:8px;color:var(--sub);font-size:11.5px"><span id="srvState"><span class="dot"></span> Server</span></div>
 </nav>
 
 <div class="tool">
@@ -759,6 +764,7 @@ html.glass .tool .reqTop.open{color:#3FD0FF}
 </section>
 
 <section class="card col plCard" style="gap:0">
+<button class="plX" id="plClose" title="Close the playlist window" aria-label="Close the playlist window">✕</button>
 <div class="tabs" id="plTabs"></div>
 <div class="plwrap" id="plWrap"><div class="plh"><span style="text-align:right">#</span><span></span><span></span><span>TITLE / ARTIST</span><span>TYPE</span><span style="text-align:right">LENGTH</span><span></span></div><div id="plBody"></div></div>
 <div class="info" id="info"></div>
@@ -774,7 +780,7 @@ html.glass .tool .reqTop.open{color:#3FD0FF}
 </aside>
 </div>
 
-<div class="status"><span id="fSrv">Server –</span><span id="stPl"></span><span>Limiter −1 dB</span><span id="stXf"></span><span style="margin-left:auto">OAB Studio 1.0.13</span><span style="letter-spacing:1.5px">AD SOUND &amp; SERVICE</span></div>
+<div class="status"><span id="fSrv">Server –</span><span id="stPl"></span><span>Limiter −1 dB</span><span id="stXf"></span><span style="margin-left:auto">OAB Studio 1.0.14</span><span style="letter-spacing:1.5px">AD SOUND &amp; SERVICE</span></div>
 
 <div class="cs" id="chStrip" hidden role="dialog" aria-label="Microphone channel strip">
 <header class="csHead"><span class="csIcon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="2.5" width="6" height="11.5" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg></span>
@@ -1912,7 +1918,7 @@ const ACT = {
   options: () => openOptions(), lightSettings: async () => { await openOptions(); const q = $('#optLight'); if (q) q.scrollIntoView({ block: 'start' }); }, hotSettings: async () => { await openOptions(); const q = $('#optHot'); if (q) q.scrollIntoView({ block: 'start' }); }, streamQual: async () => { await openOptions(); const q = $('#sQual'); if (q) { q.scrollIntoView({ block: 'center' }); q.focus(); } }, crossfades: () => { renderFt(); openModal('mXf'); },
   hotkeys: () => { $('#miH').textContent = 'Hot keys'; $('#miBody').innerHTML = [['Space / Shift+Space', 'MIC 1 / MIC 2 (both when linked)'], ['Enter', 'Play selected'], ['Ctrl+E', 'Start / stop broadcasting'], ['1 … 0', 'Cart wall cells 1–10'], ['−', 'Stop all jingles'], ['Insert', 'Insert last library song after the playing track'], ['Num −', 'Add last library song to the end'], ['Delete', 'Remove selected'], ['Ctrl+↑ / Ctrl+↓', 'Move selected'], ['Ctrl+A / C / X / V', 'Select all / copy / cut / paste'], ['Ctrl+, / Ctrl+.', 'Seek −10 s / +10 s'], ['Ctrl+N / O / S / F / P', 'New / open / save / find / options'], ['Alt+click', 'Prelisten']].map(r => `<div style="display:flex;gap:12px"><span class="mono" style="min-width:170px;color:#8CC2FF">${r[0]}</span><span>${r[1]}</span></div>`).join(''); openModal('mInfo'); },
   help: () => { $('#miH').textContent = 'Guide'; $('#miBody').innerHTML = 'The full Hebrew guide is in <b>README-HE.txt</b> in the Radio folder.'; openModal('mInfo'); },
-  about: () => { $('#miH').textContent = 'OAB Studio 1.0.13'; $('#miBody').innerHTML = '<img src="/oab-logo.png" alt="" style="width:96px;height:96px;display:block;margin:0 auto 8px">OAB – On Air Broadcast · radio automation studio · version 1.0.13<br>Playlist engine, scheduler, generator, ads scheduler, voice tracking, announcements, reports, DSP, AUX players.<br>AD SOUND &amp; SERVICE'; openModal('mInfo'); },
+  about: () => { $('#miH').textContent = 'OAB Studio 1.0.14'; $('#miBody').innerHTML = '<img src="/oab-logo.png" alt="" style="width:96px;height:96px;display:block;margin:0 auto 8px">OAB – On Air Broadcast · radio automation studio · version 1.0.14<br>Playlist engine, scheduler, generator, ads scheduler, voice tracking, announcements, reports, DSP, AUX players.<br>AD SOUND &amp; SERVICE'; openModal('mInfo'); },
 };
 function doAct(a){ $$('.menubar .m').forEach(m => m.classList.remove('open')); if (ACT[a]) ACT[a](); }
 document.addEventListener('click', e => { const a = e.target.closest('[data-a]'); if (a && (a.closest('.dd') || a.closest('.tool') || a.closest('.transport'))) doAct(a.dataset.a); });
@@ -3951,6 +3957,12 @@ $('#logoReset').onclick = async () => {
   const mo = new MutationObserver(() => { if (!busy) place(); });
   ['#plBody', '#libList', '#exList'].forEach(id => { const n = $(id); if (n) mo.observe(n, { childList: true }); });
 })();
+
+// Playlist button in the top bar + ✕ in the playlist window: show / hide the playlist window
+function setPlWin(on){ document.body.classList.toggle('plOff', !on); store.set('plOff', on ? '0' : '1'); const b = $('#plTop'); if (b) b.classList.toggle('open', !!on); if (on) setTimeout(() => { try { drawWaves(); renderPlaylist(); } catch(e){} }, 0); }
+$('#plTop').onclick = () => setPlWin(document.body.classList.contains('plOff'));
+$('#plClose').onclick = () => setPlWin(false);
+setPlWin(store.get('plOff', '0') !== '1');
 
 // ---------------- start ----------------
 $('#startBtn').onclick = async () => { initAudio(); await ctx.resume(); $('#start').remove(); loadServerCarts(); renderAll(true); };

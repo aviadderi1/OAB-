@@ -2010,3 +2010,9 @@ $('#logoReset').onclick = async () => {
   const mo = new MutationObserver(() => { if (!busy) place(); });
   ['#plBody', '#libList', '#exList'].forEach(id => { const n = $(id); if (n) mo.observe(n, { childList: true }); });
 })();
+
+// Playlist button in the top bar + ✕ in the playlist window: show / hide the playlist window
+function setPlWin(on){ document.body.classList.toggle('plOff', !on); store.set('plOff', on ? '0' : '1'); const b = $('#plTop'); if (b) b.classList.toggle('open', !!on); if (on) setTimeout(() => { try { drawWaves(); renderPlaylist(); } catch(e){} }, 0); }
+$('#plTop').onclick = () => setPlWin(document.body.classList.contains('plOff'));
+$('#plClose').onclick = () => setPlWin(false);
+setPlWin(store.get('plOff', '0') !== '1');
