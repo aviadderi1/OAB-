@@ -1978,3 +1978,35 @@ $('#logoFile').onchange = async () => {
 $('#logoReset').onclick = async () => {
   try { const r = await fetch('/api/logo', { method: 'POST', headers: { 'X-Radio-Key': KEY() } }); if (r.ok) { refreshLogo(); toast('Back to the OAB logo'); } } catch(e){ toast('Server not running'); }
 };
+
+// ---------------- small prelisten player under the song's name (playlist and library) ----------------
+(() => {
+  const PLAY = '<svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg>', PAUSE = '<svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>';
+  const el = document.createElement('div'); el.className = 'pflMini'; el.setAttribute('role', 'group'); el.setAttribute('aria-label', 'Prelisten');
+  el.innerHTML = `<button class="pp" aria-label="Play / pause prelisten">${PAUSE}</button><input type="range" class="gray" min="0" max="1000" value="0" aria-label="Prelisten position" style="--c:#3FD0FF"><span>0:00 / 0:00</span><button class="x" aria-label="Close prelisten">✕</button>`;
+  const seek = el.querySelector('input'); let seeking = false;
+  ['click', 'dblclick', 'mousedown', 'pointerdown', 'dragstart'].forEach(ev => el.addEventListener(ev, e => e.stopPropagation()));
+  el.querySelector('.pp').onclick = () => { if (pfl.paused) pfl.play().catch(() => {}); else pfl.pause(); };
+  el.querySelector('.x').onclick = () => { pfl.pause(); window.pflCur = null; pfl.removeAttribute('src'); try { pfl.load(); } catch(e){} el.remove(); $$('.pflOn').forEach(r => r.classList.remove('pflOn')); };
+  seek.addEventListener('input', () => { seeking = true; seek.style.setProperty('--p', seek.value / 10 + '%'); });
+  seek.addEventListener('change', () => { const d = pfl.duration; if (isFinite(d) && d > 0) pfl.currentTime = seek.value / 1000 * d; seeking = false; });
+  function ui(){ const d = pfl.duration, t = pfl.currentTime, ok = isFinite(d) && d > 0;
+    el.querySelector('.pp').innerHTML = pfl.paused ? PLAY : PAUSE; el.querySelector('span').textContent = fmt(t || 0) + ' / ' + (ok ? fmt(d) : '--:--');
+    if (!seeking) { const v = ok ? Math.round(t / d * 1000) : 0; seek.value = v; seek.style.setProperty('--p', v / 10 + '%'); } }
+  function target(){
+    const c = window.pflCur; if (!c || !pfl.getAttribute('src')) return null;
+    const inPl = () => { for (const r of $$('#plBody .plr')) { const f = findItem(r.dataset.uid); if (f && ((c.uid && f.item.uid === c.uid) || (!c.uid && c.url && f.item.url === c.url))) return [r, r.querySelector('.ptx') || r]; } return null; };
+    const inLib = () => { for (const r of $$('[data-lib]')) { const it = libById.get(r.dataset.lib); if (it && c.url && it.url === c.url && r.offsetParent) return [r, r.children[1] || r]; } return null; };
+    return c.uid ? (inPl() || inLib()) : (inLib() || inPl());   // a library song (no uid) shows its player in the library
+  }
+  let busy = false;
+  function place(){
+    if (busy) return; busy = true;
+    try { const t = target(); $$('.pflOn').forEach(r => { if (!t || r !== t[0]) r.classList.remove('pflOn'); });
+      if (!t) { if (el.parentNode) el.remove(); } else { t[0].classList.add('pflOn'); if (el.parentNode !== t[1]) t[1].appendChild(el); ui(); } }
+    finally { busy = false; }
+  }
+  ['play', 'pause', 'timeupdate', 'loadedmetadata', 'ended', 'emptied'].forEach(ev => pfl.addEventListener(ev, () => { if (ev === 'timeupdate' && el.parentNode) ui(); else place(); }));
+  const mo = new MutationObserver(() => { if (!busy) place(); });
+  ['#plBody', '#libList', '#exList'].forEach(id => { const n = $(id); if (n) mo.observe(n, { childList: true }); });
+})();
