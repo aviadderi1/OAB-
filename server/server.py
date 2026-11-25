@@ -12,6 +12,7 @@ import atexit
 import collections
 import datetime
 import hashlib
+import base64
 import json
 import os
 import queue
@@ -33,7 +34,7 @@ STATION = os.environ.get("RADIO_NAME", "OAB")
 MAX_LISTENERS = int(os.environ.get("RADIO_MAX_LISTENERS", "0"))  # 0 = no limit
 # ---------------------------------------------------------
 
-VERSION = "1.0.1"
+VERSION = "1.0.2"
 APP_DIR = os.path.dirname(os.path.abspath(__file__))            # program files (code + web)
 BASE = os.environ.get("OAB_DATA") or APP_DIR                       # settings, playlists, recordings, downloaded tools
 os.makedirs(BASE, exist_ok=True)
@@ -643,6 +644,8 @@ def start_public():
                     pub["url"] = m.group(0)
                     pub["state"] = "on"
                     print("  Public link: " + pub["url"])
+                    pub["posted"] = 0
+                    threading.Thread(target=post_address, daemon=True).start()
             if pub["proc"] is p and not pub["url"]:
                 pub.update(state="error", error=" | ".join(tail)[-200:] or "Could not create the link", url="", proc=None)
             elif pub["proc"] is p:
@@ -650,6 +653,112 @@ def start_public():
         except Exception as e:
             pub.update(state="error", error=str(e)[:200], url="")
     threading.Thread(target=work, daemon=True).start()
+
+
+# ---------------- fixed listener link ----------------
+# The Cloudflare address changes on every start. Listeners get ONE fixed link instead:
+#   https://aviadderi1.github.io/OAB-/?s=<station id>&k=<public key>
+# The studio posts the current address, signed with the station's private key (ECDSA P-256), to a free
+# message relay (ntfy.sh). The fixed page reads the newest post, checks the signature with the public key
+# from the link, and opens the broadcast. Nobody without the key can redirect the listeners.
+FIXED_PAGE = "https://aviadderi1.github.io/OAB-/"
+RELAY = "https://ntfy.sh/"
+_P = 0xffffffff00000001000000000000000000000000ffffffffffffffffffffffff
+_N = 0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551
+_G = (0x6b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c296, 0x4fe342e2fe1a7f9b8ee7eb4a7c0f9e162bce33576b315ececbb6406837bf51f5)
+
+
+def _ec_add(a, b):
+    if a is None:
+        return b
+    if b is None:
+        return a
+    if a[0] == b[0] and (a[1] + b[1]) % _P == 0:
+        return None
+    if a == b:
+        l = (3 * a[0] * a[0] - 3) * pow(2 * a[1], -1, _P) % _P
+    else:
+        l = (b[1] - a[1]) * pow(b[0] - a[0], -1, _P) % _P
+    x = (l * l - a[0] - b[0]) % _P
+    return (x, (l * (a[0] - x) - a[1]) % _P)
+
+
+def _ec_mul(k, pt):
+    r = None
+    while k:
+        if k & 1:
+            r = _ec_add(r, pt)
+        pt = _ec_add(pt, pt)
+        k >>= 1
+    return r
+
+
+def _b64u(b):
+    return base64.urlsafe_b64encode(b).rstrip(b"=").decode()
+
+
+def station_keys():
+    """(private int, public key as base64url of the 65-byte uncompressed point), made once per station."""
+    if not cfg.get("relayKey"):
+        import secrets
+        cfg["relayKey"] = "%064x" % (secrets.randbelow(_N - 1) + 1)
+        cfg["relayId"] = secrets.token_hex(10)
+        save_config()
+    d = int(cfg["relayKey"], 16)
+    q = _ec_mul(d, _G)
+    return d, _b64u(b"\x04" + q[0].to_bytes(32, "big") + q[1].to_bytes(32, "big"))
+
+
+def fixed_link():
+    _, pk = station_keys()
+    return FIXED_PAGE + "?s=" + cfg["relayId"] + "&k=" + pk
+
+
+def _sign(msg):
+    import hashlib, secrets
+    d, _ = station_keys()
+    z = int.from_bytes(hashlib.sha256(msg.encode()).digest(), "big")
+    while True:
+        k = secrets.randbelow(_N - 1) + 1
+        r = _ec_mul(k, _G)[0] % _N
+        sg = pow(k, -1, _N) * (z + r * d) % _N
+        if r and sg:
+            return _b64u(r.to_bytes(32, "big") + sg.to_bytes(32, "big"))
+
+
+def post_address():
+    url = pub.get("url") or ""
+    if not url:
+        return
+    msg = "%s|%d" % (url, int(time.time()))
+    body = json.dumps({"m": msg, "sig": _sign(msg)}).encode()
+    try:
+        req = urllib.request.Request(RELAY + "oab-" + cfg["relayId"], data=body, method="POST",
+                                     headers={"Title": "OAB", "Cache": "yes"})
+        urllib.request.urlopen(req, timeout=15).read()
+        pub["posted"] = time.time()
+        print("  Fixed link updated: " + fixed_link())
+    except Exception as e:
+        print("  Fixed link: could not update (" + str(e)[:80] + ")")
+
+
+def relay_loop():
+    """Keep the fixed link pointing at the current address (the relay keeps posts for 12 hours)."""
+    while True:
+        try:
+            if pub.get("state") == "on" and pub.get("url") and time.time() - pub.get("posted", 0) > 3 * 3600:
+                post_address()
+            # the internet link dropped (sleep, network change): open it again by itself
+            if cfg.get("autoPublic", True) and pub.get("state") in ("off", "error"):
+                pub["down"] = pub.get("down") or time.time()
+                if time.time() - pub["down"] > 60:
+                    pub["down"] = 0
+                    start_public()
+            else:
+                pub["down"] = 0
+        except Exception:
+            pass
+        time.sleep(30)
 
 
 def stop_public():
@@ -719,7 +828,7 @@ def status():
             "autodj": bool(cfg.get("autodj")),
             "library": {k: len(v) for k, v in library.items()},
             "scanning": scan_state["scanning"],
-            "public": {"state": pub["state"], "url": pub["url"], "error": pub["error"]},
+            "public": {"state": pub["state"], "url": pub["url"], "error": pub["error"], "fixed": fixed_link()},
             "lan": lan_link(),
         }
 
@@ -1589,7 +1698,9 @@ class Handler(BaseHTTPRequestHandler):
             scan_all()
             return self.send_json({"ok": True})
         if p == "/api/public":
-            if self.read_json(1000).get("on"):
+            on = bool(self.read_json(1000).get("on"))
+            cfg["autoPublic"] = on; save_config()          # remember: open the internet link at every start
+            if on:
                 start_public()
             else:
                 stop_public()
@@ -1704,6 +1815,9 @@ def main():
     scan_all()
     threading.Thread(target=autodj_loop, daemon=True).start()
     threading.Thread(target=silence_loop, daemon=True).start()
+    threading.Thread(target=relay_loop, daemon=True).start()
+    if cfg.get("autoPublic", True):                 # the fixed listener link needs the internet link to be open
+        start_public()
     ip = lan_ip()
     print("=" * 60)
     print("  %s server %s is running" % (STATION, VERSION))

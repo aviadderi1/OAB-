@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OAB – מתחבר לשידור</title>
+<meta name="theme-color" content="#06080C">
+<link rel="icon" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+html,body{margin:0;height:100%;background:#06080C;color:#EEF2F7;font-family:system-ui,-apple-system,"Segoe UI",Arial,sans-serif}
+.w{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:24px;box-sizing:border-box;text-align:center}
+img{width:150px;height:150px;filter:drop-shadow(0 0 20px rgba(63,208,255,.45));animation:p 2.4s ease-in-out infinite}
+@keyframes p{0%,100%{opacity:1}50%{opacity:.6}}
+h1{margin:0;font-size:22px}
+p{margin:0;color:#9FB4CC;font-size:15px;line-height:1.6;max-width:320px}
+button{height:46px;padding:0 26px;border:0;border-radius:12px;background:#2D8CEB;color:#fff;font:700 16px inherit;cursor:pointer}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="w">
+  <img src="oab-logo.png" alt="OAB">
+  <h1 id="t">מתחבר לשידור…</h1>
+  <p id="d">רגע אחד</p>
+  <button id="r" hidden>נסו שוב</button>
+</div>
+<script>
+// Fixed link for OAB listeners: finds the station's current broadcast address and opens it.
+// The address is posted by the studio, signed with the station's key; the public key is in this link (k=).
+const Q = new URLSearchParams(location.search);
+const S = Q.get('s') || localStorage.getItem('oabS'), K = Q.get('k') || localStorage.getItem('oabK');
+const $ = id => document.getElementById(id);
+const b64 = s => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((s.length + 3) % 4)), c => c.charCodeAt(0));
+function show(t, d, retry){ $('t').textContent = t; $('d').textContent = d; $('r').hidden = !retry; }
+async function find(){
+  if (!S || !K || !/^[0-9a-f]{20}$/.test(S)) return show('הקישור לא שלם', 'בקשו מהתחנה את קישור ההאזנה שוב.', false);
+  localStorage.setItem('oabS', S); localStorage.setItem('oabK', K);   // so the app on the home screen keeps working
+  show('מתחבר לשידור…', 'רגע אחד', false);
+  try {
+    const key = await crypto.subtle.importKey('raw', b64(K), { name: 'ECDSA', namedCurve: 'P-256' }, false, ['verify']);
+    const r = await fetch('https://ntfy.sh/oab-' + S + '/json?poll=1&since=12h', { cache: 'no-store' });
+    const lines = (await r.text()).trim().split('\n').filter(Boolean).reverse();
+    for (const ln of lines) {
+      try {
+        const ev = JSON.parse(ln); if (ev.event !== 'message') continue;
+        const o = JSON.parse(ev.message), url = String(o.m).split('|')[0];
+        if (!/^https:\/\/[a-z0-9-]+\.trycloudflare\.com$/.test(url)) continue;
+        const ok = await crypto.subtle.verify({ name: 'ECDSA', hash: 'SHA-256' }, key, b64(o.sig), new TextEncoder().encode(o.m));
+        if (!ok) continue;
+        // is the station on right now?
+        try { await fetch(url + '/api/status', { cache: 'no-store', mode: 'cors' }); } catch (e) { break; }
+        location.replace(url + '/' + (Q.get('n') ? '?n=' + encodeURIComponent(Q.get('n')) : ''));
+        return;
+      } catch (e) {}
+    }
+    show('השידור לא פעיל כרגע', 'התחנה לא משדרת עכשיו. ננסה שוב בעוד כמה שניות.', true);
+  } catch (e) {
+    show('אין חיבור', 'בדקו את החיבור לאינטרנט ונסו שוב.', true);
+  }
+  clearTimeout(window.__t); window.__t = setTimeout(find, 15000);
+}
+$('r').onclick = find;
+find();
+</script>
+</body>
+</html>

@@ -793,7 +793,7 @@ html.desk #start{display:none!important}
 </aside>
 </div>
 
-<div class="status"><span id="fSrv">Server –</span><span id="stPl"></span><span>Limiter −1 dB</span><span id="stXf"></span><span style="margin-left:auto">OAB Studio 1.0.1</span><span style="letter-spacing:1.5px">AD SOUND &amp; SERVICE</span></div>
+<div class="status"><span id="fSrv">Server –</span><span id="stPl"></span><span>Limiter −1 dB</span><span id="stXf"></span><span style="margin-left:auto">OAB Studio 1.0.2</span><span style="letter-spacing:1.5px">AD SOUND &amp; SERVICE</span></div>
 
 <div class="cs" id="chStrip" hidden role="dialog" aria-label="Microphone channel strip">
 <header class="csHead"><span class="csIcon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="2.5" width="6" height="11.5" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg></span>
@@ -1935,7 +1935,7 @@ const ACT = {
   options: () => openOptions(), lightSettings: async () => { await openOptions(); const q = $('#optLight'); if (q) q.scrollIntoView({ block: 'start' }); }, hotSettings: async () => { await openOptions(); const q = $('#optHot'); if (q) q.scrollIntoView({ block: 'start' }); }, streamQual: async () => { await openOptions(); const q = $('#sQual'); if (q) { q.scrollIntoView({ block: 'center' }); q.focus(); } }, crossfades: () => { renderFt(); openModal('mXf'); },
   hotkeys: () => { $('#miH').textContent = 'Hot keys'; $('#miBody').innerHTML = [['Space / Shift+Space', 'MIC 1 / MIC 2 (both when linked)'], ['Enter', 'Play selected'], ['Ctrl+E', 'Start / stop broadcasting'], ['1 … 0', 'Cart wall cells 1–10'], ['−', 'Stop all jingles'], ['Insert', 'Insert last library song after the playing track'], ['Num −', 'Add last library song to the end'], ['Delete', 'Remove selected'], ['Ctrl+↑ / Ctrl+↓', 'Move selected'], ['Ctrl+A / C / X / V', 'Select all / copy / cut / paste'], ['Ctrl+, / Ctrl+.', 'Seek −10 s / +10 s'], ['Ctrl+N / O / S / F / P', 'New / open / save / find / options'], ['Alt+click', 'Prelisten']].map(r => `<div style="display:flex;gap:12px"><span class="mono" style="min-width:170px;color:#8CC2FF">${r[0]}</span><span>${r[1]}</span></div>`).join(''); openModal('mInfo'); },
   help: () => { $('#miH').textContent = 'Guide'; $('#miBody').innerHTML = 'The full Hebrew guide is in <b>README-HE.txt</b> in the Radio folder.'; openModal('mInfo'); },
-  about: () => { $('#miH').textContent = 'OAB Studio 1.0.1'; $('#miBody').innerHTML = '<img src="/oab-logo.png" alt="" style="width:96px;height:96px;display:block;margin:0 auto 8px">OAB – On Air Broadcast · radio automation studio · version 1.0.1<br>Playlist engine, scheduler, generator, ads scheduler, voice tracking, announcements, reports, DSP, AUX players.<br>AD SOUND &amp; SERVICE'; openModal('mInfo'); },
+  about: () => { $('#miH').textContent = 'OAB Studio 1.0.2'; $('#miBody').innerHTML = '<img src="/oab-logo.png" alt="" style="width:96px;height:96px;display:block;margin:0 auto 8px">OAB – On Air Broadcast · radio automation studio · version 1.0.2<br>Playlist engine, scheduler, generator, ads scheduler, voice tracking, announcements, reports, DSP, AUX players.<br>AD SOUND &amp; SERVICE'; openModal('mInfo'); },
 };
 function doAct(a){ $$('.menubar .m').forEach(m => m.classList.remove('open')); if (ACT[a]) ACT[a](); }
 document.addEventListener('click', e => { const a = e.target.closest('[data-a]'); if (a && (a.closest('.dd') || a.closest('.tool') || a.closest('.transport'))) doAct(a.dataset.a); });
@@ -2566,7 +2566,7 @@ Object.assign(ACT, {
 
 // ---------------- listener links (home network + internet) ----------------
 let LINKS = { lan: '', pub: null };
-const bestLink = () => LINKS.pub && LINKS.pub.state === 'on' && LINKS.pub.url ? LINKS.pub.url + '/' : (LINKS.lan || location.origin + '/');
+const bestLink = () => LINKS.pub && LINKS.pub.fixed ? LINKS.pub.fixed : LINKS.pub && LINKS.pub.state === 'on' && LINKS.pub.url ? LINKS.pub.url + '/' : (LINKS.lan || location.origin + '/');
 function showLinks(s){
   LINKS.lan = s.lan || ''; LINKS.pub = s.public || null;
   $('#lisLink').textContent = bestLink();
@@ -2577,17 +2577,18 @@ $('#lisCopy').onclick = () => copyTxt(bestLink());
 $('#lisLink').onclick = () => copyTxt(bestLink());
 function renderLinks(){
   const p = LINKS.pub || { state: 'off' }; const on = p.state === 'on' && p.url;
-  const row = (title, url, note) => `<div class="aux" style="margin-bottom:10px"><div class="lbl">${title}</div>${url ? `<div class="mono" style="font-size:14px;color:#8CC2FF;word-break:break-all;margin:4px 0">${esc(url)}</div><div style="display:flex;gap:6px;flex-wrap:wrap">${/^(FOR EVERYONE|FOR PHONES)/.test(title) ? `<button class="btn sm" data-wa="${esc(url)}" style="background:#1F8F4E;border-color:#25D366;color:#fff">Share on WhatsApp</button><button class="btn sm" data-wacopy="${esc(url)}">Copy WhatsApp message</button>` : ''}<button class="btn sm" data-cp="${esc(url)}">Copy link</button><a class="btn sm" href="${esc(url)}" target="_blank" style="color:var(--txt);text-decoration:none">Open</a></div>` : ''}<div class="sub" style="font-size:11.5px;margin-top:4px">${note}</div></div>`;
+  const row = (title, url, note) => `<div class="aux" style="margin-bottom:10px"><div class="lbl">${title}</div>${url ? `<div class="mono" style="font-size:14px;color:#8CC2FF;word-break:break-all;margin:4px 0">${esc(url)}</div><div style="display:flex;gap:6px;flex-wrap:wrap">${/^(FIXED LINK|FOR PHONES)/.test(title) ? `<button class="btn sm" data-wa="${esc(url)}" style="background:#1F8F4E;border-color:#25D366;color:#fff">Share on WhatsApp</button><button class="btn sm" data-wacopy="${esc(url)}">Copy WhatsApp message</button>` : ''}<button class="btn sm" data-cp="${esc(url)}">Copy link</button><a class="btn sm" href="${esc(url)}" target="_blank" style="color:var(--txt);text-decoration:none">Open</a></div>` : ''}<div class="sub" style="font-size:11.5px;margin-top:4px">${note}</div></div>`;
   $('#miBody').innerHTML =
-    row('FOR EVERYONE ON THE INTERNET', on ? p.url + '/' : '', on ? 'Send this link to your listeners (WhatsApp, Facebook…). It changes every time the server restarts.' :
+    row('FIXED LINK FOR LISTENERS – NEVER CHANGES', p.fixed || '', 'Send this link once (WhatsApp, Facebook, the app). It always finds the broadcast, even after a restart. ' + (on ? '<b style="color:#2EE88A">● On air now.</b>' : 'Works while the internet link below is open.')) +
+    row('INTERNET ADDRESS NOW (CHANGES EVERY START)', on ? p.url + '/' : '', on ? 'The current address. Use the fixed link above for listeners.' :
       (p.state === 'error' ? 'Error: ' + esc(p.error || '') + '<br>' : p.state === 'off' ? 'Not created yet. ' : 'Creating the link… (the first time downloads about 30 MB)<br>') + 'Press the button to create a link anyone can open.') +
     `<button class="btn ${on ? '' : 'pri'}" id="lkPub" style="width:100%;justify-content:center;margin-bottom:12px">${on || p.state === 'starting' || p.state === 'downloading' ? 'Close internet link' : 'Create internet link'}</button>` +
     row('FOR PHONES ON YOUR HOME WI-FI', LINKS.lan, 'Works only for devices connected to the same Wi-Fi as this computer.') +
     (on ? row('PHONE BROADCAST APP (INTERNET)', p.url + '/mobile', 'Broadcast from your phone from anywhere (uses the broadcast password).') + row('REMOTE CONTROL (INTERNET)', p.url + '/remote', 'Control the studio from your phone.') :
       row('PHONE BROADCAST APP (HOME WI-FI)', LINKS.lan ? LINKS.lan + 'mobile' : '', 'Broadcast from your phone.') + row('REMOTE CONTROL (HOME WI-FI)', LINKS.lan ? LINKS.lan + 'remote' : '', 'Control the studio from your phone.'));
   $('#lkPub').onclick = () => $('#pubBtn').click();
-  $$('#miBody [data-wa]').forEach(b => b.onclick = () => window.open('https://wa.me/?text=' + encodeURIComponent('מחכים לכם, האזינו לשידור:\n' + b.dataset.wa + 'listen'), '_blank'));
-  $$('#miBody [data-wacopy]').forEach(b => b.onclick = () => copyTxt('מחכים לכם, האזינו לשידור:\n' + b.dataset.wacopy + 'listen'));
+  $$('#miBody [data-wa]').forEach(b => b.onclick = () => window.open('https://wa.me/?text=' + encodeURIComponent('מחכים לכם, האזינו לשידור:\n' + b.dataset.wa + (/github\.io/.test(b.dataset.wa) ? '' : 'listen')), '_blank'));
+  $$('#miBody [data-wacopy]').forEach(b => b.onclick = () => copyTxt('מחכים לכם, האזינו לשידור:\n' + b.dataset.wacopy + (/github\.io/.test(b.dataset.wacopy) ? '' : 'listen')));
 }
 $('#miBody').addEventListener('click', e => { const b = e.target.closest('[data-cp]'); if (b) copyTxt(b.dataset.cp); });
 function openLinks(){ $('#miH').textContent = 'Links for listeners'; renderLinks(); openModal('mInfo'); }

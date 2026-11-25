@@ -602,7 +602,7 @@ Object.assign(ACT, {
 
 // ---------------- listener links (home network + internet) ----------------
 let LINKS = { lan: '', pub: null };
-const bestLink = () => LINKS.pub && LINKS.pub.state === 'on' && LINKS.pub.url ? LINKS.pub.url + '/' : (LINKS.lan || location.origin + '/');
+const bestLink = () => LINKS.pub && LINKS.pub.fixed ? LINKS.pub.fixed : LINKS.pub && LINKS.pub.state === 'on' && LINKS.pub.url ? LINKS.pub.url + '/' : (LINKS.lan || location.origin + '/');
 function showLinks(s){
   LINKS.lan = s.lan || ''; LINKS.pub = s.public || null;
   $('#lisLink').textContent = bestLink();
@@ -613,17 +613,18 @@ $('#lisCopy').onclick = () => copyTxt(bestLink());
 $('#lisLink').onclick = () => copyTxt(bestLink());
 function renderLinks(){
   const p = LINKS.pub || { state: 'off' }; const on = p.state === 'on' && p.url;
-  const row = (title, url, note) => `<div class="aux" style="margin-bottom:10px"><div class="lbl">${title}</div>${url ? `<div class="mono" style="font-size:14px;color:#8CC2FF;word-break:break-all;margin:4px 0">${esc(url)}</div><div style="display:flex;gap:6px;flex-wrap:wrap">${/^(FOR EVERYONE|FOR PHONES)/.test(title) ? `<button class="btn sm" data-wa="${esc(url)}" style="background:#1F8F4E;border-color:#25D366;color:#fff">Share on WhatsApp</button><button class="btn sm" data-wacopy="${esc(url)}">Copy WhatsApp message</button>` : ''}<button class="btn sm" data-cp="${esc(url)}">Copy link</button><a class="btn sm" href="${esc(url)}" target="_blank" style="color:var(--txt);text-decoration:none">Open</a></div>` : ''}<div class="sub" style="font-size:11.5px;margin-top:4px">${note}</div></div>`;
+  const row = (title, url, note) => `<div class="aux" style="margin-bottom:10px"><div class="lbl">${title}</div>${url ? `<div class="mono" style="font-size:14px;color:#8CC2FF;word-break:break-all;margin:4px 0">${esc(url)}</div><div style="display:flex;gap:6px;flex-wrap:wrap">${/^(FIXED LINK|FOR PHONES)/.test(title) ? `<button class="btn sm" data-wa="${esc(url)}" style="background:#1F8F4E;border-color:#25D366;color:#fff">Share on WhatsApp</button><button class="btn sm" data-wacopy="${esc(url)}">Copy WhatsApp message</button>` : ''}<button class="btn sm" data-cp="${esc(url)}">Copy link</button><a class="btn sm" href="${esc(url)}" target="_blank" style="color:var(--txt);text-decoration:none">Open</a></div>` : ''}<div class="sub" style="font-size:11.5px;margin-top:4px">${note}</div></div>`;
   $('#miBody').innerHTML =
-    row('FOR EVERYONE ON THE INTERNET', on ? p.url + '/' : '', on ? 'Send this link to your listeners (WhatsApp, Facebook…). It changes every time the server restarts.' :
+    row('FIXED LINK FOR LISTENERS – NEVER CHANGES', p.fixed || '', 'Send this link once (WhatsApp, Facebook, the app). It always finds the broadcast, even after a restart. ' + (on ? '<b style="color:#2EE88A">● On air now.</b>' : 'Works while the internet link below is open.')) +
+    row('INTERNET ADDRESS NOW (CHANGES EVERY START)', on ? p.url + '/' : '', on ? 'The current address. Use the fixed link above for listeners.' :
       (p.state === 'error' ? 'Error: ' + esc(p.error || '') + '<br>' : p.state === 'off' ? 'Not created yet. ' : 'Creating the link… (the first time downloads about 30 MB)<br>') + 'Press the button to create a link anyone can open.') +
     `<button class="btn ${on ? '' : 'pri'}" id="lkPub" style="width:100%;justify-content:center;margin-bottom:12px">${on || p.state === 'starting' || p.state === 'downloading' ? 'Close internet link' : 'Create internet link'}</button>` +
     row('FOR PHONES ON YOUR HOME WI-FI', LINKS.lan, 'Works only for devices connected to the same Wi-Fi as this computer.') +
     (on ? row('PHONE BROADCAST APP (INTERNET)', p.url + '/mobile', 'Broadcast from your phone from anywhere (uses the broadcast password).') + row('REMOTE CONTROL (INTERNET)', p.url + '/remote', 'Control the studio from your phone.') :
       row('PHONE BROADCAST APP (HOME WI-FI)', LINKS.lan ? LINKS.lan + 'mobile' : '', 'Broadcast from your phone.') + row('REMOTE CONTROL (HOME WI-FI)', LINKS.lan ? LINKS.lan + 'remote' : '', 'Control the studio from your phone.'));
   $('#lkPub').onclick = () => $('#pubBtn').click();
-  $$('#miBody [data-wa]').forEach(b => b.onclick = () => window.open('https://wa.me/?text=' + encodeURIComponent('מחכים לכם, האזינו לשידור:\n' + b.dataset.wa + 'listen'), '_blank'));
-  $$('#miBody [data-wacopy]').forEach(b => b.onclick = () => copyTxt('מחכים לכם, האזינו לשידור:\n' + b.dataset.wacopy + 'listen'));
+  $$('#miBody [data-wa]').forEach(b => b.onclick = () => window.open('https://wa.me/?text=' + encodeURIComponent('מחכים לכם, האזינו לשידור:\n' + b.dataset.wa + (/github\.io/.test(b.dataset.wa) ? '' : 'listen')), '_blank'));
+  $$('#miBody [data-wacopy]').forEach(b => b.onclick = () => copyTxt('מחכים לכם, האזינו לשידור:\n' + b.dataset.wacopy + (/github\.io/.test(b.dataset.wacopy) ? '' : 'listen')));
 }
 $('#miBody').addEventListener('click', e => { const b = e.target.closest('[data-cp]'); if (b) copyTxt(b.dataset.cp); });
 function openLinks(){ $('#miH').textContent = 'Links for listeners'; renderLinks(); openModal('mInfo'); }
