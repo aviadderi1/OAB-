@@ -46,6 +46,7 @@ public class MainActivity extends Activity {
         s.setMediaPlaybackRequiresUserGesture(false);
         s.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);   // a studio on the home Wi-Fi is plain http
         s.setAllowFileAccess(false);
+        s.setTextZoom(100);   // the phone's large-font setting must not break the studio layout
         web.setWebViewClient(new WebViewClient() {
             @Override public WebResourceResponse shouldInterceptRequest(WebView v, WebResourceRequest r) {
                 return loader.shouldInterceptRequest(r.getUrl());
