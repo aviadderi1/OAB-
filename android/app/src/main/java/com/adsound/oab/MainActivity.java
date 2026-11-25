@@ -51,6 +51,13 @@ public class MainActivity extends Activity {
             @Override public WebResourceResponse shouldInterceptRequest(WebView v, WebResourceRequest r) {
                 return loader.shouldInterceptRequest(r.getUrl());
             }
+            // links that leave the app (WhatsApp, GitHub…) open outside, never inside the studio
+            @Override public boolean shouldOverrideUrlLoading(WebView v, WebResourceRequest r) {
+                Uri u = r.getUrl();
+                if ("appassets.androidplatform.net".equals(u.getHost())) return false;
+                try { startActivity(new Intent(Intent.ACTION_VIEW, u)); } catch (Exception e) { /* no app for it */ }
+                return true;
+            }
         });
         web.setWebChromeClient(new WebChromeClient() {
             @Override public void onPermissionRequest(final PermissionRequest r) {
@@ -95,7 +102,17 @@ public class MainActivity extends Activity {
                 else getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
             });
         }
-        @JavascriptInterface public String version() { return "1"; }
+        @JavascriptInterface public String version() { return "2"; }
+        /** Share text in WhatsApp (or any app if WhatsApp is not installed). */
+        @JavascriptInterface public void shareWhatsApp(final String text) {
+            runOnUiThread(() -> {
+                Intent i = new Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, text);
+                for (String pkg : new String[]{"com.whatsapp", "com.whatsapp.w4b"}) {
+                    try { startActivity(new Intent(i).setPackage(pkg)); return; } catch (Exception e) { /* try the next */ }
+                }
+                try { startActivity(Intent.createChooser(i, "Send the listen link")); } catch (Exception e) { /* nothing to share with */ }
+            });
+        }
     }
 
     @Override public void onRequestPermissionsResult(int code, String[] perms, int[] res) {
