@@ -99,8 +99,8 @@ jobs:
 
   android:
     # OAB Mobile – the phone studio as an APK, attached to the same release
+    # runs every time: a change to the phone app replaces the APK in the current release
     needs: windows
-    if: needs.windows.outputs.skip == '0'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

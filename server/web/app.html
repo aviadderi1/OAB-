@@ -56,6 +56,11 @@ header.top h1{margin:0;font-size:17px;font-weight:700}
 #air{flex:none;height:32px;padding:0 13px;border-radius:9px;background:var(--red);border:1px solid var(--red);color:#fff;font-weight:700;font-size:11.5px;letter-spacing:.5px;white-space:nowrap}
 #air.on{background:var(--red);border-color:var(--red);color:#fff;box-shadow:0 0 14px rgba(229,72,77,.6);animation:pulse 2s infinite}
 @keyframes pulse{50%{box-shadow:0 0 4px rgba(229,72,77,.3)}}
+.ant{flex:none;display:flex;align-items:center;justify-content:center;width:30px;height:30px;color:#5B6170;margin-right:-2px}
+.ant.live{color:#22C55E;filter:drop-shadow(0 0 5px rgba(34,197,94,.65))}
+.ant.live .w1{animation:airW 1.4s ease-in-out infinite}
+.ant.live .w2{animation:airW 1.4s ease-in-out .35s infinite}
+@keyframes airW{0%,100%{opacity:1}50%{opacity:.15}}
 .hint{position:absolute;left:0;right:0;bottom:8px;text-align:center;font-size:11.5px;color:var(--sub);z-index:2}
 .deck{flex:none;padding:0 18px 12px;display:flex;flex-direction:column;gap:10px}
 #arc{display:block;width:100%;height:30px;margin-top:-4px}
@@ -197,6 +202,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;heigh
         <div class="bar">
           <img class="slogo" src="oab-logo.png" alt="OAB">
           <span id="clock">00:00</span><span id="lis">● 0 listening</span><span class="sp"></span>
+          <span class="ant" id="ant" role="img" aria-label="Broadcast: off"><svg width="28" height="28" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><g class="w1"><path d="M11.8 10.8a6 6 0 0 0 0 8.4"/><path d="M20.2 10.8a6 6 0 0 1 0 8.4"/></g><g class="w2"><path d="M8.3 7.3a11 11 0 0 0 0 15.4"/><path d="M23.7 7.3a11 11 0 0 1 0 15.4"/></g><circle cx="16" cy="15" r="2.2" fill="currentColor" stroke="none"/><path d="M16 17.5 12 29M16 17.5 20 29M13.2 25.5h5.6"/></svg></span>
           <button id="air">GO LIVE</button>
         </div>
         <div class="hint">Tap a microphone to open it · hold for EQ</div>
@@ -732,7 +738,7 @@ async function setLive(on){
     const d = cur(); if (d) meta(d.it);
     toast('You are on air');
   } else { live = false; enc = null; out = []; if (wake) { wake.release().catch(() => {}); wake = null; } if (NATIVE) try { NATIVE.setLive(false, false); } catch(e){} toast('Broadcast stopped'); }
-  $('#air').classList.toggle('on', live); $('#air').textContent = live ? 'ON AIR' : 'GO LIVE'; renderNow();
+  $('#air').classList.toggle('on', live); $('#ant').classList.toggle('live', live); $('#ant').setAttribute('aria-label', live ? 'Broadcast: on air' : 'Broadcast: off'); $('#air').textContent = live ? 'ON AIR' : 'GO LIVE'; renderNow();
 }
 $('#air').onclick = () => { if (live) choose('Stop the broadcast?', [['y', 'Yes, stop'], ['n', 'Keep broadcasting']], '', v => v === 'y' && setLive(false)); else setLive(true); };
 document.addEventListener('visibilitychange', async () => { if (live && CFG.keepOn && document.visibilityState === 'visible' && !wake) { try { wake = await navigator.wakeLock.request('screen'); } catch(e){} } });
