@@ -34,7 +34,7 @@ STATION = os.environ.get("RADIO_NAME", "OAB")
 MAX_LISTENERS = int(os.environ.get("RADIO_MAX_LISTENERS", "0"))  # 0 = no limit
 # ---------------------------------------------------------
 
-VERSION = "1.0.2"
+VERSION = "1.0.3"
 APP_DIR = os.path.dirname(os.path.abspath(__file__))            # program files (code + web)
 BASE = os.environ.get("OAB_DATA") or APP_DIR                       # settings, playlists, recordings, downloaded tools
 os.makedirs(BASE, exist_ok=True)
@@ -1224,7 +1224,7 @@ class Handler(BaseHTTPRequestHandler):
     # ---------- helpers ----------
     def cors(self):
         self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type, X-Radio-Key, Range")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, X-Radio-Key, X-Radio-Source, Range")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, PUT, OPTIONS")
 
     def send_json(self, obj, code=200):
@@ -1292,6 +1292,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", MIME.get(ext, "application/octet-stream"))
         self.send_header("Content-Length", str(end - start + 1))
         self.send_header("Accept-Ranges", "bytes")
+        self.send_header("Access-Control-Allow-Origin", "*")   # the phone app mixes station songs and jingles
         if attachment:
             self.send_header("Content-Disposition", 'attachment; filename="%s"' % os.path.basename(full))
         self.cors()
@@ -1472,6 +1473,8 @@ class Handler(BaseHTTPRequestHandler):
         p = urllib.parse.urlparse(self.path).path
         if p in ("/live", "/live.mp3", "/stream", "/stream.mp3"):
             return self.stream()
+        if p in ("/app", "/app/"):              # OAB Mobile – broadcast from the phone
+            return self.serve_file(os.path.join(WEB, "app.html"))
         if p == "/oab-logo.png" and os.path.isfile(LOGO_FILE):   # the station's own logo
             with open(LOGO_FILE, "rb") as f:
                 data = f.read()

@@ -10,3 +10,8 @@ server/yt-dlp*
 server/deno*
 server/cloudflared*
 server/ffmpeg*
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/app/*.jks

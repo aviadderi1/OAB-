@@ -1,0 +1,796 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#06080C">
+<title>OAB Mobile</title>
+<link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<script src="lib/lame.min.js"></script>
+<style>
+@font-face{font-family:Heebo;font-weight:400;src:url(fonts/heebo-latin-400-normal.woff2) format('woff2')}
+@font-face{font-family:Heebo;font-weight:700;src:url(fonts/heebo-latin-700-normal.woff2) format('woff2')}
+:root{--bg:#06080C;--txt:#EEF2F7;--sub:#9FB4CC;--mut:#7C8696;--cy:#3FD0FF;--gr:#2EE88A;--am:#FFB020;--red:#E5484D;--blue:#2D8CEB;--line:rgba(255,255,255,.07);--card:rgba(255,255,255,.035);--mono:'JetBrains Mono',ui-monospace,monospace}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--txt);font:14px Inter,Heebo,system-ui,sans-serif}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;padding:0}
+input,textarea,select{font:inherit;color:var(--txt);user-select:text;-webkit-user-select:text}
+.app{position:fixed;inset:0;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top)}
+.views{flex:1;min-height:0;position:relative}
+.view{position:absolute;inset:0;display:none;flex-direction:column;min-height:0}
+.view.on{display:flex}
+nav.tabs{flex:none;display:flex;justify-content:space-around;align-items:center;height:calc(62px + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);background:rgba(8,11,17,.96);border-top:1px solid var(--line)}
+nav.tabs button{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;width:64px;padding:6px 0;color:var(--mut);font-size:10.5px;font-weight:600}
+nav.tabs button.on{color:var(--cy)}
+nav.tabs svg{width:22px;height:22px}
+.badge{position:absolute;top:0;left:38px;min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:var(--blue);color:#fff;font:700 10px Inter,sans-serif;display:none;align-items:center;justify-content:center}
+.badge.show{display:flex}
+header.top{flex:none;height:56px;padding:0 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line)}
+header.top img{width:30px;height:30px}
+header.top h1{margin:0;font-size:17px;font-weight:700}
+.sp{flex:1}
+.btn{height:34px;padding:0 13px;border-radius:10px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.05);color:#DCE3EC;font-weight:600;font-size:12.5px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn.g{border-color:var(--gr);background:rgba(46,232,138,.14);color:#6FF0A8}
+.btn.r{border-color:#7A2A2E;background:rgba(229,72,77,.14);color:#FFB3B5}
+.ell{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mono{font-family:var(--mono)}
+/* ---- studio ---- */
+.photo{position:relative;flex:1 1 auto;min-height:170px;overflow:hidden}
+.frame{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);aspect-ratio:390/372;background:url(phone-studio.jpg) center/cover}
+.photo::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(6,8,12,.45) 0%,rgba(6,8,12,0) 28%,rgba(6,8,12,0) 70%,#06080C 100%)}
+.ring{position:absolute;width:28.2%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;z-index:1}
+.ring .base{position:absolute;inset:0;border-radius:50%;border:2px dashed rgba(255,255,255,.45)}
+.ring.on .base{border:3px solid var(--gr);background:rgba(46,232,138,.06);box-shadow:0 0 26px rgba(46,232,138,.55)}
+.ring svg{position:absolute;inset:-4px;width:calc(100% + 8px);height:calc(100% + 8px);transform:rotate(-90deg);opacity:0}
+.ring.on svg{opacity:1}
+.ring .lv{fill:none;stroke:#B8F43A;stroke-width:4;stroke-linecap:round;stroke-dasharray:0 300;filter:drop-shadow(0 0 4px #B8F43A)}
+.ring .lbl{position:absolute;left:50%;bottom:-20px;transform:translateX(-50%);font:700 10px Inter,sans-serif;letter-spacing:1px;color:rgba(255,255,255,.55);white-space:nowrap}
+.bar{position:absolute;left:12px;right:12px;top:10px;height:46px;display:flex;align-items:center;gap:10px;padding:0 8px 0 10px;border-radius:14px;background:rgba(10,13,19,.6);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.08);z-index:3}
+.bar img{width:28px;height:28px}
+#clock{font:700 21px var(--mono)}
+#lis{font-size:12px;color:#6FF0A8}
+#air{height:32px;padding:0 13px;border-radius:9px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);color:#C8CFDA;font-weight:700;font-size:11.5px;letter-spacing:.5px}
+#air.on{background:var(--red);border-color:var(--red);color:#fff;box-shadow:0 0 14px rgba(229,72,77,.6);animation:pulse 2s infinite}
+@keyframes pulse{50%{box-shadow:0 0 4px rgba(229,72,77,.3)}}
+.hint{position:absolute;left:0;right:0;bottom:8px;text-align:center;font-size:11.5px;color:var(--sub);z-index:2}
+.deck{flex:none;padding:0 18px 12px;display:flex;flex-direction:column;gap:10px}
+#arc{display:block;width:100%;height:30px;margin-top:-4px}
+.np{display:flex;align-items:flex-end;justify-content:space-between;gap:10px}
+.np .k{font-size:10.5px;font-weight:700;letter-spacing:1.5px;color:var(--gr)}
+.np .k span{color:var(--sub)}
+#npT{font-size:20px;font-weight:700;margin-top:3px}
+#npA{font-size:13px;color:var(--sub)}
+#rem{font:700 28px var(--mono);color:var(--am);flex:none}
+.prog{position:relative;height:4px;border-radius:2px;background:rgba(63,208,255,.18)}
+.prog i{display:block;height:100%;width:0;border-radius:2px;background:linear-gradient(90deg,var(--gr),var(--cy));box-shadow:0 0 8px var(--cy)}
+.prog b{position:absolute;top:-4px;left:0;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:#fff;box-shadow:0 0 10px #BFF3FF}
+.tr{display:flex;align-items:center;justify-content:center;gap:14px}
+.tr button{width:48px;height:48px;border-radius:50%;border:1px solid rgba(63,208,255,.4);background:rgba(9,15,28,.7);color:var(--cy);display:flex;align-items:center;justify-content:center}
+.tr button.big{width:68px;height:68px;border:2px solid var(--cy);background:rgba(63,208,255,.16);color:#fff;box-shadow:0 0 26px rgba(63,208,255,.45)}
+.tr button.msg{border:0;background:var(--blue);color:#fff}
+.tr button:active{transform:scale(.94)}
+.pads{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;justify-items:center}
+.pads button{width:min(58px,14vw);height:min(58px,14vw);border-radius:50%;border:2px solid var(--c);background:rgba(0,0,0,.35);color:#fff;font-weight:700;font-size:15px;position:relative;overflow:hidden}
+.pads button.play{background:var(--c);color:#000;box-shadow:0 0 18px var(--c)}
+.pads button.none{opacity:.45}
+@media (max-height:700px){.pads button{width:min(48px,12vw);height:min(48px,12vw)}.tr button{width:42px;height:42px}.tr button.big{width:58px;height:58px}#npT{font-size:17px}#rem{font-size:24px}}
+/* ---- lists ---- */
+.subtabs{flex:none;display:flex;gap:18px;padding:10px 18px 0;font-size:14px;font-weight:600;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
+.subtabs::-webkit-scrollbar{display:none}
+.subtabs button{padding-bottom:9px;color:var(--mut);white-space:nowrap;border-bottom:2px solid transparent}
+.subtabs button.on{color:var(--txt);border-bottom-color:var(--cy)}
+.list{flex:1;min-height:0;overflow-y:auto;scrollbar-width:none;overscroll-behavior:contain}
+.list::-webkit-scrollbar{display:none}
+.row{display:grid;grid-template-columns:22px minmax(0,1fr) auto 30px;gap:10px;align-items:center;min-height:58px;padding:6px 10px 6px 16px;border-bottom:1px solid rgba(255,255,255,.05);position:relative}
+.row .n{font:500 12px var(--mono);color:var(--mut)}
+.row .t{display:block;font-size:15px;font-weight:600;font-family:var(--songFont,inherit)}
+.row .a{font-size:12.5px;color:var(--sub)}
+.row .d{font:500 13px var(--mono);text-align:right}
+.row.cur{background:rgba(46,232,138,.12);box-shadow:inset 3px 0 0 var(--gr)}
+.row.sel{background:rgba(63,208,255,.08)}
+.row.drag{background:#121a28;z-index:2;box-shadow:0 8px 24px rgba(0,0,0,.6)}
+.row .h{display:flex;align-items:center;justify-content:center;height:40px;color:var(--mut);touch-action:none}
+.row.lib{grid-template-columns:minmax(0,1fr) auto 34px 34px}
+.ib{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--sub)}
+.ib.on{color:var(--cy);background:rgba(63,208,255,.12)}
+.ib.add{color:#6FF0A8}
+.empty{padding:40px 24px;text-align:center;color:var(--mut);line-height:1.6}
+.rowact{grid-column:1/-1;display:flex;gap:8px;padding:2px 0 6px}
+.mini{flex:none;display:flex;align-items:center;gap:10px;margin:8px 12px 10px;padding:8px 10px;border-radius:14px;background:rgba(13,20,36,.95);border:1px solid rgba(63,208,255,.25)}
+.mini img{width:34px;height:34px}
+.mini .m1{width:38px;height:38px;border-radius:50%;border:2px solid rgba(255,255,255,.35);color:#C8CFDA;font-weight:700;font-size:11px}
+.mini .m1.on{border-color:var(--gr);background:rgba(46,232,138,.12);color:#6FF0A8}
+.mini .pp{width:38px;height:38px;border-radius:50%;border:2px solid var(--cy);background:rgba(63,208,255,.16);color:#fff;display:flex;align-items:center;justify-content:center}
+.search{flex:none;padding:10px 14px;display:flex;gap:8px}
+.search input{flex:1;height:38px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:#0F141D;padding:0 12px;font-size:15px;outline:none}
+.req{padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.05)}
+.req .s{font-size:15px;font-weight:600}
+.req .w{font-size:12.5px;color:var(--sub);margin-top:2px}
+.req .b{display:flex;gap:8px;margin-top:8px}
+/* ---- settings ---- */
+.set{padding:4px 16px 16px}
+.conn{display:flex;align-items:center;gap:12px;margin:12px 0 4px;padding:12px 14px;border-radius:14px;background:rgba(46,232,138,.08);border:1px solid rgba(46,232,138,.35);font-size:13px;line-height:1.45}
+.conn.bad{background:rgba(229,72,77,.08);border-color:rgba(229,72,77,.4)}
+.conn i{width:10px;height:10px;border-radius:50%;background:var(--gr);box-shadow:0 0 10px var(--gr);flex:none}
+.conn.bad i{background:var(--red);box-shadow:0 0 10px var(--red)}
+.gh{margin-top:16px;font-size:11px;font-weight:700;letter-spacing:2px;color:var(--mut)}
+.grp{margin-top:6px;border-radius:14px;background:var(--card);border:1px solid var(--line);overflow:hidden}
+.srow{display:flex;align-items:center;gap:10px;min-height:46px;width:100%;padding:0 14px;border-bottom:1px solid rgba(255,255,255,.05);font-size:14px;text-align:left}
+.srow:last-child{border-bottom:0}
+.srow .v{font-size:13px;color:var(--sub);max-width:55%;text-align:right}
+.srow .v.ok{color:var(--gr)}
+.srow::after{content:"›";color:#4E5866;font-size:18px}
+.foot{margin:22px 0 6px;text-align:center;font-size:11px;letter-spacing:1.5px;color:#4E5866}
+/* ---- sheets ---- */
+.sheet{position:fixed;inset:0;z-index:20;display:none;flex-direction:column;justify-content:flex-end;background:rgba(0,0,0,.55)}
+.sheet.on{display:flex}
+.sheet .box{max-height:86%;display:flex;flex-direction:column;background:#0C111A;border-top:1px solid rgba(255,255,255,.1);border-radius:20px 20px 0 0;padding:14px 16px calc(16px + env(safe-area-inset-bottom));animation:up .22s ease-out}
+@keyframes up{from{transform:translateY(40%);opacity:.4}}
+.sheet h3{margin:0 0 10px;font-size:16px}
+.sheet .opts{overflow-y:auto;scrollbar-width:none}
+.opt{display:flex;align-items:center;gap:10px;width:100%;min-height:48px;padding:0 6px;border-bottom:1px solid rgba(255,255,255,.06);font-size:15px;text-align:left}
+.opt.on{color:var(--cy)}
+.opt.on::after{content:"✓";margin-left:auto}
+.field{width:100%;height:44px;border-radius:11px;border:1px solid rgba(255,255,255,.14);background:#0F141D;padding:0 12px;font-size:15px;outline:none;margin-bottom:10px}
+textarea.field{height:96px;padding:10px 12px;resize:none}
+.sheet .acts{display:flex;gap:10px;margin-top:6px}
+.sheet .acts button{flex:1;height:46px;border-radius:12px;font-weight:700}
+.pri{background:var(--cy);color:#04121A}
+.sec{background:rgba(255,255,255,.08)}
+/* ---- mic screen ---- */
+#micV{position:fixed;inset:0;z-index:15;display:none;flex-direction:column;background:var(--bg);padding-top:env(safe-area-inset-top)}
+#micV.on{display:flex}
+.micb{flex:1;min-height:0;padding:12px 16px calc(14px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:12px;overflow-y:auto;scrollbar-width:none}
+.prow{display:flex;gap:8px}
+.prow select{flex:1;height:36px;border-radius:10px;background:#151B27;border:1px solid rgba(255,255,255,.12);padding:0 10px;font-size:13px}
+.eqtog{height:36px;padding:0 12px;border-radius:10px;border:1px solid rgba(255,255,255,.2);color:var(--mut);font-weight:700;font-size:12px}
+.eqtog.on{border-color:var(--gr);color:#6FF0A8}
+#eqc{width:100%;height:160px;border-radius:14px;background:rgba(4,8,14,.8);border:1px solid var(--line);touch-action:none;display:block}
+.bands{display:flex;gap:6px}
+.bands button{flex:1 1 0;min-width:0;padding:7px 2px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);text-align:center}
+.bands button.sel{border-color:var(--c);background:rgba(255,255,255,.08)}
+.bands .bn{font-size:10.5px;font-weight:700;color:var(--c)}
+.bands .bf{font:500 11.5px var(--mono);margin-top:3px}
+.bands .bg{font:500 10.5px var(--mono);color:var(--sub)}
+.panel{border-radius:14px;padding:12px 14px;background:var(--card);border:1px solid rgba(255,255,255,.08);display:flex;flex-direction:column;gap:10px}
+.ph{display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:700;letter-spacing:2px;color:var(--sub)}
+.ph b{font:700 11px Inter,sans-serif;letter-spacing:0;color:#F5C46B}
+.sl{display:block}
+.sl .l{display:flex;justify-content:space-between;font-size:12.5px;color:#B5BFCC}
+.sl .l span:last-child{font-family:var(--mono);color:var(--txt)}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:24px;background:none;margin:2px 0 0}
+input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:2px;background:linear-gradient(90deg,var(--tc,#F5A524) var(--p,50%),rgba(255,255,255,.12) var(--p,50%))}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;margin-top:-8px;border-radius:50%;background:#fff;box-shadow:0 0 8px rgba(0,0,0,.5)}
+.duck{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:14px;background:rgba(63,208,255,.1);border:1px solid rgba(63,208,255,.45)}
+.duck b{display:block;font-size:13.5px}
+.duck small{font-size:11.5px;color:var(--sub)}
+.tg{width:44px;height:26px;border-radius:13px;background:rgba(255,255,255,.18);position:relative;flex:none;transition:.2s}
+.tg::after{content:"";position:absolute;left:3px;top:3px;width:20px;height:20px;border-radius:50%;background:#0B1220;transition:.2s}
+.tg.on{background:var(--cy)}
+.tg.on::after{left:21px}
+/* ---- connect ---- */
+#conn{position:fixed;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;background:radial-gradient(120% 70% at 50% 0%,#10213A 0%,#06080C 70%)}
+#conn img{width:110px;height:110px;filter:drop-shadow(0 0 22px rgba(63,208,255,.45))}
+#conn h2{margin:14px 0 2px;font-size:22px;letter-spacing:1px}
+#conn p{margin:0 0 22px;color:var(--sub);font-size:13px;text-align:center;line-height:1.5}
+#conn .field{max-width:360px}
+#conn .pri{width:100%;max-width:360px;height:50px;border-radius:13px;font-weight:700;font-size:16px}
+#connMsg{min-height:20px;margin-top:12px;color:#FFB3B5;font-size:13px;text-align:center}
+#toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:40;padding:10px 16px;border-radius:12px;background:rgba(20,26,38,.96);border:1px solid rgba(255,255,255,.12);font-size:13.5px;opacity:0;pointer-events:none;transition:opacity .25s;max-width:88%;text-align:center}
+#toast.on{opacity:1}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="views">
+    <!-- STUDIO -->
+    <section class="view on" id="v-studio">
+      <div class="photo">
+        <div class="frame" id="frame">
+          <button class="ring" id="ring0" style="left:30.8%;top:54%" aria-label="Microphone 1"><span class="base"></span><svg viewBox="0 0 100 100" aria-hidden="true"><circle class="lv" cx="50" cy="50" r="47"/></svg></button>
+          <button class="ring" id="ring1" style="left:69.5%;top:54.6%" aria-label="Microphone 2"><span class="base"></span><svg viewBox="0 0 100 100" aria-hidden="true"><circle class="lv" cx="50" cy="50" r="47"/></svg></button>
+        </div>
+        <div class="bar">
+          <img class="slogo" src="oab-logo.png" alt="OAB">
+          <span id="clock">00:00</span><span id="lis">● 0 listening</span><span class="sp"></span>
+          <button id="air">GO LIVE</button>
+        </div>
+        <div class="hint">Tap a microphone to open it · hold for EQ</div>
+      </div>
+      <div class="deck">
+        <svg id="arc" viewBox="0 0 354 30" preserveAspectRatio="none" aria-hidden="true"><path d="M2 27 C 80 3, 274 3, 352 27" fill="none" stroke="rgba(63,208,255,.2)" stroke-width="3" stroke-linecap="round"/><path id="arcL" d="M177 9.2 C 120 9.6, 60 14, 2 27" fill="none" stroke="#3FD0FF" stroke-width="3" stroke-linecap="round" style="filter:drop-shadow(0 0 5px #3FD0FF)"/><path id="arcR" d="M177 9.2 C 234 9.6, 294 14, 352 27" fill="none" stroke="#3FD0FF" stroke-width="3" stroke-linecap="round" style="filter:drop-shadow(0 0 5px #3FD0FF)"/></svg>
+        <div class="np">
+          <div style="min-width:0;flex:1">
+            <div class="k ell" id="npK">READY · NEXT: <span id="npN">—</span></div>
+            <div id="npT" class="ell">Nothing playing</div>
+            <div id="npA" class="ell">Add songs in Playlist</div>
+          </div>
+          <span id="rem">--:--</span>
+        </div>
+        <div class="prog" id="prog"><i></i><b></b></div>
+        <div class="tr">
+          <button id="bStop" aria-label="Stop"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg></button>
+          <button id="bPrev" aria-label="Previous"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h2v14H6zM20 5v14L9 12z"/></svg></button>
+          <button id="bPlay" class="big" aria-label="Play"></button>
+          <button id="bNext" aria-label="Next"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M16 5h2v14h-2zM4 5v14l11-7z"/></svg></button>
+          <button id="bMsg" class="msg" aria-label="Message to listeners"><svg width="18" height="16" viewBox="0 0 26 22" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="1.5" y="2" width="17" height="12.5" rx="2"/><path d="m2.5 3.5 7.5 5.5 7.5-5.5"/></svg></button>
+        </div>
+        <div class="pads" id="pads"></div>
+      </div>
+    </section>
+    <!-- PLAYLIST -->
+    <section class="view" id="v-pl">
+      <header class="top"><img class="slogo" src="oab-logo.png" alt=""><h1>Playlist</h1><span class="sp"></span><button class="btn" id="plAdd">+ Add</button></header>
+      <div class="subtabs" id="plTabs"></div>
+      <div class="list" id="plList"></div>
+      <div class="mini">
+        <img class="slogo" src="oab-logo.png" alt="">
+        <span style="flex:1;min-width:0"><span class="ell" id="miniT" style="display:block;font-size:13.5px;font-weight:700">Nothing playing</span><span class="mono" id="miniR" style="font-size:11.5px;color:var(--am)">--:--</span></span>
+        <button class="m1" id="miniMic" aria-label="Microphone 1">M1</button>
+        <button class="pp" id="miniPlay" aria-label="Play"></button>
+      </div>
+    </section>
+    <!-- LIBRARY -->
+    <section class="view" id="v-lib">
+      <header class="top"><img class="slogo" src="oab-logo.png" alt=""><h1>Library</h1><span class="sp"></span><button class="btn" id="libPhone">+ From phone</button></header>
+      <div class="search"><input id="libQ" type="search" placeholder="Search songs or artists" aria-label="Search library"></div>
+      <div class="list" id="libList"></div>
+    </section>
+    <!-- REQUESTS -->
+    <section class="view" id="v-req">
+      <header class="top"><img class="slogo" src="oab-logo.png" alt=""><h1>Requests</h1><span class="sp"></span><button class="btn" id="reqClear">Clear all</button></header>
+      <div class="list" id="reqList"></div>
+    </section>
+    <!-- SETTINGS -->
+    <section class="view" id="v-set">
+      <header class="top"><img class="slogo" src="oab-logo.png" alt=""><h1>Settings</h1></header>
+      <div class="list"><div class="set" id="setBody"></div></div>
+    </section>
+  </div>
+  <nav class="tabs" aria-label="Sections">
+    <button data-v="studio" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="9" r="3.5"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg>Studio</button>
+    <button data-v="pl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M3 6h12M3 12h12M3 18h8"/><path d="M17 18V8l5-1.5"/><circle cx="15" cy="18" r="2"/></svg>Playlist</button>
+    <button data-v="lib"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Library</button>
+    <button data-v="req"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Requests<span class="badge" id="reqBadge">0</span></button>
+    <button data-v="set"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>Settings</button>
+  </nav>
+</div>
+
+<!-- MIC CHANNEL -->
+<div id="micV" role="dialog" aria-label="Microphone channel">
+  <header class="top"><button class="ib" id="micBack" aria-label="Back"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 5l-7 7 7 7"/></svg></button><h1 id="micTitle">MIC 1</h1><span class="sp"></span><button class="btn g" id="presetSave">Save preset</button></header>
+  <div class="micb">
+    <div class="prow"><select id="presetSel" aria-label="Preset"></select><button class="eqtog on" id="eqOn">EQ ON</button></div>
+    <canvas id="eqc"></canvas>
+    <div class="bands" id="bands"></div>
+    <div class="panel" id="bandPanel"></div>
+    <div class="panel"><div class="ph">COMPRESSOR <b id="gr">GR 0.0 dB</b></div><div id="compS"></div></div>
+    <button class="duck" id="duckBtn"><span style="flex:1;text-align:left"><b>AUTO DUCKER</b><small id="duckTxt">Music goes down only while you talk</small></span><span class="tg" id="duckTg"></span></button>
+  </div>
+</div>
+
+<div class="sheet" id="sheet"><div class="box" id="sheetBox"></div></div>
+<input type="file" id="fPick" accept="audio/*,.mp3,.m4a,.wav,.ogg,.flac,.aac" multiple hidden>
+<input type="file" id="fOne" accept="audio/*,.mp3,.m4a,.wav,.ogg,.flac,.aac" hidden>
+<input type="file" id="fLogo" accept="image/*" hidden>
+
+<div id="conn">
+  <img src="oab-logo.png" alt="OAB">
+  <h2>OAB MOBILE</h2>
+  <p>Broadcast from your phone, anywhere.<br>Paste your station's fixed link from OAB Studio.</p>
+  <input class="field" id="cAddr" placeholder="Station link or address" aria-label="Station link or address" autocomplete="off">
+  <input class="field" id="cPw" type="password" placeholder="Broadcast password" aria-label="Broadcast password">
+  <button class="pri" id="cGo">Connect</button>
+  <div id="connMsg"></div>
+  <div class="foot" style="position:absolute;bottom:calc(14px + env(safe-area-inset-bottom))">AD SOUND &amp; SERVICE</div>
+</div>
+<div id="toast"></div>
+
+<script>
+'use strict';
+const VERSION = '1.0.3';
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const NATIVE = window.OABNative || null;
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const fmt = s => { s = Math.max(0, Math.round(s || 0)); return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'); };
+const store = { get(k, d){ try { const v = localStorage.getItem('oabm.' + k); return v == null ? d : JSON.parse(v); } catch(e){ return d; } }, set(k, v){ try { localStorage.setItem('oabm.' + k, JSON.stringify(v)); } catch(e){} } };
+let toastT; function toast(t){ const e = $('#toast'); e.textContent = t; e.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => e.classList.remove('on'), 2600); }
+const cleanT = t => String(t || '').replace(/\[[^\]]*\]/g, '').replace(/\((official|lyric|audio|video|hd|hq|music)[^)]*\)/ig, '').replace(/_/g, ' ').replace(/\s+-\s+topic$/i, '').replace(/vevo/ig, '').replace(/\s{2,}/g, ' ').trim();
+const PLAY = '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4v16l13-8z"/></svg>';
+const PAUSE = '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>';
+
+// ---------- settings ----------
+const CFG = Object.assign({ addr: '', fixed: '', base: '', key: '', kbps: 128, monitor: true, duckDb: -14, xfade: 4, keepOn: true, mics: ['', ''], micPreset: ['', ''] }, store.get('cfg', {}));
+const saveCfg = () => store.set('cfg', CFG);
+let BASE = CFG.base || '';
+const api = (p, o = {}) => fetch(BASE + p, Object.assign({ cache: 'no-store' }, o, { headers: Object.assign({ 'X-Radio-Key': CFG.key }, o.headers || {}) }));
+
+// ---------- small file store for songs and jingles from the phone ----------
+const IDB = { db: null,
+  open(){ return this.db || (this.db = new Promise((ok, no) => { const r = indexedDB.open('oabm', 1); r.onupgradeneeded = () => r.result.createObjectStore('f'); r.onsuccess = () => ok(r.result); r.onerror = () => no(r.error); })); },
+  async put(k, v){ const d = await this.open(); return new Promise(ok => { const t = d.transaction('f', 'readwrite'); t.objectStore('f').put(v, k); t.oncomplete = ok; t.onerror = ok; }); },
+  async get(k){ const d = await this.open(); return new Promise(ok => { const r = d.transaction('f').objectStore('f').get(k); r.onsuccess = () => ok(r.result); r.onerror = () => ok(null); }); },
+  async del(k){ const d = await this.open(); return new Promise(ok => { const t = d.transaction('f', 'readwrite'); t.objectStore('f').delete(k); t.oncomplete = ok; t.onerror = ok; }); } };
+const blobUrls = {};
+async function srcOf(it){
+  if (it.blob) { if (!blobUrls[it.blob]) { const b = await IDB.get(it.blob); if (!b) return ''; blobUrls[it.blob] = URL.createObjectURL(b); } return blobUrls[it.blob]; }
+  return /^https?:/.test(it.url) ? it.url : BASE + it.url;
+}
+const uid = () => Math.random().toString(36).slice(2, 10);
+function fromFile(f){ const base = f.name.replace(/\.[^.]+$/, ''), p = base.split(' - '); return { uid: uid(), blob: 'b' + uid(), title: cleanT(p.length > 1 ? p.slice(1).join(' - ') : base), artist: p.length > 1 ? p[0].replace(/^\d+\s*/, '') : 'From phone', dur: 0 }; }
+
+// ---------- audio engine ----------
+let ctx, masterIn, limiter, masterOut, musicBus, duckG, cartBus, monitor, mAn, enc = null, out = [], live = false, sending = false, wake = null;
+const decks = [];
+function initAudio(){
+  if (ctx) return;
+  ctx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 'playback' });
+  masterIn = ctx.createGain();
+  limiter = ctx.createDynamicsCompressor(); limiter.threshold.value = -3; limiter.knee.value = 0; limiter.ratio.value = 20; limiter.attack.value = 0.002; limiter.release.value = 0.15;
+  masterOut = ctx.createGain(); masterIn.connect(limiter); limiter.connect(masterOut);
+  musicBus = ctx.createGain(); duckG = ctx.createGain(); musicBus.connect(duckG); duckG.connect(masterIn);
+  cartBus = ctx.createGain(); cartBus.connect(masterIn);
+  monitor = ctx.createGain(); monitor.connect(ctx.destination);
+  duckG.connect(monitor); cartBus.connect(monitor);
+  mAn = ctx.createAnalyser(); mAn.fftSize = 1024; masterOut.connect(mAn);
+  for (let i = 0; i < 2; i++) {
+    const a = new Audio(); a.crossOrigin = 'anonymous'; a.preload = 'auto';
+    const src = ctx.createMediaElementSource(a), fade = ctx.createGain(); src.connect(fade); fade.connect(musicBus);
+    const d = { a, fade, it: null, playing: false, token: 0 }; a.onended = () => onEnded(d); a.onerror = () => { if (d.it) { toast('Cannot play ' + d.it.title); d.playing = false; if (d === cur()) next(true); } };
+    decks.push(d);
+  }
+  const sp = ctx.createScriptProcessor(4096, 2, 2); masterOut.connect(sp); const z = ctx.createGain(); z.gain.value = 0; sp.connect(z); z.connect(ctx.destination);
+  sp.onaudioprocess = e => { if (!live || !enc) return; const L = e.inputBuffer.getChannelData(0), R = e.inputBuffer.getChannelData(1), n = L.length, l = new Int16Array(n), r = new Int16Array(n);
+    for (let i = 0; i < n; i++) { l[i] = Math.max(-1, Math.min(1, L[i])) * 32767; r[i] = Math.max(-1, Math.min(1, R[i])) * 32767; }
+    const mp3 = enc.encodeBuffer(l, r); if (mp3.length) { out.push(new Uint8Array(mp3)); if (out.length > 400) out.splice(0, out.length - 400); } };
+  requestAnimationFrame(draw);
+}
+const rms = (an, buf) => { an.getFloatTimeDomainData(buf); let s = 0; for (let i = 0; i < buf.length; i++) s += buf[i] * buf[i]; return Math.sqrt(s / buf.length); };
+const lvl = r => Math.max(0, Math.min(1, (20 * Math.log10(r + 1e-9) + 50) / 50));
+
+// ---------- playlists ----------
+let PL = store.get('pl', null);
+const plSave = () => { if (PL) { delete PL.fresh; store.set('pl', PL); } };
+const tab = () => PL.tabs[PL.view] || PL.tabs[0];
+let playing = null; // {tabId, uid}
+function itemsOfPlaying(){ const t = PL.tabs.find(x => x.id === (playing && playing.tab)) || tab(); return t; }
+function cur(){ return decks.find(d => d.playing); }
+function nextItem(){ const t = itemsOfPlaying(); if (!t || !t.items.length) return null; const i = playing ? t.items.findIndex(x => x.uid === playing.uid) : -1; return t.items[i + 1] || (CFG.repeat ? t.items[0] : null); }
+async function playItem(it, t){
+  initAudio(); await ctx.resume();
+  const o = cur(), d = decks.find(x => x !== o) || decks[0];
+  const src = await srcOf(it); if (!src) { toast('File not found: ' + it.title); return; }
+  d.a.src = src; d.it = it; d.token++; d.mixed = false;
+  d.fade.gain.cancelScheduledValues(ctx.currentTime); d.fade.gain.setValueAtTime(1, ctx.currentTime);
+  try { await d.a.play(); } catch(e){ toast('Cannot play ' + it.title); return; }
+  d.playing = true; d.paused = false; playing = { tab: (t || itemsOfPlaying()).id, uid: it.uid }; it.played = true;
+  if (o) { const tm = ctx.currentTime, tok = o.token, xf = Math.max(0.3, +CFG.xfade || 0.3); o.fade.gain.setValueAtTime(1, tm); o.fade.gain.linearRampToValueAtTime(0, tm + xf); setTimeout(() => { if (o.token === tok) { o.a.pause(); o.playing = false; } }, xf * 1000 + 100); }
+  meta(it); plSave(); renderAll();
+}
+function next(force){ const n = nextItem(); if (n) playItem(n); else if (force) stopAll(); }
+function onEnded(d){ if (!d.playing) return; d.playing = false; if (!cur()) next(true); renderNow(); }
+function stopAll(){ decks.forEach(d => { d.a.pause(); d.playing = false; d.paused = false; }); renderAll(); }
+function playPause(){
+  initAudio(); ctx.resume();
+  const d = cur();
+  if (d) { d.a.pause(); d.playing = false; d.paused = true; }
+  else { const p = decks.find(x => x.paused && x.it); if (p) { p.a.play(); p.playing = true; p.paused = false; }
+    else { const t = tab(); const sel = t.items.find(x => x.uid === PL.sel) || t.items.find(x => !x.played) || t.items[0]; if (sel) playItem(sel, t); else toast('Add songs to the playlist first'); } }
+  renderAll();
+}
+function prev(){ const d = cur(); if (d && d.a.currentTime > 3) { d.a.currentTime = 0; return; } const t = itemsOfPlaying(); const i = playing ? t.items.findIndex(x => x.uid === playing.uid) : 0; const p = t.items[i - 1]; if (p) playItem(p, t); else if (d) d.a.currentTime = 0; }
+setInterval(() => {
+  const d = cur(); if (!d || !d.a.duration) return;
+  const rem = d.a.duration - d.a.currentTime, xf = +CFG.xfade || 0;
+  if (xf > 0 && rem < xf + 0.2 && !d.mixed && nextItem()) { d.mixed = true; next(); }
+}, 200);
+
+// ---------- microphones ----------
+const BANDS = [{ k: 'lc', n: 'Low cut', c: '#C8CFDA' }, { k: 'b1', n: 'Low', c: '#FF8A3D' }, { k: 'b2', n: 'Low mid', c: '#F5C542' }, { k: 'b3', n: 'High mid', c: '#2EE88A' }, { k: 'b4', n: 'High', c: '#3FD0FF' }];
+const DEF = () => ({ eq: true, lc: { f: 80 }, b1: { f: 120, g: 0, q: .7 }, b2: { f: 400, g: 0, q: 1 }, b3: { f: 3000, g: 0, q: 1 }, b4: { f: 10000, g: 0, q: .7 }, th: -24, ra: 4, mk: 4, duck: true });
+const BUILTIN = { 'Natural voice': DEF(), 'Radio voice': Object.assign(DEF(), { lc: { f: 100 }, b1: { f: 120, g: 3, q: .7 }, b2: { f: 350, g: -3, q: 1.2 }, b3: { f: 3200, g: 3, q: 1 }, b4: { f: 10000, g: 2, q: .7 }, th: -26, ra: 5, mk: 6 }), 'Warm & close': Object.assign(DEF(), { lc: { f: 70 }, b1: { f: 150, g: 2, q: .8 }, b2: { f: 500, g: -2, q: 1 }, b3: { f: 2500, g: 1, q: 1 }, b4: { f: 9000, g: -1, q: .7 }, th: -22, ra: 3, mk: 3 }) };
+const userPresets = store.get('presets', {});
+const MICS = [0, 1].map(i => ({ i, on: false, st: null, nodes: null, set: store.get('mic' + i, null) || DEF(), talk: 0 }));
+function buildChain(m){
+  const n = {}; n.lc = ctx.createBiquadFilter(); n.lc.type = 'highpass';
+  ['b1', 'b2', 'b3', 'b4'].forEach((k, j) => { n[k] = ctx.createBiquadFilter(); n[k].type = j === 0 ? 'lowshelf' : j === 3 ? 'highshelf' : 'peaking'; });
+  n.byp = ctx.createGain(); n.comp = ctx.createDynamicsCompressor(); n.comp.attack.value = 0.005; n.comp.release.value = 0.18; n.mk = ctx.createGain();
+  n.gate = ctx.createGain(); n.gate.gain.value = 0; n.an = ctx.createAnalyser(); n.an.fftSize = 1024;
+  n.lc.connect(n.b1); n.b1.connect(n.b2); n.b2.connect(n.b3); n.b3.connect(n.b4); n.b4.connect(n.comp); n.byp.connect(n.comp);
+  n.comp.connect(n.mk); n.mk.connect(n.an); n.mk.connect(n.gate); n.gate.connect(masterIn);
+  n.mon = ctx.createGain(); n.mon.gain.value = CFG.monitor ? 1 : 0; n.gate.connect(n.mon); n.mon.connect(monitor);
+  m.nodes = n; applyMic(m);
+}
+function applyMic(m){
+  const n = m.nodes, s = m.set; if (!n) return; const t = ctx.currentTime;
+  n.lc.frequency.setTargetAtTime(s.lc.f, t, .02);
+  ['b1', 'b2', 'b3', 'b4'].forEach(k => { n[k].frequency.setTargetAtTime(s[k].f, t, .02); n[k].gain.setTargetAtTime(s.eq ? s[k].g : 0, t, .02); n[k].Q.setTargetAtTime(s[k].q, t, .02); });
+  n.comp.threshold.value = s.th; n.comp.ratio.value = s.ra; n.mk.gain.value = Math.pow(10, s.mk / 20);
+  try { if (n.src) { n.src.disconnect(); n.src.connect(s.eq ? n.lc : n.byp); } } catch(e){}
+  store.set('mic' + m.i, s);
+}
+async function openMic(m){
+  initAudio(); await ctx.resume();
+  if (!m.nodes) buildChain(m);
+  if (m.st) return true;
+  const dev = CFG.mics[m.i];
+  if (m.i === 1 && !dev) { chooseInput(1); return false; }
+  try {
+    m.st = await navigator.mediaDevices.getUserMedia({ audio: { deviceId: dev ? { exact: dev } : undefined, echoCancellation: true, noiseSuppression: true, autoGainControl: false } });
+    m.nodes.src = ctx.createMediaStreamSource(m.st); m.nodes.src.connect(m.set.eq ? m.nodes.lc : m.nodes.byp); return true;
+  } catch(e){ toast('Microphone blocked – allow it for OAB'); return false; }
+}
+async function toggleMic(i){
+  const m = MICS[i];
+  if (!m.on && !(await openMic(m))) return;
+  m.on = !m.on; m.nodes.gate.gain.setTargetAtTime(m.on ? 1 : 0, ctx.currentTime, .02);
+  if (!m.on) { m.talk = 0; }
+  renderMics();
+}
+function closeMicStream(m){ if (m.st) { m.st.getTracks().forEach(t => t.stop()); m.st = null; } if (m.nodes && m.nodes.src) { try { m.nodes.src.disconnect(); } catch(e){} m.nodes.src = null; } m.on = false; }
+function renderMics(){ MICS.forEach(m => $('#ring' + m.i).classList.toggle('on', m.on)); $('#miniMic').classList.toggle('on', MICS[0].on); }
+let duckNow = 1;
+function duckTick(buf){
+  if (!ctx) return;
+  let want = 1; const anyOn = MICS.some(m => m.on);
+  MICS.forEach(m => { if (m.on && m.nodes) { const r = rms(m.nodes.an, buf); if (r > 0.02) m.talk = performance.now(); } });
+  if (anyOn) { const auto = MICS.some(m => m.on && m.set.duck); const talking = MICS.some(m => m.on && performance.now() - m.talk < 700); if (!auto || talking) want = Math.pow(10, (+CFG.duckDb || -14) / 20); }
+  if (want !== duckNow) { duckG.gain.setTargetAtTime(want, ctx.currentTime, want < duckNow ? .06 : .35); duckNow = want; }
+}
+
+// ---------- level drawing ----------
+const tbuf = new Float32Array(1024); let arcLen = 0;
+function draw(){
+  requestAnimationFrame(draw);
+  MICS.forEach(m => { const c = $('#ring' + m.i + ' .lv'); if (m.on && m.nodes) { const v = lvl(rms(m.nodes.an, tbuf)); c.style.strokeDasharray = (v * 295).toFixed(1) + ' 300'; } });
+  duckTick(tbuf);
+  if (MV.open && MICS[MV.i].nodes) $('#gr').textContent = 'GR ' + MICS[MV.i].nodes.comp.reduction.toFixed(1) + ' dB';
+  const v = lvl(rms(mAn, tbuf)); const L = $('#arcL'), R = $('#arcR'); if (!arcLen) arcLen = L.getTotalLength();
+  const dash = (v * arcLen).toFixed(1) + ' ' + arcLen; L.style.strokeDasharray = dash; R.style.strokeDasharray = dash;
+}
+// meter arcs start at the centre
+document.addEventListener('DOMContentLoaded', () => {});
+
+// ---------- now playing ----------
+function renderNow(){
+  const d = cur() || decks.find(x => x.paused && x.it), it = d && d.it, n = nextItem();
+  $('#npT').textContent = it ? it.title : 'Nothing playing'; $('#npA').textContent = it ? (it.artist || '') : 'Add songs in Playlist';
+  $('#npN').textContent = n ? n.title : '—';
+  $('#npK').firstChild.textContent = (live ? 'ON AIR' : cur() ? 'PLAYING' : 'READY') + ' · NEXT: ';
+  $('#npK').style.color = live ? 'var(--gr)' : 'var(--sub)';
+  $('#bPlay').innerHTML = cur() ? PAUSE : PLAY; $('#miniPlay').innerHTML = cur() ? PAUSE.replace(/24/g, '15') : PLAY.replace(/24/g, '15');
+  $('#miniT').textContent = it ? it.title : 'Nothing playing';
+}
+setInterval(() => {
+  const d = cur() || decks.find(x => x.paused && x.it);
+  const now = new Date(); $('#clock').textContent = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+  if (d && d.a.duration) { const rem = d.a.duration - d.a.currentTime, p = d.a.currentTime / d.a.duration * 100; $('#rem').textContent = '-' + fmt(rem); $('#miniR').textContent = '-' + fmt(rem);
+    $('#rem').style.color = rem < 15 ? '#FF6A6A' : ''; $('#prog i').style.width = p + '%'; $('#prog b').style.left = p + '%';
+    if (d.it && !d.it.dur) { d.it.dur = d.a.duration; } }
+  else { $('#rem').textContent = '--:--'; $('#miniR').textContent = '--:--'; $('#prog i').style.width = '0'; $('#prog b').style.left = '0'; }
+}, 250);
+$('#prog').onclick = e => { const d = cur(); if (!d || !d.a.duration) return; const r = $('#prog').getBoundingClientRect(); d.a.currentTime = (e.clientX - r.left) / r.width * d.a.duration; };
+
+// ---------- pads (jingles) ----------
+const PADC = ['#F04444', '#F5A524', '#22C55E', '#2D8CEB', '#A855F7', '#EC4899', '#06B6D4', '#84CC16'];
+let PADS = store.get('pads', null);
+const padSrc = [];
+function renderPads(){ $('#pads').innerHTML = PADS.map((p, i) => `<button style="--c:${PADC[i]}" class="${p ? '' : 'none'} ${padSrc[i] ? 'play' : ''}" data-i="${i}" aria-label="${esc(p ? p.title : 'Empty jingle ' + (i + 1))}">${i + 1}</button>`).join(''); }
+const padBufs = {};
+async function padBuf(i){ const p = PADS[i]; if (!p) return null; const k = p.blob || p.url; if (padBufs[k]) return padBufs[k];
+  try { const ab = await (await fetch(await srcOf(p))).arrayBuffer(); return padBufs[k] = await ctx.decodeAudioData(ab); } catch(e){ return null; } }
+async function hitPad(i){
+  initAudio(); await ctx.resume();
+  if (!PADS[i]) { assignPad(i); return; }
+  if (padSrc[i]) { padSrc[i].stop(); return; }
+  const b = await padBuf(i); if (!b) { toast('Cannot load ' + PADS[i].title); return; }
+  const s = ctx.createBufferSource(); s.buffer = b; s.connect(cartBus); s.onended = () => { padSrc[i] = null; renderPads(); }; padSrc[i] = s; s.start(); renderPads();
+}
+async function assignPad(i){
+  let carts = []; try { carts = (await (await api('/api/library?kind=carts')).json()).items || []; } catch(e){}
+  sheet(`<h3>Jingle ${i + 1}</h3><div class="opts">${carts.map((c, j) => `<button class="opt" data-c="${j}">${esc(cleanT(c.title))}</button>`).join('')}<button class="opt" data-c="phone">📱 Choose a file from the phone…</button>${PADS[i] ? '<button class="opt" data-c="clear" style="color:#FFB3B5">Clear this button</button>' : ''}</div>`, async e => {
+    const b = e.target.closest('[data-c]'); if (!b) return; const c = b.dataset.c;
+    if (c === 'phone') { pickOne(async f => { const it = fromFile(f); await IDB.put(it.blob, f); PADS[i] = { title: it.title, blob: it.blob }; store.set('pads', PADS); renderPads(); }); }
+    else if (c === 'clear') { if (PADS[i] && PADS[i].blob) IDB.del(PADS[i].blob); PADS[i] = null; }
+    else { const x = carts[+c]; PADS[i] = { title: cleanT(x.title), url: x.url }; }
+    store.set('pads', PADS); renderPads(); closeSheet();
+  });
+}
+// hold = assign, tap = play
+function holdable(el, sel, tap, hold){
+  let t, fired, start;
+  el.addEventListener('pointerdown', e => { const b = e.target.closest(sel); if (!b) return; fired = false; start = b; t = setTimeout(() => { fired = true; navigator.vibrate && navigator.vibrate(20); hold(b); }, 550); });
+  const cancel = () => clearTimeout(t);
+  el.addEventListener('pointerup', e => { clearTimeout(t); const b = e.target.closest(sel); if (b && b === start && !fired) tap(b); start = null; });
+  el.addEventListener('pointercancel', cancel); el.addEventListener('pointerleave', cancel);
+  el.addEventListener('contextmenu', e => e.preventDefault());
+}
+holdable($('#pads'), 'button', b => hitPad(+b.dataset.i), b => assignPad(+b.dataset.i));
+holdable($('#frame'), '.ring', b => toggleMic(+b.id.slice(4)), b => openMicView(+b.id.slice(4)));
+
+// ---------- sheets ----------
+let sheetH = null;
+function sheet(html, onClick){ $('#sheetBox').innerHTML = html; sheetH = onClick; $('#sheet').classList.add('on'); }
+function closeSheet(){ $('#sheet').classList.remove('on'); sheetH = null; }
+$('#sheet').onclick = e => { if (e.target.id === 'sheet') return closeSheet(); if (e.target.closest('[data-x]')) return closeSheet(); if (sheetH) sheetH(e); };
+function pickOne(cb){ const f = $('#fOne'); f.onchange = () => { if (f.files[0]) cb(f.files[0]); f.value = ''; }; f.click(); }
+function ask(title, value, cb, opt = {}){
+  sheet(`<h3>${esc(title)}</h3>${opt.area ? `<textarea class="field" id="askIn" placeholder="${esc(opt.ph || '')}">${esc(value)}</textarea>` : `<input class="field" id="askIn" type="${opt.type || 'text'}" value="${esc(value)}" placeholder="${esc(opt.ph || '')}">`}<div class="acts"><button class="sec" data-x>Cancel</button><button class="pri" data-ok>${esc(opt.ok || 'Save')}</button></div>`,
+    e => { if (e.target.closest('[data-ok]')) { const v = $('#askIn').value; closeSheet(); cb(v); } });
+  setTimeout(() => $('#askIn').focus(), 120);
+}
+function choose(title, opts, curV, cb){
+  sheet(`<h3>${esc(title)}</h3><div class="opts">${opts.map(([v, l], j) => `<button class="opt ${String(v) === String(curV) ? 'on' : ''}" data-j="${j}">${esc(l)}</button>`).join('')}</div>`, e => { const b = e.target.closest('[data-j]'); if (b) { closeSheet(); cb(opts[+b.dataset.j][0]); } });
+}
+
+// ---------- playlist view ----------
+function renderTabs(){ $('#plTabs').innerHTML = PL.tabs.map((t, i) => `<button class="${i === PL.view ? 'on' : ''}" data-t="${i}">${esc(t.name)}${playing && playing.tab === t.id ? ' <span style="color:var(--gr)">●</span>' : ''}</button>`).join('') + '<button data-t="new">+</button>'; }
+function renderPL(){
+  const t = tab(), tot = t.items.reduce((a, x) => a + (x.dur || 0), 0);
+  $('#plList').innerHTML = (t.items.length ? t.items.map((x, i) => { const on = playing && playing.uid === x.uid && cur();
+    return `<div class="row ${on ? 'cur' : ''} ${PL.sel === x.uid ? 'sel' : ''}" data-u="${x.uid}"><span class="n">${i + 1}</span><span style="min-width:0"><span class="t ell">${esc(x.title)}</span><span class="a ell" style="display:block">${esc(x.artist || '')}</span></span><span class="d">${x.dur ? fmt(x.dur) : ''}</span><span class="h" aria-label="Drag to move"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h8M8 12h8M8 18h8"/></svg></span>${PL.sel === x.uid ? `<div class="rowact"><button class="btn g" data-a="play">▶ Play now</button><button class="btn" data-a="nextup">Play next</button><span class="sp"></span><button class="btn r" data-a="rm">Remove</button></div>` : ''}</div>`; }).join('')
+    : '<div class="empty">This playlist is empty.<br>Tap <b>+ Add</b> or add songs from the Library.</div>')
+    + (t.items.length ? `<div class="empty" style="padding:14px">${t.items.length} songs · ${fmt(tot).replace(/^(\d+):/, (m, a) => (a >= 60 ? Math.floor(a / 60) + ':' + String(a % 60).padStart(2, '0') : a) + ':')}</div>` : '');
+  renderTabs();
+}
+let lastTap = { u: '', t: 0 };
+$('#plList').addEventListener('click', e => {
+  const r = e.target.closest('.row'); if (!r || e.target.closest('.h')) return; const t = tab(), i = t.items.findIndex(x => x.uid === r.dataset.u), it = t.items[i];
+  const a = e.target.closest('[data-a]');
+  if (a) { if (a.dataset.a === 'play') playItem(it, t); else if (a.dataset.a === 'rm') { t.items.splice(i, 1); PL.sel = ''; } else if (a.dataset.a === 'nextup') { const pi = playing ? t.items.findIndex(x => x.uid === playing.uid) : -1; t.items.splice(i, 1); t.items.splice(pi + (i < pi ? 0 : 1), 0, it); toast('Plays next'); } plSave(); renderAll(); return; }
+  const now = Date.now(); if (lastTap.u === it.uid && now - lastTap.t < 350) { playItem(it, t); lastTap.u = ''; return; } lastTap = { u: it.uid, t: now };
+  PL.sel = PL.sel === it.uid ? '' : it.uid; renderPL();
+});
+// drag to reorder
+(() => { let drag = null;
+  $('#plList').addEventListener('pointerdown', e => { const h = e.target.closest('.h'); if (!h) return; const r = h.closest('.row'); e.preventDefault(); h.setPointerCapture(e.pointerId);
+    drag = { r, u: r.dataset.u, y0: e.clientY, h: r.offsetHeight, rows: [...$('#plList').querySelectorAll('.row')] }; r.classList.add('drag'); });
+  $('#plList').addEventListener('pointermove', e => { if (!drag) return; const dy = e.clientY - drag.y0; drag.r.style.transform = `translateY(${dy}px)`; drag.dy = dy;
+    const box = $('#plList').getBoundingClientRect(); if (e.clientY < box.top + 40) $('#plList').scrollTop -= 8; else if (e.clientY > box.bottom - 40) $('#plList').scrollTop += 8; });
+  const end = () => { if (!drag) return; const t = tab(), i = t.items.findIndex(x => x.uid === drag.u), mv = Math.round((drag.dy || 0) / drag.h);
+    if (mv) { const [it] = t.items.splice(i, 1); t.items.splice(Math.max(0, Math.min(t.items.length, i + mv)), 0, it); plSave(); }
+    drag.r.classList.remove('drag'); drag.r.style.transform = ''; drag = null; renderAll(); };
+  $('#plList').addEventListener('pointerup', end); $('#plList').addEventListener('pointercancel', end);
+})();
+$('#plTabs').onclick = e => { const b = e.target.closest('[data-t]'); if (!b) return;
+  if (b.dataset.t === 'new') return ask('New playlist', '', v => { if (!v.trim()) return; PL.tabs.push({ id: uid(), name: v.trim().slice(0, 30), items: [] }); PL.view = PL.tabs.length - 1; plSave(); renderPL(); }, { ph: 'Name', ok: 'Create' });
+  if (+b.dataset.t === PL.view) return choose(tab().name, [['ren', 'Rename'], ['reload', 'Reload playlists from the studio'], ['clear', 'Remove played songs'], ['del', 'Delete this playlist']], '', v => {
+    if (v === 'ren') ask('Rename playlist', tab().name, n => { if (n.trim()) { tab().name = n.trim(); plSave(); renderPL(); } });
+    if (v === 'reload') loadServerPlaylists(true);
+    if (v === 'clear') { tab().items = tab().items.filter(x => !x.played || (playing && playing.uid === x.uid)); plSave(); renderPL(); }
+    if (v === 'del') { if (PL.tabs.length < 2) return toast('Keep at least one playlist'); PL.tabs.splice(PL.view, 1); PL.view = 0; plSave(); renderPL(); } });
+  PL.view = +b.dataset.t; plSave(); renderPL(); };
+$('#plAdd').onclick = () => choose('Add to ' + tab().name, [['lib', 'Songs from the station library'], ['phone', 'Songs from this phone']], '', v => { if (v === 'lib') go('lib'); else $('#fPick').click(); });
+$('#libPhone').onclick = () => $('#fPick').click();
+$('#fPick').onchange = async e => { const fs = [...e.target.files]; e.target.value = ''; for (const f of fs) { const it = fromFile(f); await IDB.put(it.blob, f); tab().items.push(it); } plSave(); renderAll(); toast(fs.length + ' added to ' + tab().name); };
+async function loadServerPlaylists(force){
+  try { const r = await api('/api/playlists'); if (!r.ok) throw 0; const d = await r.json();
+    if (!d.tabs || !d.tabs.length) { if (force) toast('No playlists in the studio'); return; }
+    const tabs = d.tabs.map(t => ({ id: t.id || uid(), name: t.name || 'Playlist', items: (t.items || []).filter(x => x.url && x.kind !== 'break' && x.kind !== 'stream').map(x => ({ uid: x.uid || uid(), url: x.url, title: cleanT(x.title), artist: cleanT(x.artist), dur: x.dur || 0 })) }));
+    if (force || !PL || PL.fresh) { const mine = PL ? PL.tabs.filter(t => t.items.some(x => x.blob)) : []; PL = { tabs: tabs.concat(mine.filter(m => !tabs.some(t => t.id === m.id))), view: 0, sel: '' }; plSave(); renderAll(); if (force) toast('Playlists loaded from the studio'); }
+  } catch(e){ if (force) toast('Could not load playlists'); }
+}
+
+// ---------- library ----------
+let LIB = []; let pre = null;
+async function loadLib(){ try { LIB = (await (await api('/api/library?kind=music')).json()).items || []; } catch(e){ LIB = []; } renderLib(); }
+function renderLib(){ const q = $('#libQ').value.trim().toLowerCase(); const list = LIB.filter(i => !q || (i.title + ' ' + i.artist).toLowerCase().includes(q)).slice(0, 300);
+  $('#libList').innerHTML = list.length ? list.map(i => `<div class="row lib" data-id="${esc(i.id)}"><span style="min-width:0"><span class="t ell">${esc(cleanT(i.title))}</span><span class="a ell" style="display:block">${esc(cleanT(i.artist))}</span></span><span class="d">${i.dur ? fmt(i.dur) : ''}</span><button class="ib ${pre && pre.id === i.id ? 'on' : ''}" data-a="pre" aria-label="Prelisten"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1v-6h3zM3 19a2 2 0 0 0 2 2h1v-6H3z"/></svg></button><button class="ib add" data-a="add" aria-label="Add to playlist"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg></button></div>`).join('')
+    : `<div class="empty">${LIB.length ? 'No songs match.' : 'No songs in the station library yet.<br>Set the music folder in OAB Studio, or add songs from the phone.'}</div>`; }
+$('#libQ').oninput = renderLib;
+$('#libList').onclick = e => { const b = e.target.closest('[data-a]'); if (!b) return; const i = LIB.find(x => x.id === b.closest('.row').dataset.id); if (!i) return;
+  if (b.dataset.a === 'add') { tab().items.push({ uid: uid(), url: i.url, title: cleanT(i.title), artist: cleanT(i.artist), dur: i.dur || 0 }); plSave(); renderPL(); b.innerHTML = '✓'; toast('Added to ' + tab().name); }
+  else { if (pre && pre.id === i.id) { pre.a.pause(); pre = null; } else { if (pre) pre.a.pause(); const a = new Audio(BASE + i.url); a.play().catch(() => toast('Cannot prelisten')); a.onended = () => { pre = null; renderLib(); }; pre = { id: i.id, a }; toast('Prelisten – only you hear it'); } renderLib(); } };
+
+// ---------- requests ----------
+let REQS = [];
+function renderReq(){ $('#reqList').innerHTML = REQS.length ? REQS.map(r => `<div class="req" data-id="${r.id}"><div class="s">${esc(r.song)}</div><div class="w">${esc(r.name)} · ${esc(r.time)}</div><div class="b"><button class="btn g" data-a="find">Find &amp; add next</button></div></div>`).join('') : '<div class="empty">No requests yet.<br>Listeners send requests from the OAB player.</div>';
+  const n = REQS.length; $('#reqBadge').textContent = n; $('#reqBadge').classList.toggle('show', n > 0); }
+$('#reqList').onclick = async e => { const b = e.target.closest('[data-a]'); if (!b) return; const r = REQS.find(x => String(x.id) === b.closest('.req').dataset.id); if (!r) return;
+  if (!LIB.length) await loadLib();
+  const words = r.song.toLowerCase().split(/[\s\-–,]+/).filter(w => w.length > 1);
+  const best = LIB.map(i => ({ i, s: words.filter(w => (i.title + ' ' + i.artist).toLowerCase().includes(w)).length })).sort((a, b) => b.s - a.s)[0];
+  if (!best || best.s < Math.max(1, Math.ceil(words.length / 2))) { go('lib'); $('#libQ').value = r.song; renderLib(); toast('Not found – search the library'); return; }
+  const t = itemsOfPlaying(), pi = playing ? t.items.findIndex(x => x.uid === playing.uid) : -1, i = best.i;
+  t.items.splice(pi + 1, 0, { uid: uid(), url: i.url, title: cleanT(i.title), artist: cleanT(i.artist), dur: i.dur || 0 }); plSave(); renderAll(); toast('Plays next: ' + cleanT(i.title)); };
+$('#reqClear').onclick = async () => { try { await api('/api/requests/clear', { method: 'POST' }); REQS = []; renderReq(); } catch(e){} };
+
+// ---------- mic channel screen ----------
+const MV = { open: false, i: 0, band: 'b3' };
+function openMicView(i){ MV.open = true; MV.i = i; $('#micTitle').textContent = 'MIC ' + (i + 1); $('#micV').classList.add('on'); fillPresets(); renderMV(); if (!MICS[i].nodes) { initAudio(); buildChain(MICS[i]); } }
+$('#micBack').onclick = () => { MV.open = false; $('#micV').classList.remove('on'); };
+function fillPresets(){ const names = Object.keys(BUILTIN).map(n => [n, n]).concat(Object.keys(userPresets).map(n => [n, '★ ' + n])); const curP = CFG.micPreset[MV.i] || '';
+  $('#presetSel').innerHTML = '<option value="">— Preset —</option>' + names.map(([v, l]) => `<option value="${esc(v)}" ${v === curP ? 'selected' : ''}>${esc(l)}</option>`).join(''); }
+$('#presetSel').onchange = e => { const n = e.target.value; if (!n) return; const p = userPresets[n] || BUILTIN[n]; const m = MICS[MV.i]; m.set = JSON.parse(JSON.stringify(p)); CFG.micPreset[MV.i] = n; saveCfg(); applyMic(m); renderMV(); };
+$('#presetSave').onclick = () => ask('Save preset', CFG.micPreset[MV.i] && userPresets[CFG.micPreset[MV.i]] ? CFG.micPreset[MV.i] : '', n => { n = n.trim().slice(0, 30); if (!n) return; userPresets[n] = JSON.parse(JSON.stringify(MICS[MV.i].set)); store.set('presets', userPresets); CFG.micPreset[MV.i] = n; saveCfg(); fillPresets(); toast('Preset saved'); }, { ph: 'e.g. My morning show' });
+$('#eqOn').onclick = () => { const m = MICS[MV.i]; m.set.eq = !m.set.eq; applyMic(m); renderMV(); };
+$('#duckBtn').onclick = () => { const m = MICS[MV.i]; m.set.duck = !m.set.duck; applyMic(m); renderMV(); };
+const fx = f => f >= 1000 ? (f / 1000).toFixed(f >= 10000 ? 0 : 1) + ' kHz' : Math.round(f) + ' Hz';
+const sg = g => (g > 0 ? '+' : g < 0 ? '−' : '') + Math.abs(g).toFixed(1);
+function slider(id, label, min, max, step, val, show, color){ const p = (val - min) / (max - min) * 100; return `<label class="sl"><span class="l"><span>${label}</span><span id="${id}V">${show(val)}</span></span><input type="range" id="${id}" min="${min}" max="${max}" step="${step}" value="${val}" style="--p:${p}%;--tc:${color}"></label>`; }
+function renderMV(){
+  const m = MICS[MV.i], s = m.set;
+  $('#eqOn').classList.toggle('on', s.eq); $('#eqOn').textContent = s.eq ? 'EQ ON' : 'EQ OFF';
+  $('#bands').innerHTML = BANDS.map(b => `<button style="--c:${b.c}" class="${MV.band === b.k ? 'sel' : ''}" data-b="${b.k}"><div class="bn">${b.n}</div><div class="bf">${fx(s[b.k].f)}</div><div class="bg">${b.k === 'lc' ? '24 dB' : sg(s[b.k].g)}</div></button>`).join('');
+  const b = s[MV.band], col = BANDS.find(x => x.k === MV.band).c;
+  $('#bandPanel').innerHTML = `<div class="ph" style="color:${col}">${BANDS.find(x => x.k === MV.band).n.toUpperCase()}</div>` + slider('sF', 'Frequency', 0, 1, .001, Math.log(b.f / 20) / Math.log(1000), v => fx(20 * Math.pow(1000, v)), col)
+    + (MV.band === 'lc' ? '' : slider('sG', 'Gain', -12, 12, .5, b.g, v => sg(+v) + ' dB', col) + slider('sQ', 'Width (Q)', .3, 4, .1, b.q, v => (+v).toFixed(1), col));
+  $('#compS').innerHTML = slider('cT', 'Threshold', -50, 0, 1, s.th, v => v + ' dB', '#F5A524') + slider('cR', 'Ratio', 1, 12, .5, s.ra, v => v + ':1', '#F5A524') + slider('cM', 'Make-up', 0, 18, .5, s.mk, v => '+' + v + ' dB', '#F5A524');
+  $('#duckTg').classList.toggle('on', s.duck); $('#duckTxt').textContent = s.duck ? `Music goes down ${CFG.duckDb} dB only while you talk` : `Music stays down ${CFG.duckDb} dB while the mic is open`;
+  drawEQ();
+}
+$('#bands').onclick = e => { const b = e.target.closest('[data-b]'); if (b) { MV.band = b.dataset.b; renderMV(); } };
+$('.micb').addEventListener('input', e => { const el = e.target; if (el.type !== 'range') return; const m = MICS[MV.i], s = m.set, b = s[MV.band], v = +el.value;
+  el.style.setProperty('--p', (v - el.min) / (el.max - el.min) * 100 + '%');
+  if (el.id === 'sF') b.f = Math.round(20 * Math.pow(1000, v)); if (el.id === 'sG') b.g = v; if (el.id === 'sQ') b.q = v;
+  if (el.id === 'cT') s.th = v; if (el.id === 'cR') s.ra = v; if (el.id === 'cM') s.mk = v;
+  const lbl = $('#' + el.id + 'V'); if (lbl) lbl.textContent = el.id === 'sF' ? fx(b.f) : el.id === 'sG' ? sg(v) + ' dB' : el.id === 'sQ' ? v.toFixed(1) : el.id === 'cT' ? v + ' dB' : el.id === 'cR' ? v + ':1' : '+' + v + ' dB';
+  applyMic(m); drawEQ(); const bb = $(`#bands [data-b="${MV.band}"]`); if (bb) { bb.querySelector('.bf').textContent = fx(b.f); if (MV.band !== 'lc') bb.querySelector('.bg').textContent = sg(b.g); } });
+// EQ curve (computed with an offline set of filters so it shows the real response)
+let eqCtx = null, eqF = null;
+function eqResp(s, fr){
+  if (!eqCtx) { eqCtx = new OfflineAudioContext(1, 1, 44100); eqF = { lc: eqCtx.createBiquadFilter(), b1: eqCtx.createBiquadFilter(), b2: eqCtx.createBiquadFilter(), b3: eqCtx.createBiquadFilter(), b4: eqCtx.createBiquadFilter() }; eqF.lc.type = 'highpass'; eqF.b1.type = 'lowshelf'; eqF.b2.type = 'peaking'; eqF.b3.type = 'peaking'; eqF.b4.type = 'highshelf'; }
+  const tot = new Float32Array(fr.length).fill(0), mag = new Float32Array(fr.length), ph = new Float32Array(fr.length);
+  for (const k of ['lc', 'b1', 'b2', 'b3', 'b4']) { const f = eqF[k]; f.frequency.value = s[k].f; if (k !== 'lc') { f.gain.value = s.eq ? s[k].g : 0; f.Q.value = s[k].q; } f.getFrequencyResponse(fr, mag, ph); for (let i = 0; i < fr.length; i++) tot[i] += 20 * Math.log10(mag[i] + 1e-6); }
+  return tot;
+}
+function drawEQ(){
+  const c = $('#eqc'), W = c.clientWidth, H = c.clientHeight, dpr = devicePixelRatio || 1; if (!W) return; c.width = W * dpr; c.height = H * dpr; const g = c.getContext('2d'); g.scale(dpr, dpr);
+  const s = MICS[MV.i].set, X = f => Math.log(f / 20) / Math.log(1000) * W, Y = db => H / 2 - db / 15 * (H / 2 - 12);
+  g.strokeStyle = 'rgba(255,255,255,.06)'; g.lineWidth = 1; [100, 1000, 10000].forEach(f => { g.beginPath(); g.moveTo(X(f), 0); g.lineTo(X(f), H); g.stroke(); }); [-10, 10].forEach(d => { g.beginPath(); g.moveTo(0, Y(d)); g.lineTo(W, Y(d)); g.stroke(); });
+  g.strokeStyle = 'rgba(255,255,255,.18)'; g.beginPath(); g.moveTo(0, Y(0)); g.lineTo(W, Y(0)); g.stroke();
+  g.fillStyle = 'rgba(255,255,255,.35)'; g.font = '10px Inter,sans-serif'; [['100', 100], ['1k', 1000], ['10k', 10000]].forEach(([t, f]) => g.fillText(t, X(f) + 3, H - 5));
+  const N = 160, fr = new Float32Array(N); for (let i = 0; i < N; i++) fr[i] = 20 * Math.pow(1000, i / (N - 1)); const r = eqResp(s, fr);
+  g.beginPath(); for (let i = 0; i < N; i++) { const y = Math.max(2, Math.min(H - 2, Y(r[i]))); i ? g.lineTo(X(fr[i]), y) : g.moveTo(X(fr[i]), y); }
+  g.strokeStyle = s.eq ? '#2EE88A' : 'rgba(255,255,255,.35)'; g.lineWidth = 2.5; g.shadowColor = '#2EE88A'; g.shadowBlur = s.eq ? 8 : 0; g.stroke(); g.shadowBlur = 0;
+  BANDS.forEach(b => { const x = X(s[b.k].f), y = b.k === 'lc' ? Y(-6) : Y(s.eq ? s[b.k].g : 0), sel = MV.band === b.k; g.beginPath(); g.arc(x, y, sel ? 11 : 9, 0, 7); g.fillStyle = sel ? b.c : '#0B1220'; g.fill(); g.lineWidth = sel ? 2 : 2.5; g.strokeStyle = sel ? '#fff' : b.c; g.stroke(); });
+}
+(() => { const c = $('#eqc'); let dragB = null;
+  const pos = e => { const r = c.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top, r.width, r.height]; };
+  c.addEventListener('pointerdown', e => { const [x, y, W, H] = pos(e), s = MICS[MV.i].set; let best = null, bd = 1e9;
+    BANDS.forEach(b => { const bx = Math.log(s[b.k].f / 20) / Math.log(1000) * W, by = b.k === 'lc' ? H / 2 + 6 / 15 * (H / 2 - 12) : H / 2 - s[b.k].g / 15 * (H / 2 - 12), d = Math.hypot(bx - x, by - y); if (d < bd) { bd = d; best = b.k; } });
+    if (bd < 44) { dragB = best; MV.band = best; c.setPointerCapture(e.pointerId); renderMV(); } });
+  c.addEventListener('pointermove', e => { if (!dragB) return; const [x, y, W, H] = pos(e), m = MICS[MV.i], b = m.set[dragB];
+    b.f = Math.round(Math.max(20, Math.min(20000, 20 * Math.pow(1000, x / W)))); if (dragB !== 'lc') b.g = Math.round(Math.max(-12, Math.min(12, (H / 2 - y) / (H / 2 - 12) * 15)) * 2) / 2;
+    if (dragB === 'lc') b.f = Math.min(b.f, 400); applyMic(m); drawEQ(); });
+  const up = () => { if (dragB) { dragB = null; renderMV(); } }; c.addEventListener('pointerup', up); c.addEventListener('pointercancel', up);
+})();
+
+// ---------- settings ----------
+function host(){ try { return new URL(BASE).host; } catch(e){ return BASE || '—'; } }
+let ONLINE = false;
+function renderSet(){
+  const r = (k, l, v, cls = '') => `<button class="srow" data-k="${k}"><span style="flex:1">${l}</span><span class="v ell ${cls}">${esc(v)}</span></button>`;
+  const micName = i => { const d = devs.find(x => x.deviceId === CFG.mics[i]); return CFG.mics[i] ? (d ? d.label || 'Selected input' : 'Selected input') : (i ? 'Not set' : 'Phone microphone'); };
+  $('#setBody').innerHTML = `<div class="conn ${ONLINE ? '' : 'bad'}"><i></i><span style="flex:1"><b>${ONLINE ? 'Connected to your studio' : 'Studio not reachable'}</b><br><span style="color:var(--sub)">${ONLINE ? 'Works anywhere – Wi-Fi or mobile data' : 'Check that OAB Studio is open on the computer'}</span></span></div>
+  <div class="gh">CONNECTION</div><div class="grp">${r('addr', 'Station server', CFG.fixed ? 'OAB Studio (fixed link)' : host(), ONLINE ? 'ok' : '')}${r('key', 'Broadcast password', CFG.key ? '••••••••' : 'Not set')}${r('kbps', 'Stream quality', CFG.kbps + ' kbps')}</div>
+  <div class="gh">AUDIO</div><div class="grp">${r('mic0', 'Microphone 1', micName(0))}${r('mic1', 'Microphone 2', micName(1))}${r('monitor', 'Hear the mic in headphones', CFG.monitor ? 'On' : 'Off')}${r('duck', 'Ducker depth', CFG.duckDb + ' dB')}${r('xfade', 'Crossfade', CFG.xfade ? CFG.xfade + ' s' : 'Off')}${r('repeat', 'Repeat playlist', CFG.repeat ? 'On' : 'Off')}</div>
+  <div class="gh">STATION</div><div class="grp">${r('pads', 'Hot buttons 1–8', PADS.filter(Boolean).length + ' set · hold a button to change')}${r('phone', 'Add songs from the phone', tab().name)}${r('logo', 'Station logo', 'Change')}${r('keepOn', 'Keep screen on while live', CFG.keepOn ? 'On' : 'Off')}${r('out', 'Disconnect from this studio', '')}</div>
+  <div class="foot">OAB MOBILE ${VERSION}<br>AD SOUND &amp; SERVICE</div>`;
+}
+let devs = [];
+async function listDevs(){ try { devs = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === 'audioinput'); } catch(e){ devs = []; } }
+async function chooseInput(i){
+  if (!devs.some(d => d.label)) { try { const s = await navigator.mediaDevices.getUserMedia({ audio: true }); s.getTracks().forEach(t => t.stop()); } catch(e){} }
+  await listDevs();
+  const opts = (i ? [] : [['', 'Phone microphone']]).concat(devs.filter(d => d.deviceId && d.deviceId !== 'default').map((d, j) => [d.deviceId, d.label || 'Input ' + (j + 1)]));
+  if (i && !opts.length) return toast('Connect a USB or Bluetooth microphone first');
+  choose('Microphone ' + (i + 1) + ' input', opts, CFG.mics[i], v => { CFG.mics[i] = v; saveCfg(); closeMicStream(MICS[i]); renderMics(); renderSet(); toast('Microphone ' + (i + 1) + ' set'); });
+}
+$('#setBody').onclick = e => { const b = e.target.closest('[data-k]'); if (!b) return; const k = b.dataset.k;
+  if (k === 'addr') ask('Station link or address', CFG.addr, v => connect(v, CFG.key), { ph: 'Fixed link from OAB Studio', ok: 'Connect' });
+  if (k === 'key') ask('Broadcast password', CFG.key, v => { CFG.key = v; saveCfg(); checkKey(); renderSet(); }, { type: 'password' });
+  if (k === 'kbps') choose('Stream quality', [[96, '96 kbps – saves mobile data'], [128, '128 kbps – good'], [192, '192 kbps – great'], [256, '256 kbps – best (Wi-Fi)']], CFG.kbps, v => { CFG.kbps = v; saveCfg(); if (live) enc = new lamejs.Mp3Encoder(2, ctx.sampleRate, v); renderSet(); });
+  if (k === 'mic0' || k === 'mic1') chooseInput(+k.slice(3));
+  if (k === 'monitor') { CFG.monitor = !CFG.monitor; saveCfg(); MICS.forEach(m => m.nodes && (m.nodes.mon.gain.value = CFG.monitor ? 1 : 0)); renderSet(); }
+  if (k === 'duck') choose('Ducker depth', [-6, -9, -12, -14, -18, -24].map(v => [v, v + ' dB']), CFG.duckDb, v => { CFG.duckDb = v; saveCfg(); duckNow = -1; renderSet(); });
+  if (k === 'xfade') choose('Crossfade', [0, 2, 4, 6, 8, 10].map(v => [v, v ? v + ' seconds' : 'Off']), CFG.xfade, v => { CFG.xfade = v; saveCfg(); renderSet(); });
+  if (k === 'repeat') { CFG.repeat = !CFG.repeat; saveCfg(); renderSet(); renderNow(); }
+  if (k === 'pads') { go('studio'); toast('Hold a coloured button to choose its jingle'); }
+  if (k === 'phone') $('#fPick').click();
+  if (k === 'logo') $('#fLogo').click();
+  if (k === 'keepOn') { CFG.keepOn = !CFG.keepOn; saveCfg(); renderSet(); }
+  if (k === 'out') choose('Disconnect?', [['y', 'Yes, disconnect'], ['n', 'Cancel']], '', v => { if (v !== 'y') return; if (live) setLive(false); CFG.base = ''; CFG.fixed = ''; saveCfg(); BASE = ''; $('#conn').style.display = 'flex'; });
+};
+$('#fLogo').onchange = async e => { const f = e.target.files[0]; e.target.value = ''; if (!f) return; try { const r = await api('/api/logo', { method: 'POST', body: f }); const d = await r.json(); if (!r.ok) throw new Error(d.error || 'Error'); toast('Logo changed for the studio and every listener'); setLogo(d.logoV); } catch(err){ toast(err.message || 'Could not change the logo'); } };
+let logoV = -1;
+function setLogo(v){ if (v === logoV) return; logoV = v; const src = v ? BASE + '/oab-logo.png?v=' + v : 'oab-logo.png'; $$('.slogo').forEach(i => { i.src = src; i.onerror = () => { i.onerror = null; i.src = 'oab-logo.png'; }; }); }
+
+// ---------- message to listeners ----------
+$('#bMsg').onclick = () => ask('Message to listeners', '', async v => { if (!v.trim()) return; try { const r = await api('/api/message', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: v.trim() }) }); toast(r.ok ? 'Message sent to every listener' : 'Wrong password'); } catch(e){ toast('Studio not reachable'); } }, { area: true, ph: 'It shows on every listener\'s screen', ok: 'Send' });
+
+// ---------- broadcast ----------
+setInterval(async () => {
+  if (!live || sending || !out.length) return;
+  const parts = out; out = []; const len = parts.reduce((a, b) => a + b.length, 0), body = new Uint8Array(len); let o = 0; parts.forEach(p => { body.set(p, o); o += p.length; });
+  sending = true; const ac = new AbortController(), tm = setTimeout(() => ac.abort(), 6000);
+  try { const r = await api('/api/push', { method: 'POST', headers: { 'X-Radio-Source': 'Phone' }, body, signal: ac.signal }); if (r.status === 401) { toast('Wrong password'); setLive(false); } }
+  catch(e){ toast('Connection lost… retrying'); }
+  clearTimeout(tm); sending = false;
+}, 400);
+async function setLive(on){
+  if (on) {
+    initAudio(); await ctx.resume();
+    try { const r = await api('/api/check', { method: 'POST' }); if (r.status === 401) { toast('Wrong password – check Settings'); return; } } catch(e){ toast('Studio not reachable'); return; }
+    try { await api('/api/remote', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cmd: 'stoplive' }) }); } catch(e){}
+    enc = new lamejs.Mp3Encoder(2, ctx.sampleRate, +CFG.kbps || 128); out = []; live = true;
+    if (CFG.keepOn) { try { wake = await navigator.wakeLock.request('screen'); } catch(e){} }
+    if (NATIVE) try { NATIVE.setLive(true, !!CFG.keepOn); } catch(e){}
+    const d = cur(); if (d) meta(d.it);
+    toast('You are on air');
+  } else { live = false; enc = null; out = []; if (wake) { wake.release().catch(() => {}); wake = null; } if (NATIVE) try { NATIVE.setLive(false, false); } catch(e){} toast('Broadcast stopped'); }
+  $('#air').classList.toggle('on', live); $('#air').textContent = live ? 'ON AIR' : 'GO LIVE'; renderNow();
+}
+$('#air').onclick = () => { if (live) choose('Stop the broadcast?', [['y', 'Yes, stop'], ['n', 'Keep broadcasting']], '', v => v === 'y' && setLive(false)); else setLive(true); };
+document.addEventListener('visibilitychange', async () => { if (live && CFG.keepOn && document.visibilityState === 'visible' && !wake) { try { wake = await navigator.wakeLock.request('screen'); } catch(e){} } });
+function meta(it){ if (!it || !live) return; api('/api/meta', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: it.title, artist: it.artist }) }).catch(() => {}); }
+
+// ---------- status ----------
+async function poll(){
+  try { const s = await (await fetch(BASE + '/api/status', { cache: 'no-store' })).json(); ONLINE = true;
+    $('#lis').textContent = '● ' + s.listeners + ' listening'; REQS = s.requests || []; renderReq(); setLogo(s.logoV || 0);
+    if (s.public && s.public.fixed && !CFG.fixed) { CFG.fixed = s.public.fixed; saveCfg(); }
+  } catch(e){ ONLINE = false; $('#lis').textContent = '● offline'; if (CFG.fixed && !live) reResolve(); }
+  if ($('#v-set').classList.contains('on')) renderSet();
+}
+let reT = 0; async function reResolve(){ if (Date.now() - reT < 20000) return; reT = Date.now(); const b = await resolveFixed(CFG.fixed); if (b && b !== BASE) { BASE = CFG.base = b; saveCfg(); } }
+
+// ---------- connect ----------
+const b64 = s => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((s.length + 3) % 4)), c => c.charCodeAt(0));
+async function resolveFixed(link){
+  try { const u = new URL(link), S = u.searchParams.get('s'), K = u.searchParams.get('k'); if (!S || !K || !/^[0-9a-f]{20}$/.test(S)) return '';
+    const key = await crypto.subtle.importKey('raw', b64(K), { name: 'ECDSA', namedCurve: 'P-256' }, false, ['verify']);
+    const r = await fetch('https://ntfy.sh/oab-' + S + '/json?poll=1&since=12h', { cache: 'no-store' });
+    const lines = (await r.text()).trim().split('\n').filter(Boolean).reverse();
+    for (const ln of lines) { try { const ev = JSON.parse(ln); if (ev.event !== 'message') continue; const o = JSON.parse(ev.message), url = String(o.m).split('|')[0];
+      if (!/^https:\/\/[a-z0-9-]+\.trycloudflare\.com$/.test(url)) continue;
+      if (!(await crypto.subtle.verify({ name: 'ECDSA', hash: 'SHA-256' }, key, b64(o.sig), new TextEncoder().encode(o.m)))) continue;
+      try { await fetch(url + '/api/status', { cache: 'no-store' }); return url; } catch(e){ return ''; } } catch(e){} }
+  } catch(e){}
+  return '';
+}
+async function checkKey(){ try { const r = await api('/api/check', { method: 'POST' }); return r.status !== 401; } catch(e){ return true; } }
+async function connect(addr, key){
+  addr = (addr || '').trim(); const msg = t => { $('#connMsg').textContent = t; if ($('#conn').style.display === 'none') toast(t); };
+  if (!addr) return msg('Paste the station link from OAB Studio');
+  msg('Connecting…'); let base = '', fixed = '';
+  if (/[?&]s=[0-9a-f]{20}/.test(addr)) { fixed = addr; base = await resolveFixed(addr); if (!base) return msg('The studio is not on line right now. Open OAB Studio on the computer and try again.'); }
+  else { if (!/^https?:\/\//.test(addr)) addr = 'https://' + addr; try { base = new URL(addr).origin; } catch(e){ return msg('This address is not valid'); } }
+  try { const r = await fetch(base + '/api/status', { cache: 'no-store' }); await r.json(); } catch(e){ return msg('Cannot reach the studio at this address'); }
+  BASE = base; CFG.base = base; CFG.addr = addr; CFG.fixed = fixed; CFG.key = key; saveCfg();
+  if (!(await checkKey())) return msg('Wrong broadcast password');
+  $('#connMsg').textContent = ''; $('#conn').style.display = 'none'; start();
+}
+$('#cGo').onclick = () => connect($('#cAddr').value, $('#cPw').value);
+let started = false;
+async function start(){
+  ONLINE = true;
+  if (window.__padsFresh) { window.__padsFresh = false; PADS = Array(8).fill(null); try { const c = (await (await api('/api/library?kind=carts')).json()).items || []; c.slice(0, 8).forEach((x, i) => PADS[i] = { title: cleanT(x.title), url: x.url }); } catch(e){} store.set('pads', PADS); }
+  if (!PL || PL.fresh) { await loadServerPlaylists(false); if (!PL) PL = { tabs: [{ id: uid(), name: 'Main', items: [] }], view: 0, sel: '', fresh: true }; }
+  renderAll(); loadLib(); poll(); if (!started) { started = true; setInterval(poll, 3000); }
+}
+function renderAll(){ renderNow(); renderPL(); renderPads(); renderMics(); }
+function go(v){ $$('.view').forEach(x => x.classList.toggle('on', x.id === 'v-' + v)); $$('nav.tabs button').forEach(b => b.classList.toggle('on', b.dataset.v === v)); if (v === 'set') renderSet(); if (v === 'lib' && !LIB.length) loadLib(); }
+$$('nav.tabs button').forEach(b => b.onclick = () => go(b.dataset.v));
+$('#bPlay').onclick = playPause; $('#miniPlay').onclick = playPause; $('#bNext').onclick = () => next(true); $('#bPrev').onclick = prev;
+$('#bStop').onclick = () => { stopAll(); };
+$('#miniMic').onclick = () => toggleMic(0);
+window.addEventListener('resize', () => { arcLen = 0; if (MV.open) drawEQ(); });
+
+// boot: the APK passes nothing; on the server page the studio's own address is used
+(function boot(){
+  if (!PL) PL = { tabs: [{ id: uid(), name: 'Main', items: [] }], view: 0, sel: '', fresh: true };
+  const padsSaved = !!PADS; if (!PADS) PADS = Array(8).fill(null);
+  window.__padsFresh = !padsSaved;
+  $('#cAddr').value = CFG.fixed || CFG.addr || ''; $('#cPw').value = CFG.key || '';
+  const onServer = /^https?:$/.test(location.protocol) && location.hostname !== 'appassets.androidplatform.net';
+  if (!BASE && onServer) { BASE = location.origin; CFG.base = BASE; CFG.addr = BASE; }
+  if (BASE && CFG.key) { $('#conn').style.display = 'none'; start(); if (CFG.fixed) resolveFixed(CFG.fixed).then(b => { if (b && b !== BASE) { BASE = CFG.base = b; saveCfg(); start(); } }); }
+  renderAll();
+  document.addEventListener('pointerdown', () => { if (ctx && ctx.state !== 'running') ctx.resume(); }, { passive: true });
+})();
+</script>
+</body>
+</html>

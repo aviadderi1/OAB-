@@ -1,0 +1,28 @@
+plugins { id 'com.android.application' }
+def ver = (file('../../server/web/app.html').text =~ /const VERSION = '([0-9.]+)'/)[0][1]
+def parts = ver.tokenize('.').collect { it as int }
+android {
+    namespace 'com.adsound.oab'
+    compileSdk 34
+    defaultConfig {
+        applicationId 'com.adsound.oab'
+        minSdk 24
+        targetSdk 34
+        versionCode parts[0] * 10000 + parts[1] * 100 + parts[2]
+        versionName ver
+    }
+    signingConfigs {
+        // the signing key is never in the repo: CI makes it from the ANDROID_KEYSTORE secret, or a new one if there is none
+        release { storeFile file('oab-mobile.jks'); storePassword System.getenv('OAB_KS_PASS') ?: 'oabmobile'; keyAlias 'oab'; keyPassword System.getenv('OAB_KS_PASS') ?: 'oabmobile' }
+    }
+    buildTypes { release { minifyEnabled false; signingConfig signingConfigs.release } }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+    sourceSets { main { assets.srcDirs = ['build/www-assets'] } }
+}
+dependencies { implementation 'androidx.webkit:webkit:1.11.0' }
+// the phone app page lives with the server (server/web/app.html); copy it and what it needs into the APK
+tasks.register('copyWww', Copy) {
+    from('../../server/web') { include 'app.html', 'phone-studio.jpg', 'oab-logo.png', 'favicon.png', 'lib/lame.min.js', 'fonts/heebo-latin-*.woff2' }
+    into 'build/www-assets/www'
+}
+preBuild.dependsOn copyWww
