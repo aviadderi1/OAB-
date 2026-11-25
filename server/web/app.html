@@ -292,7 +292,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;heigh
 
 <script>
 'use strict';
-const VERSION = '1.0.5';
+const VERSION = '1.0.0';
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const NATIVE = window.OABNative || null;
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -434,13 +434,20 @@ async function toggleMic(i){
 }
 function closeMicStream(m){ if (m.st) { m.st.getTracks().forEach(t => t.stop()); m.st = null; } if (m.nodes && m.nodes.src) { try { m.nodes.src.disconnect(); } catch(e){} m.nodes.src = null; } m.on = false; }
 function renderMics(){ MICS.forEach(m => $('#ring' + m.i).classList.toggle('on', m.on)); $('#miniMic').classList.toggle('on', MICS[0].on); }
-let duckNow = 1;
+let duckNow = 1, duckTarget = 1, duckVol = 1;
+// The ducker turns the song players themselves down, so the phone hears exactly what the listeners hear
+// (on some phones the song is also played straight to the speaker, past the mixer).
+setInterval(() => {
+  if (Math.abs(duckVol - duckTarget) < 0.002) duckVol = duckTarget;
+  else duckVol += (duckTarget - duckVol) * (duckTarget < duckVol ? 0.35 : 0.08);
+  decks.forEach(d => { if (Math.abs(d.a.volume - duckVol) > 0.001) d.a.volume = Math.max(0, Math.min(1, duckVol)); });
+}, 30);
 function duckTick(buf){
   if (!ctx) return;
   let want = 1; const anyOn = MICS.some(m => m.on);
   MICS.forEach(m => { if (m.on && m.nodes) { const r = rms(m.nodes.an, buf); if (r > 0.006) m.talk = performance.now(); } });
   if (anyOn) { const auto = MICS.some(m => m.on && m.set.duck); const talking = MICS.some(m => m.on && performance.now() - m.talk < 900); if (!auto || talking) want = Math.pow(10, (+CFG.duckDb || -14) / 20); }
-  if (want !== duckNow) { duckG.gain.setTargetAtTime(want, ctx.currentTime, want < duckNow ? .06 : .35); duckNow = want; const h = $('.hint'); h.textContent = want < 1 ? '🎙 Music ducked ' + CFG.duckDb + ' dB' : anyOn ? 'Mic open · talk to duck the music' : 'Tap a microphone to open it · hold for EQ'; h.style.color = want < 1 ? '#6FF0A8' : ''; }
+  if (want !== duckNow) { duckTarget = want; duckNow = want; const h = $('.hint'); h.textContent = want < 1 ? '🎙 Music ducked ' + CFG.duckDb + ' dB' : anyOn ? 'Mic open · talk to duck the music' : 'Tap a microphone to open it · hold for EQ'; h.style.color = want < 1 ? '#6FF0A8' : ''; }
 }
 
 // ---------- level drawing ----------

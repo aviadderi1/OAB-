@@ -130,4 +130,5 @@ jobs:
         run: |
           V=${{ needs.windows.outputs.ver }}
           cp android/app/build/outputs/apk/release/app-release.apk "OAB-Mobile-$V.apk"
-          gh release upload "v$V" "OAB-Mobile-$V.apk" --clobber -R "$GITHUB_REPOSITORY"
+          cp "OAB-Mobile-$V.apk" OAB-Mobile.apk   # fixed name: the studio's download link always gets the newest app
+          gh release upload "v$V" "OAB-Mobile-$V.apk" OAB-Mobile.apk --clobber -R "$GITHUB_REPOSITORY"

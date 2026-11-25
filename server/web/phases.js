@@ -622,6 +622,8 @@ function renderLinks(){
     row('FOR PHONES ON YOUR HOME WI-FI', LINKS.lan, 'Works only for devices connected to the same Wi-Fi as this computer.') +
     (on ? row('PHONE BROADCAST APP (INTERNET)', p.url + '/mobile', 'Broadcast from your phone from anywhere (uses the broadcast password).') + row('REMOTE CONTROL (INTERNET)', p.url + '/remote', 'Control the studio from your phone.') :
       row('PHONE BROADCAST APP (HOME WI-FI)', LINKS.lan ? LINKS.lan + 'mobile' : '', 'Broadcast from your phone.') + row('REMOTE CONTROL (HOME WI-FI)', LINKS.lan ? LINKS.lan + 'remote' : '', 'Control the studio from your phone.'));
+  $('#miBody').insertAdjacentHTML('beforeend', '<button class="btn pri" id="lkApp" style="width:100%;justify-content:center;margin-top:4px">📱 Get the OAB Mobile app – broadcast from your phone</button>');
+  $('#lkApp').onclick = () => ACT.mobileApp();
   $('#lkPub').onclick = () => $('#pubBtn').click();
   $$('#miBody [data-wa]').forEach(b => b.onclick = () => window.open('https://wa.me/?text=' + encodeURIComponent('מחכים לכם, האזינו לשידור:\n' + b.dataset.wa + (/github\.io/.test(b.dataset.wa) ? '' : 'listen')), '_blank'));
   $$('#miBody [data-wacopy]').forEach(b => b.onclick = () => copyTxt('מחכים לכם, האזינו לשידור:\n' + b.dataset.wacopy + (/github\.io/.test(b.dataset.wacopy) ? '' : 'listen')));
@@ -2072,3 +2074,19 @@ if (window.oabDesktop && !/[?&]resume=1/.test(location.search)) (function autoSt
   if (!ready && n < 100) return setTimeout(() => autoStart(n + 1), 50);   // wait for the playlists to load
   if ($('#start')) $('#startBtn').click();
 })(0);
+
+// Help → OAB Mobile: the Android broadcast app (APK from the latest release), with a QR code to scan with the phone
+const APK_URL = 'https://github.com/aviadderi1/OAB-/releases/latest/download/OAB-Mobile.apk';
+ACT.mobileApp = () => {
+  $('#miH').textContent = 'OAB Mobile – broadcast from your phone';
+  let qr = ''; try { const q = qrcode(0, 'M'); q.addData(APK_URL); q.make(); qr = q.createSvgTag({ cellSize: 5, margin: 3, scalable: true }); } catch(e){}
+  const fixed = (LINKS.pub && LINKS.pub.fixed) || '';
+  $('#miBody').innerHTML = `<div style="display:flex;gap:16px;align-items:center;margin-bottom:12px">
+    <div style="width:150px;height:150px;flex:none;background:#fff;border-radius:12px;padding:4px">${qr}</div>
+    <div style="font-size:13px;line-height:1.6"><b>1.</b> Scan the code with the phone camera and download the app.<br><b>2.</b> Open the file and allow “install unknown apps”.<br><b>3.</b> In the app paste the fixed link below and the broadcast password.<br><b>4.</b> Press GO LIVE – the broadcast moves to the phone.</div></div>
+    <div class="aux" style="margin-bottom:10px"><div class="lbl">DOWNLOAD LINK (ANDROID)</div><div class="mono" style="font-size:12.5px;color:#8CC2FF;word-break:break-all;margin:4px 0">${APK_URL}</div><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn sm" data-wa2="${APK_URL}" style="background:#1F8F4E;border-color:#25D366;color:#fff">Send to my phone on WhatsApp</button><button class="btn sm" data-cp="${APK_URL}">Copy link</button></div></div>
+    <div class="aux"><div class="lbl">STATION LINK FOR THE APP</div>${fixed ? `<div class="mono" style="font-size:12.5px;color:#8CC2FF;word-break:break-all;margin:4px 0">${esc(fixed)}</div><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn sm" data-wa2="${esc(fixed)}" style="background:#1F8F4E;border-color:#25D366;color:#fff">Send to my phone on WhatsApp</button><button class="btn sm" data-cp="${esc(fixed)}">Copy link</button></div>` : '<div class="sub" style="margin-top:4px">Open the internet link first (Broadcast → Listen link).</div>'}</div>
+    <div class="sub" style="font-size:12px;margin-top:10px">Keep OAB Studio open on this computer while you broadcast from the phone.</div>`;
+  $$('#miBody [data-wa2]').forEach(b => b.onclick = () => window.open('https://wa.me/?text=' + encodeURIComponent(b.dataset.wa2), '_blank'));
+  openModal('mInfo');
+};
