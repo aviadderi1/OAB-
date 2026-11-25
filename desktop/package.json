@@ -1,7 +1,7 @@
 {
  "name": "oab-studio",
  "productName": "OAB Studio",
- "version": "1.0.0",
+ "version": "1.0.1",
  "description": "OAB – On Air Broadcast",
  "author": "AD SOUND & SERVICE",
  "main": "main.js",

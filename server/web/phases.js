@@ -2064,3 +2064,10 @@ $('#libFiles').onchange = async () => {
 
 // Help → User manual: download the PDF
 ACT.manual = () => { const a = document.createElement('a'); a.href = '/manual.pdf'; a.download = 'OAB-Studio-User-Manual.pdf'; document.body.appendChild(a); a.click(); a.remove(); toast('Downloading the user manual…'); };
+
+// desktop app: no "Open studio" window – the studio starts by itself right after the opening screen
+if (window.oabDesktop && !/[?&]resume=1/.test(location.search)) (function autoStart(n){
+  let ready = false; try { ready = !!(viewTab() && viewTab().items); } catch(e){}
+  if (!ready && n < 100) return setTimeout(() => autoStart(n + 1), 50);   // wait for the playlists to load
+  if ($('#start')) $('#startBtn').click();
+})(0);
