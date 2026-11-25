@@ -7,6 +7,11 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      rebuild:
+        description: Build again and replace the files of the current version
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -35,7 +40,7 @@ jobs:
         run: |
           VER=$(node -p "require('./package.json').version")
           echo "ver=$VER" >> "$GITHUB_OUTPUT"
-          if gh release view "v$VER" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then echo "skip=1" >> "$GITHUB_OUTPUT"; echo "v$VER is already released – nothing to build"; else echo "skip=0" >> "$GITHUB_OUTPUT"; echo "Building $VER"; fi
+          if [ "${{ github.event.inputs.rebuild }}" = "true" ]; then echo "skip=0" >> "$GITHUB_OUTPUT"; echo "Rebuilding $VER"; elif gh release view "v$VER" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then echo "skip=1" >> "$GITHUB_OUTPUT"; echo "v$VER is already released – nothing to build"; else echo "skip=0" >> "$GITHUB_OUTPUT"; echo "Building $VER"; fi
 
       - name: Install
         if: steps.v.outputs.skip == '0'
