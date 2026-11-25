@@ -25,9 +25,21 @@ public class LiveService extends Service {
         Notification.Builder b = Build.VERSION.SDK_INT >= 26 ? new Notification.Builder(this, "live") : new Notification.Builder(this);
         Notification n = b.setContentTitle("OAB · ON AIR").setContentText("You are broadcasting from your phone")
                 .setSmallIcon(android.R.drawable.presence_audio_online).setOngoing(true).setContentIntent(open).build();
-        if (Build.VERSION.SDK_INT >= 29)
-            startForeground(1, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE | ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK);
-        else startForeground(1, n);
+        // Android 14 refuses the "microphone" type until the mic permission is granted – never let that crash the app
+        boolean mic = checkSelfPermission(android.Manifest.permission.RECORD_AUDIO) == android.content.pm.PackageManager.PERMISSION_GRANTED;
+        try {
+            if (Build.VERSION.SDK_INT >= 30)
+                startForeground(1, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK | (mic ? ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE : 0));
+            else if (Build.VERSION.SDK_INT >= 29)
+                startForeground(1, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK);
+            else startForeground(1, n);
+        } catch (Throwable t) {
+            try {
+                if (Build.VERSION.SDK_INT >= 29) startForeground(1, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK);
+                else startForeground(1, n);
+            } catch (Throwable t2) { stopSelf(); return START_NOT_STICKY; }
+        }
+        try {
         if (cpu == null) {
             cpu = ((PowerManager) getSystemService(Context.POWER_SERVICE)).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "oab:live");
             cpu.acquire(12 * 60 * 60 * 1000L);
@@ -36,6 +48,7 @@ public class LiveService extends Service {
             WifiManager wm = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
             if (wm != null) { wifi = wm.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "oab:live"); wifi.acquire(); }
         }
+        } catch (Throwable t) { /* locks are a bonus */ }
         return START_NOT_STICKY;
     }
 

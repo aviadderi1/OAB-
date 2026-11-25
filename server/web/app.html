@@ -434,6 +434,7 @@ async function toggleMic(i){
   const m = MICS[i];
   if (!m.on && !(await openMic(m))) return;
   m.on = !m.on; m.nodes.gate.gain.setTargetAtTime(m.on ? 1 : 0, ctx.currentTime, .02);
+  if (m.on && live && NATIVE) try { NATIVE.setLive(true, !!CFG.keepOn); } catch(e){}
   if (!m.on) { m.talk = 0; }
   duckNow = -1;
   renderMics();

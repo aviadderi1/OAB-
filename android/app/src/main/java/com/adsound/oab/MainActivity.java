@@ -74,8 +74,11 @@ public class MainActivity extends Activity {
             }
         });
         web.addJavascriptInterface(new Bridge(), "OABNative");
-        if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED)
-            requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, REQ_NOTE);
+        // ask once at start for the mic and for the "ON AIR" notification
+        java.util.ArrayList<String> need = new java.util.ArrayList<>();
+        if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) need.add(Manifest.permission.RECORD_AUDIO);
+        if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) need.add(Manifest.permission.POST_NOTIFICATIONS);
+        if (!need.isEmpty()) requestPermissions(need.toArray(new String[0]), REQ_NOTE);
         if (b != null) web.restoreState(b); else web.loadUrl(START);
     }
 
@@ -84,8 +87,10 @@ public class MainActivity extends Activity {
             runOnUiThread(() -> {
                 live = on;
                 Intent i = new Intent(MainActivity.this, LiveService.class);
-                if (on) { if (Build.VERSION.SDK_INT >= 26) startForegroundService(i); else startService(i); }
-                else stopService(i);
+                try {
+                    if (on) { if (Build.VERSION.SDK_INT >= 26) startForegroundService(i); else startService(i); }
+                    else stopService(i);
+                } catch (Throwable t) { /* the broadcast still runs while the app is open */ }
                 if (on && keepOn) getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
                 else getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
             });
