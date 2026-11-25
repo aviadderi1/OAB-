@@ -79,8 +79,11 @@ header.top h1{margin:0;font-size:17px;font-weight:700}
 .tr button.msg{border:0;background:var(--blue);color:#fff}
 .tr button:active{transform:scale(.94)}
 .pads{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;justify-items:center}
-.pads button{width:min(58px,14vw);height:min(58px,14vw);border-radius:50%;border:2px solid var(--c);background:rgba(0,0,0,.35);color:#fff;font-weight:700;font-size:15px;position:relative;overflow:hidden}
-.pads button.play{background:var(--c);color:#000;box-shadow:0 0 18px var(--c)}
+.pads button{width:min(58px,14vw);height:min(58px,14vw);border-radius:50%;border:2px solid var(--c);background:rgba(0,0,0,.35);color:#fff;font-weight:700;font-size:15px;position:relative;overflow:visible}
+.pads button svg{position:absolute;inset:-6px;width:calc(100% + 12px);height:calc(100% + 12px);transform:rotate(-90deg);pointer-events:none;opacity:0;transition:opacity .2s}
+.pads button svg circle{fill:none;stroke:var(--c);stroke-width:4;stroke-linecap:round;stroke-dasharray:0 302;filter:drop-shadow(0 0 4px var(--c))}
+.pads button.play{background:color-mix(in srgb,var(--c) 22%,rgba(0,0,0,.35));box-shadow:0 0 16px color-mix(in srgb,var(--c) 55%,transparent)}
+.pads button.play svg{opacity:1}
 .pads button.none{opacity:.45}
 @media (max-height:700px){.pads button{width:min(48px,12vw);height:min(48px,12vw)}.tr button{width:42px;height:42px}.tr button.big{width:58px;height:58px}#npT{font-size:17px}#rem{font-size:24px}}
 /* ---- lists ---- */
@@ -112,6 +115,10 @@ header.top h1{margin:0;font-size:17px;font-weight:700}
 .mini .pp{width:38px;height:38px;border-radius:50%;border:2px solid var(--cy);background:rgba(63,208,255,.16);color:#fff;display:flex;align-items:center;justify-content:center}
 .search{flex:none;padding:10px 14px;display:flex;gap:8px}
 .search input{flex:1;height:38px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:#0F141D;padding:0 12px;font-size:15px;outline:none}
+.ytr{grid-template-columns:64px minmax(0,1fr) auto 40px}
+.ytr img{width:64px;height:36px;border-radius:6px;object-fit:cover;background:#111}
+.dl{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;background:rgba(255,78,69,.16);border:1px solid rgba(255,78,69,.5);font:700 11px var(--mono)}
+.dl.ok{background:rgba(46,232,138,.16);border-color:var(--gr);color:#6FF0A8}
 .req{padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.05)}
 .req .s{font-size:15px;font-weight:600}
 .req .w{font-size:12.5px;color:var(--sub);margin-top:2px}
@@ -246,7 +253,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;heigh
     <!-- LIBRARY -->
     <section class="view" id="v-lib">
       <header class="top"><img class="slogo" src="oab-logo.png" alt=""><h1>Library</h1><span class="sp"></span><button class="btn" id="libPhone">+ From phone</button></header>
-      <div class="search"><input id="libQ" type="search" placeholder="Search songs or artists" aria-label="Search library"></div>
+      <div class="subtabs" id="libSrc"><button class="on" data-s="lib">Station library</button><button data-s="yt"><span style="color:#FF4E45">▶</span> YouTube</button></div>
+      <div class="search"><input id="libQ" type="search" placeholder="Search songs or artists" aria-label="Search library" enterkeyhint="search"><button class="btn" id="ytGo" style="display:none;height:38px">Search</button></div>
       <div class="list" id="libList"></div>
     </section>
     <!-- REQUESTS -->
@@ -313,7 +321,7 @@ const PLAY = '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor
 const PAUSE = '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>';
 
 // ---------- settings ----------
-const CFG = Object.assign({ addr: '', fixed: '', base: '', key: '', kbps: 128, monitor: true, duckDb: -14, xfade: 4, keepOn: true, mics: ['', ''], micPreset: ['', ''] }, store.get('cfg', {}));
+const CFG = Object.assign({ addr: '', fixed: '', base: '', key: '', kbps: 0, monitor: true, duckDb: -14, xfade: 4, keepOn: true, mics: ['', ''], micPreset: ['', ''] }, store.get('cfg', {}));
 const saveCfg = () => store.set('cfg', CFG);
 let BASE = CFG.base || '';
 const api = (p, o = {}) => fetch(BASE + p, Object.assign({ cache: 'no-store' }, o, { headers: Object.assign({ 'X-Radio-Key': CFG.key }, o.headers || {}) }));
@@ -333,6 +341,7 @@ const uid = () => Math.random().toString(36).slice(2, 10);
 function fromFile(f){ const base = f.name.replace(/\.[^.]+$/, ''), p = base.split(' - '); return { uid: uid(), blob: 'b' + uid(), title: cleanT(p.length > 1 ? p.slice(1).join(' - ') : base), artist: p.length > 1 ? p[0].replace(/^\d+\s*/, '') : 'From phone', dur: 0 }; }
 
 // ---------- audio engine ----------
+let netBad = 0, curKbps = 128;
 let ctx, masterIn, limiter, masterOut, musicBus, duckG, cartBus, monitor, mAn, enc = null, out = [], live = false, sending = false, wake = null;
 const decks = [];
 function initAudio(){
@@ -355,7 +364,7 @@ function initAudio(){
   const sp = ctx.createScriptProcessor(4096, 2, 2); masterOut.connect(sp); const z = ctx.createGain(); z.gain.value = 0; sp.connect(z); z.connect(ctx.destination);
   sp.onaudioprocess = e => { if (!live || !enc) return; const L = e.inputBuffer.getChannelData(0), R = e.inputBuffer.getChannelData(1), n = L.length, l = new Int16Array(n), r = new Int16Array(n);
     for (let i = 0; i < n; i++) { l[i] = Math.max(-1, Math.min(1, L[i])) * 32767; r[i] = Math.max(-1, Math.min(1, R[i])) * 32767; }
-    const mp3 = enc.encodeBuffer(l, r); if (mp3.length) { out.push(new Uint8Array(mp3)); if (out.length > 400) out.splice(0, out.length - 400); } };
+    const mp3 = enc.encodeBuffer(l, r); if (mp3.length) { out.push(new Uint8Array(mp3)); if (out.length > 2000) out.splice(0, out.length - 2000); } };
   requestAnimationFrame(draw);
 }
 const rms = (an, buf) => { an.getFloatTimeDomainData(buf); let s = 0; for (let i = 0; i < buf.length; i++) s += buf[i] * buf[i]; return Math.sqrt(s / buf.length); };
@@ -466,6 +475,7 @@ function draw(){
   requestAnimationFrame(draw);
   MICS.forEach(m => { const c = $('#ring' + m.i + ' .lv'); if (m.on && m.nodes) { const v = lvl(rms(m.nodes.an, tbuf)); c.style.strokeDasharray = (v * 295).toFixed(1) + ' 300'; } });
   duckTick(tbuf);
+  padSrc.forEach((sN, i) => { if (!sN) return; const c = document.querySelector(`#pads [data-i="${i}"] circle`); if (c) c.style.strokeDasharray = (Math.min(1, (ctx.currentTime - sN.t0) / sN.dur) * 302).toFixed(1) + ' 302'; });
   if (MV.open && MICS[MV.i].nodes) $('#gr').textContent = 'GR ' + MICS[MV.i].nodes.comp.reduction.toFixed(1) + ' dB';
   const v = lvl(rms(mAn, tbuf)); const L = $('#arcL'), R = $('#arcR'); if (!arcLen) arcLen = L.getTotalLength();
   const dash = (v * arcLen).toFixed(1) + ' ' + arcLen; L.style.strokeDasharray = dash; R.style.strokeDasharray = dash;
@@ -497,7 +507,7 @@ $('#prog').onclick = e => { const d = cur(); if (!d || !d.a.duration) return; co
 const PADC = ['#F04444', '#F5A524', '#22C55E', '#2D8CEB', '#A855F7', '#EC4899', '#06B6D4', '#84CC16'];
 let PADS = store.get('pads', null);
 const padSrc = [];
-function renderPads(){ $('#pads').innerHTML = PADS.map((p, i) => `<button style="--c:${PADC[i]}" class="${p ? '' : 'none'} ${padSrc[i] ? 'play' : ''}" data-i="${i}" aria-label="${esc(p ? p.title : 'Empty jingle ' + (i + 1))}">${i + 1}</button>`).join(''); }
+function renderPads(){ $('#pads').innerHTML = PADS.map((p, i) => `<button style="--c:${PADC[i]}" class="${p ? '' : 'none'} ${padSrc[i] ? 'play' : ''}" data-i="${i}" aria-label="${esc(p ? p.title : 'Empty jingle ' + (i + 1))}"><svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="48"/></svg>${i + 1}</button>`).join(''); }
 const padBufs = {};
 async function padBuf(i){ const p = PADS[i]; if (!p) return null; const k = p.blob || p.url; if (padBufs[k]) return padBufs[k];
   try { const ab = await (await fetch(await srcOf(p))).arrayBuffer(); return padBufs[k] = await ctx.decodeAudioData(ab); } catch(e){ return null; } }
@@ -506,7 +516,7 @@ async function hitPad(i){
   if (!PADS[i]) { assignPad(i); return; }
   if (padSrc[i]) { padSrc[i].stop(); return; }
   const b = await padBuf(i); if (!b) { toast('Cannot load ' + PADS[i].title); return; }
-  const s = ctx.createBufferSource(); s.buffer = b; s.connect(cartBus); s.onended = () => { padSrc[i] = null; renderPads(); }; padSrc[i] = s; s.start(); renderPads();
+  const s = ctx.createBufferSource(); s.buffer = b; s.connect(cartBus); s.onended = () => { padSrc[i] = null; renderPads(); }; s.t0 = ctx.currentTime; s.dur = b.duration; padSrc[i] = s; s.start(); renderPads();
 }
 async function assignPad(i){
   let carts = []; try { carts = (await (await api('/api/library?kind=carts')).json()).items || []; } catch(e){}
@@ -597,11 +607,48 @@ async function loadServerPlaylists(force){
 // ---------- library ----------
 let LIB = []; let pre = null;
 async function loadLib(){ try { LIB = (await (await api('/api/library?kind=music')).json()).items || []; } catch(e){ LIB = []; } renderLib(); }
-function renderLib(){ const q = $('#libQ').value.trim().toLowerCase(); const list = LIB.filter(i => !q || (i.title + ' ' + i.artist).toLowerCase().includes(q)).slice(0, 300);
+function renderLib(){ if (LIBSRC === 'yt') return renderYT(); const q = $('#libQ').value.trim().toLowerCase(); const list = LIB.filter(i => !q || (i.title + ' ' + i.artist).toLowerCase().includes(q)).slice(0, 300);
   $('#libList').innerHTML = list.length ? list.map(i => `<div class="row lib" data-id="${esc(i.id)}"><span style="min-width:0"><span class="t ell">${esc(cleanT(i.title))}</span><span class="a ell" style="display:block">${esc(cleanT(i.artist))}</span></span><span class="d">${i.dur ? fmt(i.dur) : ''}</span><button class="ib ${pre && pre.id === i.id ? 'on' : ''}" data-a="pre" aria-label="Prelisten"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1v-6h3zM3 19a2 2 0 0 0 2 2h1v-6H3z"/></svg></button><button class="ib add" data-a="add" aria-label="Add to playlist"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg></button></div>`).join('')
     : `<div class="empty">${LIB.length ? 'No songs match.' : 'No songs in the station library yet.<br>Set the music folder in OAB Studio, or add songs from the phone.'}</div>`; }
-$('#libQ').oninput = renderLib;
-$('#libList').onclick = e => { const b = e.target.closest('[data-a]'); if (!b) return; const i = LIB.find(x => x.id === b.closest('.row').dataset.id); if (!i) return;
+$('#libQ').oninput = () => { if (LIBSRC === 'lib') renderLib(); };
+// ---------- YouTube → station library (the studio computer downloads the song) ----------
+let LIBSRC = 'lib', YT = [], ytBusy = false; const YTJ = {};
+const isYtUrl = t => /^https?:\/\/(www\.|m\.|music\.)?(youtube\.com\/(watch\?|shorts\/|live\/)|youtu\.be\/)\S+$/i.test(t.trim());
+$('#libSrc').onclick = e => { const b = e.target.closest('[data-s]'); if (!b) return; LIBSRC = b.dataset.s; $$('#libSrc button').forEach(x => x.classList.toggle('on', x === b));
+  $('#libQ').value = ''; $('#libQ').placeholder = LIBSRC === 'yt' ? 'Search YouTube or paste a link' : 'Search songs or artists'; $('#ytGo').style.display = LIBSRC === 'yt' ? '' : 'none';
+  LIBSRC === 'yt' ? renderYT() : renderLib(); };
+$('#libQ').addEventListener('keydown', e => { if (e.key === 'Enter' && LIBSRC === 'yt') { e.preventDefault(); ytSearch(); $('#libQ').blur(); } });
+$('#ytGo').onclick = () => ytSearch();
+async function ytSearch(){
+  const q = $('#libQ').value.trim(); if (!q) return;
+  if (isYtUrl(q)) { YT = [{ title: 'YouTube link', artist: q, url: q, image: '', dur: 0 }]; renderYT(); ytDownload(q); return; }
+  ytBusy = true; renderYT();
+  try { const d = await (await api('/api/yt/search?q=' + encodeURIComponent(q))).json(); YT = d.items || []; if (d.error) toast(d.error); }
+  catch(e){ YT = []; toast('Studio not reachable'); }
+  ytBusy = false; renderYT();
+}
+function renderYT(){
+  if (LIBSRC !== 'yt') return;
+  $('#libList').innerHTML = ytBusy ? '<div class="empty">Searching YouTube…</div>' : YT.length ? YT.map((v, k) => { const j = YTJ[v.url];
+    const st = !j ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>' : j.state === 'done' ? '✓' : j.state === 'error' ? '!' : (j.progress | 0) + '%';
+    return `<div class="row ytr" data-k="${k}">${v.image ? `<img src="${esc(v.image)}" alt="">` : '<span></span>'}<span style="min-width:0"><span class="t ell">${esc(v.title)}</span><span class="a ell" style="display:block">${esc(v.artist)}</span></span><span class="d">${v.dur ? fmt(v.dur) : ''}</span><button class="dl ${j && j.state === 'done' ? 'ok' : ''}" data-a="dl" aria-label="Download to the station library">${st}</button></div>`; }).join('')
+    : '<div class="empty">Search YouTube, or paste a YouTube link.<br>The song is downloaded to the station library on the studio computer and added to your playlist.</div>';
+}
+async function ytDownload(url){
+  if (YTJ[url] && YTJ[url].state !== 'error') return;
+  YTJ[url] = { state: 'queued', progress: 0 }; renderYT();
+  try { const r = await api('/api/yt/add', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url }) }); const d = await r.json(); if (!r.ok || !d.job) throw new Error(d.error || 'Download failed');
+    toast('Downloading on the studio computer…');
+    const poll = async () => { let j; try { j = await (await api('/api/yt/job?id=' + d.job)).json(); } catch(e){ return setTimeout(poll, 2000); }
+      YTJ[url] = j; renderYT();
+      if (j.state === 'done' && j.item) { const i = j.item; if (!LIB.some(x => x.id === i.id)) LIB.unshift(i);
+        tab().items.push({ uid: uid(), url: i.url, title: cleanT(i.title), artist: cleanT(i.artist), dur: i.dur || 0 }); plSave(); renderPL(); toast('Added to ' + tab().name + ': ' + cleanT(i.title)); return; }
+      if (j.state === 'error') { toast(j.error || 'Download failed'); return; }
+      setTimeout(poll, 1200); };
+    poll();
+  } catch(e){ YTJ[url] = { state: 'error' }; renderYT(); toast(e.message || 'Download failed'); }
+}
+$('#libList').onclick = e => { const b = e.target.closest('[data-a]'); if (!b) return; if (b.dataset.a === 'dl') { const v = YT[+b.closest('.row').dataset.k]; if (v) ytDownload(v.url); return; } const i = LIB.find(x => x.id === b.closest('.row').dataset.id); if (!i) return;
   if (b.dataset.a === 'add') { tab().items.push({ uid: uid(), url: i.url, title: cleanT(i.title), artist: cleanT(i.artist), dur: i.dur || 0 }); plSave(); renderPL(); b.innerHTML = '✓'; toast('Added to ' + tab().name); }
   else { if (pre && pre.id === i.id) { pre.a.pause(); pre = null; } else { if (pre) pre.a.pause(); const a = new Audio(BASE + i.url); a.play().catch(() => toast('Cannot prelisten')); a.onended = () => { pre = null; renderLib(); }; pre = { id: i.id, a }; toast('Prelisten – only you hear it'); } renderLib(); } };
 
@@ -687,7 +734,7 @@ function renderSet(){
   const micName = i => { const d = devs.find(x => x.deviceId === CFG.mics[i]); return CFG.mics[i] ? (d ? d.label || 'Selected input' : 'Selected input') : (i ? 'Not set' : 'Phone microphone'); };
   $('#setBody').innerHTML = `<div class="conn ${ONLINE ? '' : 'bad'}"><i></i><span style="flex:1"><b>${ONLINE ? 'Connected to your studio' : 'Studio not reachable'}</b><br><span style="color:var(--sub)">${ONLINE ? 'Works anywhere – Wi-Fi or mobile data' : 'Check that OAB Studio is open on the computer'}</span></span></div>
   <button class="wa" id="waShare"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.8 11.9 11.9 0 0 0 4.6 4c1.7.7 2.4.8 3.2.7.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3z"/></svg><span style="flex:1;text-align:left"><b>Send the listen link on WhatsApp</b><br><small>${esc(listenLink() || 'Waiting for the station link…')}</small></span></button>
-  <div class="gh">CONNECTION</div><div class="grp">${r('addr', 'Station server', CFG.fixed ? 'OAB Studio (fixed link)' : host(), ONLINE ? 'ok' : '')}${r('key', 'Broadcast password', CFG.key ? '••••••••' : 'Not set')}${r('kbps', 'Stream quality', CFG.kbps + ' kbps')}</div>
+  <div class="gh">CONNECTION</div><div class="grp">${r('addr', 'Station server', CFG.fixed ? 'OAB Studio (fixed link)' : host(), ONLINE ? 'ok' : '')}${r('key', 'Broadcast password', CFG.key ? '••••••••' : 'Not set')}${r('kbps', 'Stream quality', +CFG.kbps ? CFG.kbps + ' kbps' : 'Auto' + (live ? ' · ' + curKbps + ' kbps' : ''))}</div>
   <div class="gh">AUDIO</div><div class="grp">${r('mic0', 'Microphone 1', micName(0))}${r('mic1', 'Microphone 2', micName(1))}${r('monitor', 'Hear the mic in headphones', CFG.monitor ? 'On' : 'Off')}${r('duck', 'Ducker depth', CFG.duckDb + ' dB')}${r('xfade', 'Crossfade', CFG.xfade ? CFG.xfade + ' s' : 'Off')}${r('repeat', 'Repeat playlist', CFG.repeat ? 'On' : 'Off')}</div>
   <div class="gh">STATION</div><div class="grp">${r('pads', 'Hot buttons 1–8', PADS.filter(Boolean).length + ' set · hold a button to change')}${r('phone', 'Add songs from the phone', tab().name)}${r('logo', 'Station logo', 'Change')}${r('keepOn', 'Keep screen on while live', CFG.keepOn ? 'On' : 'Off')}${r('out', 'Disconnect from this studio', '')}</div>
   <div class="foot">OAB MOBILE ${VERSION}<br>AD SOUND &amp; SERVICE</div>`;
@@ -709,7 +756,7 @@ function shareListen(){ const l = listenLink(); if (!l) return toast('Connect to
 $('#setBody').onclick = e => { if (e.target.closest('#waShare')) return shareListen(); const b = e.target.closest('[data-k]'); if (!b) return; const k = b.dataset.k;
   if (k === 'addr') ask('Station link or address', CFG.addr, v => connect(v, CFG.key), { ph: 'Fixed link from OAB Studio', ok: 'Connect' });
   if (k === 'key') ask('Broadcast password', CFG.key, v => { CFG.key = v; saveCfg(); checkKey(); renderSet(); }, { type: 'password' });
-  if (k === 'kbps') choose('Stream quality', [[96, '96 kbps – saves mobile data'], [128, '128 kbps – good'], [192, '192 kbps – great'], [256, '256 kbps – best (Wi-Fi)']], CFG.kbps, v => { CFG.kbps = v; saveCfg(); if (live) enc = new lamejs.Mp3Encoder(2, ctx.sampleRate, v); renderSet(); });
+  if (k === 'kbps') choose('Stream quality', [[0, 'Auto – 96 on mobile data, 128 on Wi-Fi'], [64, '64 kbps – weak signal'], [96, '96 kbps – saves mobile data'], [128, '128 kbps – good'], [192, '192 kbps – great (Wi-Fi)']], CFG.kbps, v => { CFG.kbps = v; saveCfg(); if (live) { curKbps = pickKbps(); enc = new lamejs.Mp3Encoder(2, ctx.sampleRate, curKbps); } renderSet(); });
   if (k === 'mic0' || k === 'mic1') chooseInput(+k.slice(3));
   if (k === 'monitor') { CFG.monitor = !CFG.monitor; saveCfg(); MICS.forEach(m => m.nodes && (m.nodes.mon.gain.value = CFG.monitor ? 1 : 0)); renderSet(); }
   if (k === 'duck') choose('Ducker depth', [-6, -9, -12, -14, -18, -24].map(v => [v, v + ' dB']), CFG.duckDb, v => { CFG.duckDb = v; saveCfg(); duckNow = -1; renderSet(); });
@@ -732,17 +779,19 @@ $('#bMsg').onclick = () => ask('Message to listeners', '', async v => { if (!v.t
 setInterval(async () => {
   if (!live || sending || !out.length) return;
   const parts = out; out = []; const len = parts.reduce((a, b) => a + b.length, 0), body = new Uint8Array(len); let o = 0; parts.forEach(p => { body.set(p, o); o += p.length; });
-  sending = true; const ac = new AbortController(), tm = setTimeout(() => ac.abort(), 6000);
-  try { const r = await api('/api/push', { method: 'POST', headers: { 'X-Radio-Source': 'Phone' }, body, signal: ac.signal }); if (r.status === 401) { toast('Wrong password'); setLive(false); } }
-  catch(e){ toast('Connection lost… retrying'); }
+  sending = true; const ac = new AbortController(), tm = setTimeout(() => ac.abort(), 15000);
+  try { const r = await api('/api/push', { method: 'POST', headers: { 'X-Radio-Source': 'Phone', 'X-Radio-Kbps': String(curKbps) }, body, signal: ac.signal });
+    if (r.status === 401) { toast('Wrong password'); setLive(false); } else if (!r.ok) throw 0; netBad = 0; }
+  catch(e){ if (live) { out = [body].concat(out); if (out.length > 600) out.splice(1, out.length - 600); } if (++netBad === 3) toast('Weak signal – keeping the audio, sending again…'); }
   clearTimeout(tm); sending = false;
 }, 400);
+function pickKbps(){ if (+CFG.kbps) return +CFG.kbps; const c = navigator.connection; return c && (c.type === 'cellular' || /2g|3g/.test(c.effectiveType || '')) ? 96 : 128; }
 async function setLive(on){
   if (on) {
     initAudio(); await ctx.resume();
     try { const r = await api('/api/check', { method: 'POST' }); if (r.status === 401) { toast('Wrong password – check Settings'); return; } } catch(e){ toast('Studio not reachable'); return; }
     try { await api('/api/remote', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cmd: 'stoplive' }) }); } catch(e){}
-    enc = new lamejs.Mp3Encoder(2, ctx.sampleRate, +CFG.kbps || 128); out = []; live = true;
+    curKbps = pickKbps(); enc = new lamejs.Mp3Encoder(2, ctx.sampleRate, curKbps); out = []; live = true; netBad = 0;
     if (CFG.keepOn) { try { wake = await navigator.wakeLock.request('screen'); } catch(e){} }
     if (NATIVE) try { NATIVE.setLive(true, !!CFG.keepOn); } catch(e){}
     const d = cur(); if (d) meta(d.it);

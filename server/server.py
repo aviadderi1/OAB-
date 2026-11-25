@@ -185,6 +185,57 @@ def live_source_active():
     return time.time() - st["last_live"] < 5
 
 
+# ---- phone broadcast cushion ----
+# A phone on mobile data sends audio in bursts: a few seconds can arrive late and then all at once.
+# Its audio is kept here and released to listeners at the steady speed of the stream (CBR MP3),
+# after a cushion of a few seconds, so short network hiccups are never heard.
+PHONE_CUSHION = 4.0           # seconds kept in hand before playing out
+phone = {"buf": bytearray(), "rate": 16000, "source": "Phone", "filling": True, "last_in": 0.0}
+phone_lock = threading.Lock()
+
+
+def phone_push(data, source, kbps):
+    with phone_lock:
+        phone["buf"] += data
+        phone["rate"] = max(4000, min(40000, int(kbps) * 125))
+        phone["source"] = source
+        phone["last_in"] = time.time()
+        if len(phone["buf"]) > phone["rate"] * 40:          # never keep more than 40 s
+            del phone["buf"][:len(phone["buf"]) - phone["rate"] * 40]
+    with lock:
+        st["last_live"] = time.time()                       # the phone is live even while the cushion fills
+
+
+def phone_pacer():
+    budget, last = 0.0, time.monotonic()
+    while True:
+        time.sleep(0.05)
+        now = time.monotonic()
+        dt, last = now - last, now
+        out = b""
+        with phone_lock:
+            buf, rate = phone["buf"], phone["rate"]
+            if not buf:
+                phone["filling"], budget = True, 0.0
+                continue
+            if phone["filling"]:
+                if len(buf) < rate * PHONE_CUSHION and time.time() - phone["last_in"] < 2:
+                    continue
+                phone["filling"], budget = False, 0.0
+            budget += rate * dt
+            if len(buf) > rate * (PHONE_CUSHION * 3):           # too far behind: catch up a little faster
+                budget += rate * dt * 0.25
+            n = int(min(len(buf), budget))
+            if n >= 512 or n == len(buf):
+                out = bytes(buf[:n]); del buf[:n]; budget -= n
+            src = phone["source"]
+        if out:
+            broadcast(out, src)
+
+
+threading.Thread(target=phone_pacer, daemon=True).start()
+
+
 def broadcast(data, source):
     with lock:
         burst.append(data)
@@ -1112,6 +1163,25 @@ def yt_job(jid, url):
         j.update(state="error", error=str(e)[:200])
 
 
+def yt_search(q):
+    """YouTube search for OAB Mobile – no API key needed (yt-dlp flat search)."""
+    with yt_tool_lock:
+        exe = ytdlp_exe()
+    kw = {"creationflags": 0x08000000} if IS_WIN else {}
+    r = subprocess.run([exe, "ytsearch12:" + q, "--flat-playlist", "-J", "--no-warnings", "--encoding", "utf-8"],
+                       capture_output=True, timeout=60, **kw)
+    d = json.loads(r.stdout.decode("utf-8", "replace") or "{}")
+    out = []
+    for e in d.get("entries") or []:
+        vid = e.get("id") or ""
+        if not re.match(r"^[\w-]{11}$", vid):
+            continue
+        title, artist = yt_clean(e.get("title"), "", e.get("channel") or e.get("uploader"), "")
+        out.append({"title": title, "artist": artist, "dur": int(e.get("duration") or 0),
+                    "image": "https://i.ytimg.com/vi/%s/mqdefault.jpg" % vid, "url": "https://www.youtube.com/watch?v=" + vid})
+    return out
+
+
 def yt_add(url):
     jid = "y%d%04d" % (int(time.time()), random.randint(0, 9999))
     ytjobs[jid] = {"id": jid, "url": url, "state": "queued", "progress": 0, "error": "", "item": None}
@@ -1224,7 +1294,7 @@ class Handler(BaseHTTPRequestHandler):
     # ---------- helpers ----------
     def cors(self):
         self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type, X-Radio-Key, X-Radio-Source, Range")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, X-Radio-Key, X-Radio-Source, X-Radio-Kbps, Range")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, PUT, OPTIONS")
 
     def send_json(self, obj, code=200):
@@ -1577,6 +1647,14 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send_json(weather((self.qs().get("city") or [cfg.get("city") or "Tel Aviv"])[0]))
             except Exception as e:
                 return self.send_json({"error": str(e)[:150]}, 502)
+        if p == "/api/yt/search":
+            if not self.authed():
+                return self.send_json({"error": "wrong password"}, 401)
+            q = (self.qs().get("q") or [""])[0].strip()[:120]
+            try:
+                return self.send_json({"items": yt_search(q) if q else []})
+            except Exception as e:
+                return self.send_json({"items": [], "error": "YouTube search failed: " + str(e)[:100]})
         if p == "/api/yt/job":
             if not self.authed():
                 return self.send_json({"error": "wrong password"}, 401)
@@ -1628,7 +1706,11 @@ class Handler(BaseHTTPRequestHandler):
         if p == "/api/push":                     # studio sends MP3 audio
             data = self.read_body()
             if data:
-                broadcast(data, self.headers.get("X-Radio-Source") or "Studio")
+                kb = self.headers.get("X-Radio-Kbps")
+                if kb and kb.isdigit():                  # OAB Mobile: smooth out mobile-data bursts
+                    phone_push(data, self.headers.get("X-Radio-Source") or "Phone", int(kb))
+                else:
+                    broadcast(data, self.headers.get("X-Radio-Source") or "Studio")
             return self.send_json({"ok": True, "listeners": len(listeners)})
         if p == "/api/message":                  # studio → message on every listener's screen
             d = self.read_json(20000)
